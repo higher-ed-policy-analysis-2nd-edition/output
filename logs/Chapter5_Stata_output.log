@@ -1,0 +1,1388 @@
+--------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+log type:  text
+ opened on:  27 Mar 2026, 15:46:22
+
+. 
+. di "Chapter 5 log opened: " c(current_date) " " c(current_time)
+Chapter 5 log opened: 27 Mar 2026 15:46:22
+
+. 
+. *===============================================================================
+. * Section 5.2: Getting to Know the Structure of Our Datasets
+. *===============================================================================
+. 
+. *----------------------------------------------------------------
+. * Time series dataset: describe and compress
+. *----------------------------------------------------------------
+. 
+. clear all
+
+. 
+. /* Download or use the copy and import commands to open the time series
+>    dataset of the percent of US high school graduates in PSE, 1960 to 2016
+>    from Chapter 4. On GitHub, this file is named Example_4_2_2_TS.dta
+>    and is found in the /data/ch4/ repository. */
+. 
+. copy "https://raw.githubusercontent.com/higher-ed-policy-analysis-2nd-edition/data/main/ch4/Exam
+> ple_4_2_2_TS.dta" ///
+>      "Example_4_2_2_TS.dta", replace
+(file Example_4_2_2_TS.dta not found)
+
+. 
+. use "Example_4_2_2_TS.dta", clear
+
+. 
+. * View storage types for all variables
+. describe
+
+Contains data from Example_4_2_2_TS.dta
+ Observations:            56                  
+    Variables:             2                  9 Nov 2025 13:50
+--------------------------------------------------------------------------------------------------
+Variable      Storage   Display    Value
+    name         type    format    label      Variable label
+--------------------------------------------------------------------------------------------------
+year            int     %ty                   year
+totalpct        double  %10.0g                totalpct
+--------------------------------------------------------------------------------------------------
+Sorted by: year
+
+. 
+. * 🔹 Compress to save memory (converts year from float to int)
+. compress
+  (0 bytes saved)
+
+. 
+. describe
+
+Contains data from Example_4_2_2_TS.dta
+ Observations:            56                  
+    Variables:             2                  9 Nov 2025 13:50
+--------------------------------------------------------------------------------------------------
+Variable      Storage   Display    Value
+    name         type    format    label      Variable label
+--------------------------------------------------------------------------------------------------
+year            int     %ty                   year
+totalpct        double  %10.0g                totalpct
+--------------------------------------------------------------------------------------------------
+Sorted by: year
+
+. 
+. * save "Example_4_2_2_TS.dta", replace
+. 
+. *----------------------------------------------------------------
+. * 🔹 Panel dataset: describe, compress, and recast
+. *----------------------------------------------------------------
+. 
+. /* Download or use the copy and import commands to open Example_5_0.dta,
+>    found in the /data/ch5/ repository. */
+. 
+. copy "https://raw.githubusercontent.com/higher-ed-policy-analysis-2nd-edition/data/main/ch5/Exam
+> ple_5_0.dta" ///
+>      "Example_5_0.dta", replace
+(file Example_5_0.dta not found)
+
+. 
+. use "Example_5_0.dta", clear
+
+. 
+. * View storage types — id is stored as float but should be integer
+. describe
+
+Contains data from Example_5_0.dta
+ Observations:           250                  
+    Variables:             6                  17 Jul 2020 15:01
+--------------------------------------------------------------------------------------------------
+Variable      Storage   Display    Value
+    name         type    format    label      Variable label
+--------------------------------------------------------------------------------------------------
+id              float   %10.0gc               id
+year            int     %ty                   
+State           str20   %20s                  State
+Ugrad           long    %10.0g                Undergraduate enrollment
+need            float   %9.0g                 State spending on need-based aid
+merit           float   %9.0g                 State spending on merit-based aid
+--------------------------------------------------------------------------------------------------
+Sorted by: id  year
+
+. 
+. compress
+  variable id was float now byte
+  variable State was str20 now str14
+  (2,250 bytes saved)
+
+. 
+. describe
+
+Contains data from Example_5_0.dta
+ Observations:           250                  
+    Variables:             6                  17 Jul 2020 15:01
+--------------------------------------------------------------------------------------------------
+Variable      Storage   Display    Value
+    name         type    format    label      Variable label
+--------------------------------------------------------------------------------------------------
+id              byte    %10.0gc               id
+year            int     %ty                   
+State           str14   %14s                  State
+Ugrad           long    %10.0g                Undergraduate enrollment
+need            float   %9.0g                 State spending on need-based aid
+merit           float   %9.0g                 State spending on merit-based aid
+--------------------------------------------------------------------------------------------------
+Sorted by: id  year
+     Note: Dataset has changed since last saved.
+
+. 
+. * 🔹 Recast id variable to integer (compress only went to byte; recast forces int)
+. recast int id
+
+. 
+. describe
+
+Contains data from Example_5_0.dta
+ Observations:           250                  
+    Variables:             6                  17 Jul 2020 15:01
+--------------------------------------------------------------------------------------------------
+Variable      Storage   Display    Value
+    name         type    format    label      Variable label
+--------------------------------------------------------------------------------------------------
+id              int     %10.0gc               id
+year            int     %ty                   
+State           str14   %14s                  State
+Ugrad           long    %10.0g                Undergraduate enrollment
+need            float   %9.0g                 State spending on need-based aid
+merit           float   %9.0g                 State spending on merit-based aid
+--------------------------------------------------------------------------------------------------
+Sorted by: id  year
+     Note: Dataset has changed since last saved.
+
+. 
+. * save "Example_5_0.dta", replace
+. 
+. clear all
+
+. 
+. *===============================================================================
+. * Section 5.2 (continued): SHEEO Finance Data Example
+. *===============================================================================
+. 
+. *----------------------------------------------------------------
+. * Download and import SHEEO state higher education finance data
+. *----------------------------------------------------------------
+. 
+. /* The reformatted SHEEO Excel file is available on GitHub in the
+>    data/ch5/ repository as Example_5_1.xlsx. See footnote 4 in the
+>    chapter for details on the variables included. */
+. 
+. copy "https://raw.githubusercontent.com/higher-ed-policy-analysis-2nd-edition/data/main/ch5/Exam
+> ple_5_1.xlsx" ///
+>      "Example_5_1.xlsx", replace
+(file Example_5_1.xlsx not found)
+
+. 
+. import excel "Example_5_1.xlsx", sheet("reformatted") firstrow clear
+(6 vars, 2,309 obs)
+
+. 
+. *----------------------------------------------------------------
+. * Drop pre-recession years and non-state observations
+. *----------------------------------------------------------------
+. 
+. * Keep only post-Great Recession data (FY 2010 onward)
+. drop if FY < 2010
+(1,530 observations deleted)
+
+. 
+. * Inspect FY 2010 observations
+. list if FY == 2010
+
+     +----------------------------------------------------------------------+
+     |          State     FY   NetTuit~e   StateTa~s   StatePu~d   NetFTE~t |
+     |----------------------------------------------------------------------|
+729. |        Alabama   2010   1.419e+09   1.424e+09    37624240     210067 |
+730. |         Alaska   2010    88850609   3.370e+08      788000      20291 |
+731. |        Arizona   2010   1.228e+09   1.037e+09    11312000     259953 |
+732. |       Arkansas   2010   4.306e+08   8.391e+08    59616148     118884 |
+733. |     California   2010   3.035e+09   9.742e+09   1.068e+09    1617690 |
+     |----------------------------------------------------------------------|
+734. |       Colorado   2010   1.207e+09   4.315e+08    98052349     187231 |
+735. |    Connecticut   2010   5.827e+08   1.309e+09    36319573      85033 |
+736. |       Delaware   2010   4.266e+08   2.266e+08    13845700      33570 |
+737. |        Florida   2010   1.211e+09   2.864e+09   5.078e+08     607246 |
+738. |        Georgia   2010   8.305e+08   1.926e+09   5.917e+08     371921 |
+     |----------------------------------------------------------------------|
+739. |         Hawaii   2010   1.840e+08   5.754e+08     3284899      39857 |
+740. |          Idaho   2010   1.814e+08   3.424e+08     5434030      49251 |
+741. |       Illinois   2010   1.790e+09   3.590e+09   2.075e+08     391926 |
+742. |        Indiana   2010   1.661e+09   1.562e+09   1.671e+08     265758 |
+743. |           Iowa   2010   8.431e+08   7.579e+08     9082372     127128 |
+     |----------------------------------------------------------------------|
+744. |         Kansas   2010   6.414e+08   7.432e+08    12251789     138240 |
+745. |       Kentucky   2010   9.703e+08   1.004e+09   1.296e+08     154247 |
+746. |      Louisiana   2010   4.449e+08   1.268e+09   1.460e+08     178931 |
+747. |          Maine   2010   2.501e+08   2.579e+08     9242479      37517 |
+748. |       Maryland   2010   1.535e+09   1.593e+09    78616554     231189 |
+     |----------------------------------------------------------------------|
+749. |  Massachusetts   2010   9.888e+08   9.785e+08    50250284     165244 |
+750. |       Michigan   2010   3.448e+09   1.837e+09    38551475     434490 |
+751. |      Minnesota   2010   1.455e+09   1.429e+09   1.115e+08     215009 |
+752. |    Mississippi   2010   5.268e+08   1.003e+09    22488088     132222 |
+753. |       Missouri   2010   7.745e+08   9.197e+08    51818252     191608 |
+     |----------------------------------------------------------------------|
+754. |        Montana   2010   1.962e+08   1.679e+08     5955446      38909 |
+755. |       Nebraska   2010   2.889e+08   6.230e+08     8779453      83206 |
+756. |         Nevada   2010   1.932e+08   3.971e+08    64230120      68799 |
+757. |  New Hampshire   2010   3.287e+08   1.389e+08     2699500      39171 |
+758. |     New Jersey   2010   1.959e+09   2.356e+09   2.468e+08     268066 |
+     |----------------------------------------------------------------------|
+759. |     New Mexico   2010   1.562e+08   8.177e+08    73609523      98709 |
+760. |       New York   2010   2.389e+09   4.989e+09   5.498e+08     572378 |
+761. | North Carolina   2010   1.040e+09   3.750e+09   1.473e+08     420956 |
+762. |   North Dakota   2010   2.349e+08   3.117e+08     8257953      37716 |
+763. |           Ohio   2010   2.606e+09   1.997e+09    64010412     447494 |
+     |----------------------------------------------------------------------|
+764. |       Oklahoma   2010   4.917e+08   1.049e+09    90966419     142024 |
+765. |         Oregon   2010   7.530e+08   6.376e+08    77826889     160037 |
+766. |   Pennsylvania   2010   3.288e+09   1.872e+09   2.126e+08     371286 |
+767. |   Rhode Island   2010   2.441e+08   1.598e+08     8430978      33023 |
+768. | South Carolina   2010   9.869e+08   7.041e+08   2.395e+08     171727 |
+     |----------------------------------------------------------------------|
+769. |   South Dakota   2010   1.792e+08   1.819e+08     3218600      32324 |
+770. |      Tennessee   2010   7.258e+08   1.119e+09   2.615e+08     187864 |
+771. |          Texas   2010   3.358e+09   6.169e+09   2.629e+08     896832 |
+772. |           Utah   2010   4.644e+08   6.740e+08    12160300     118446 |
+773. |        Vermont   2010   2.835e+08    92464160     9007028      21795 |
+     |----------------------------------------------------------------------|
+774. |       Virginia   2010   1.828e+09   1.727e+09   1.456e+08     312598 |
+775. |     Washington   2010   8.135e+08   1.572e+09   2.033e+08     254867 |
+776. |  West Virginia   2010   3.696e+08   4.479e+08    79383593      78798 |
+777. |      Wisconsin   2010   1.004e+09   1.248e+09    78466742     237403 |
+778. |        Wyoming   2010    43630907   2.953e+08    25949256      25587 |
+     |----------------------------------------------------------------------|
+779. |           U.S.   2010   5.038e+10   7.149e+10   6.349e+09   11384518 |
+     +----------------------------------------------------------------------+
+
+. 
+. * Drop U.S. aggregate row and D.C.
+. drop if State == "U.S."
+(15 observations deleted)
+
+. drop if State == "D.C."
+(14 observations deleted)
+
+. 
+. *----------------------------------------------------------------
+. * 🔹 Create state identifiers using statastates
+. *----------------------------------------------------------------
+. 
+. * Install statastates if needed (run once)
+. * ssc install statastates, replace
+. 
+. statastates, name(State) nogenerate
+(750 real changes made)
+(variable state_name was str14, now str20 to accommodate using data's values)
+
+    Result                      Number of obs
+    -----------------------------------------
+    Not matched                             0
+    Matched                               750  
+    -----------------------------------------
+
+. 
+. * Alternative: create a numeric state id from state names
+. * egen stateid = group(State)
+. 
+. compress
+  variable State was str20 now str14
+  (4,500 bytes saved)
+
+. 
+. *----------------------------------------------------------------
+. * Declare as panel dataset and save
+. *----------------------------------------------------------------
+. 
+. * Use state FIPS code as panel identifier; FY as time variable
+. xtset state_fips FY, yearly
+
+Panel variable: state_fips (strongly balanced)
+ Time variable: FY, 2010 to 2024
+         Delta: 1 year
+
+. 
+. * save "Example_5_2.dta", replace
+. 
+. clear all
+
+. 
+. *===============================================================================
+. * Section 5.3: Getting to Know Our Data
+. *===============================================================================
+. 
+. *----------------------------------------------------------------
+. * Loading the HSLS:09 public-use student dataset
+. *----------------------------------------------------------------
+. 
+. /* Use the public-use HSLS:09 dataset (2017 Student File), which can be
+>    downloaded directly from NCES at https://nces.ed.gov/datalab/onlinecodebook.
+>    Note: this is a very large file.
+>      - Stata/MP: set maxvar 60000
+>      - Stata/SE: set maxvar 32000
+>    Then keep: STU_ID X1SEX X1RACE X1SES X1SESQ5 X4ATPRLVLA S3CLGPELL P1TUITION
+>    Alternatively, copy and import the truncated version from GitHub (below). */
+. 
+. clear all
+
+. 
+. copy "https://raw.githubusercontent.com/higher-ed-policy-analysis-2nd-edition/data/main/ch5/Publ
+> ic_use_HSLS_09_truncated.dta" ///
+>      "Public_use_HSLS_09_truncated.dta", replace
+(file Public_use_HSLS_09_truncated.dta not found)
+
+. 
+. use "Public_use_HSLS_09_truncated.dta", clear
+
+. 
+. keep STU_ID X1SEX X1RACE X1SES X1SESQ5 X4ATPRLVLA S3CLGPELL P1TUITION
+
+. 
+. /* If you have neither Stata/MP nor Stata/SE, download the pre-truncated
+>    version (Example_5_3.dta) from GitHub using the copy and import commands. */
+. 
+. copy "https://raw.githubusercontent.com/higher-ed-policy-analysis-2nd-edition/data/main/ch5/Exam
+> ple_5_3.dta" ///
+>      "Example_5_3.dta", replace
+(file Example_5_3.dta not found)
+
+. 
+. use "Example_5_3.dta", clear
+
+. 
+. *----------------------------------------------------------------
+. * 🔹 Inspect missing data coding with codebook
+. *----------------------------------------------------------------
+. 
+. * Examine how NCES codes missing values in S3CLGPELL (-9 = Missing)
+. codebook S3CLGPELL
+
+--------------------------------------------------------------------------------------------------
+S3CLGPELL         S3 D07C Offered scholarship/grant to attend Nov 1 2013 school for 2013-2014 year
+--------------------------------------------------------------------------------------------------
+
+                  Type: Numeric (byte)
+                 Label: S3CLGPELLF
+
+                 Range: [-8,3]                        Units: 1
+         Unique values: 6                         Missing .: 459/23,503
+
+            Tabulation: Freq.   Numeric  Label
+                        4,945        -8  Unit non-response
+                        5,022        -7  Item legitimate skip/NA
+                          588        -4  Item not administered:
+                                         abbreviated interview
+                        5,229         1  Yes
+                        5,333         2  No
+                        1,927         3  Don't know
+                          459         .  
+
+. 
+. *----------------------------------------------------------------
+. * Recode NCES missing codes to Stata system missing (.)
+. *----------------------------------------------------------------
+. 
+. * mvdecode replaces -9 (and other special codes) with Stata's system missing
+. mvdecode _all, mv(-9=.)
+      STU_ID: string variable ignored
+
+. 
+. * Save recoded file
+. * save "Example_5_4.dta", replace
+. 
+. *===============================================================================
+. * Section 5.4: Missing Data Analysis
+. *===============================================================================
+. 
+. *----------------------------------------------------------------
+. * 🔹 Tabulate missing values with mdesc
+. *----------------------------------------------------------------
+. 
+. clear all
+
+. 
+. /* Load dataset with missing values already recoded from Section 5.3.
+>    Available on GitHub in the /data/ch5/ repository. */
+. 
+. copy "https://raw.githubusercontent.com/higher-ed-policy-analysis-2nd-edition/data/main/ch5/Exam
+> ple_5_4_1.dta" ///
+>      "Example_5_4_1.dta", replace
+(file Example_5_4_1.dta not found)
+
+. 
+. use "Example_5_4_1.dta", clear
+
+. 
+. * Install mdesc from SSC (run once)
+. cap ssc install mdesc, replace
+
+. 
+. * Tabulate number, total, and percent missing for each variable
+. mdesc
+
+    Variable    |     Missing          Total     Percent Missing
+----------------+-----------------------------------------------
+         STU_ID |           0         23,503           0.00
+          X1SEX |           6         23,503           0.03
+         X1RACE |       1,006         23,503           4.28
+          X1SES |           0         23,503           0.00
+        X1SESQ5 |           0         23,503           0.00
+     X4ATPRLVLA |         136         23,503           0.58
+      S3CLGPELL |         459         23,503           1.95
+      P1TUITION |       1,407         23,503           5.99
+----------------+-----------------------------------------------
+
+. 
+. *----------------------------------------------------------------
+. * Explore missingness patterns with misstable
+. *----------------------------------------------------------------
+. 
+. * Nested pattern of missing values (percent)
+. misstable tree
+
+  Nested pattern of missing values
+   P1TUITION     X1RACE  S3CLGPELL X4ATPRLVLA      X1SEX
+  ------------------------------------------------------
+           6%        <1%         0%         0%         0%
+                                                       0 
+                                            0          0 
+                                                       0 
+                                <1          0          0 
+                                                       0 
+                                           <1         <1 
+                                                      <1 
+                      6         <1          0          0 
+                                                       0 
+                                           <1          0 
+                                                      <1 
+                                 6         <1          0 
+                                                      <1 
+                                            6          0 
+                                                       6 
+          94          4         <1          0          0 
+                                                       0 
+                                           <1          0 
+                                                      <1 
+                                 4         <1          0 
+                                                      <1 
+                                            4         <1 
+                                                       4 
+                     90          2         <1          0 
+                                                      <1 
+                                            2          0 
+                                                       2 
+                                88         <1          0 
+                                                      <1 
+                                           88         <1 
+                                                      88 
+  ------------------------------------------------------
+ (percent missing listed first)
+
+. 
+. * Cross-tabulated missing-value patterns (1 = complete)
+. misstable patterns
+
+      Missing-value patterns
+        (1 means complete)
+
+              |   Pattern
+    Percent   |  1  2  3  4    5
+  ------------+------------------
+       88%    |  1  1  1  1    1
+              |
+        6     |  1  1  1  1    0
+        4     |  1  1  1  0    1
+        2     |  1  1  0  1    1
+       <1     |  1  0  1  1    1
+       <1     |  1  1  0  1    0
+       <1     |  1  1  0  0    1
+       <1     |  1  0  1  1    0
+       <1     |  1  1  1  0    0
+       <1     |  0  1  1  0    1
+       <1     |  1  0  0  1    1
+       <1     |  1  0  1  0    1
+       <1     |  0  1  1  0    0
+       <1     |  0  1  1  1    1
+  ------------+------------------
+      100%    |
+
+  Variables are  (1) X1SEX  (2) X4ATPRLVLA  (3) S3CLGPELL  (4) X1RACE  (5) P1TUITION
+
+. 
+. * Nested pattern of missing values (frequency counts)
+. misstable tree, frequency
+
+  Nested pattern of missing values
+   P1TUITION     X1RACE  S3CLGPELL X4ATPRLVLA      X1SEX
+  ------------------------------------------------------
+       1,407          7          0          0          0 
+                                                       0 
+                                            0          0 
+                                                       0 
+                                 7          0          0 
+                                                       0 
+                                            7          1 
+                                                       6 
+                  1,400         32          0          0 
+                                                       0 
+                                           32          0 
+                                                      32 
+                             1,368         10          0 
+                                                      10 
+                                        1,358          0 
+                                                   1,358 
+      22,096        999         23          0          0 
+                                                       0 
+                                           23          0 
+                                                      23 
+                               976          3          0 
+                                                       3 
+                                          973          4 
+                                                     969 
+                 21,097        404          3          0 
+                                                       3 
+                                          401          0 
+                                                     401 
+                            20,693        120          0 
+                                                     120 
+                                       20,573          1 
+                                                  20,572 
+  ------------------------------------------------------
+ (number missing listed first)
+
+. 
+. *===============================================================================
+. * Section 5.4 (continued): Missing Data by Categorical Variables
+. *===============================================================================
+. 
+. *----------------------------------------------------------------
+. * 🔹 Examine missing data patterns by subgroup using missings
+. *----------------------------------------------------------------
+. 
+. use "Example_5_4_1.dta", clear
+
+. 
+. /* Install the most recent version of missings from the Stata Journal.
+>    Run this line only once. */
+. * net install dm0085_1.pkg, replace
+. 
+. * Missingness by SES quintile
+. bysort X1SESQ5 : missings table
+
+--------------------------------------------------------------------------------------------------
+-> X1SESQ5 = Unit non
+
+Checking missings in all variables:
+1076 observations with missing values
+
+       # of |
+    missing |
+     values |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |        983       47.74       47.74
+          1 |      1,038       50.41       98.15
+          2 |         37        1.80       99.95
+          3 |          1        0.05      100.00
+------------+-----------------------------------
+      Total |      2,059      100.00
+
+--------------------------------------------------------------------------------------------------
+-> X1SESQ5 = First qu
+
+Checking missings in all variables:
+385 observations with missing values
+
+       # of |
+    missing |
+     values |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |      3,049       88.79       88.79
+          1 |        378       11.01       99.80
+          2 |          7        0.20      100.00
+------------+-----------------------------------
+      Total |      3,434      100.00
+
+--------------------------------------------------------------------------------------------------
+-> X1SESQ5 = Second q
+
+Checking missings in all variables:
+351 observations with missing values
+
+       # of |
+    missing |
+     values |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |      3,354       90.53       90.53
+          1 |        344        9.28       99.81
+          2 |          7        0.19      100.00
+------------+-----------------------------------
+      Total |      3,705      100.00
+
+--------------------------------------------------------------------------------------------------
+-> X1SESQ5 = Third qu
+
+Checking missings in all variables:
+342 observations with missing values
+
+       # of |
+    missing |
+     values |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |      3,891       91.92       91.92
+          1 |        330        7.80       99.72
+          2 |         12        0.28      100.00
+------------+-----------------------------------
+      Total |      4,233      100.00
+
+--------------------------------------------------------------------------------------------------
+-> X1SESQ5 = Fourth q
+
+Checking missings in all variables:
+335 observations with missing values
+
+       # of |
+    missing |
+     values |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |      4,218       92.64       92.64
+          1 |        327        7.18       99.82
+          2 |          8        0.18      100.00
+------------+-----------------------------------
+      Total |      4,553      100.00
+
+--------------------------------------------------------------------------------------------------
+-> X1SESQ5 = Fifth qu
+
+Checking missings in all variables:
+442 observations with missing values
+
+       # of |
+    missing |
+     values |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |      5,077       91.99       91.99
+          1 |        432        7.83       99.82
+          2 |         10        0.18      100.00
+------------+-----------------------------------
+      Total |      5,519      100.00
+
+. 
+. * Missingness by race-ethnicity
+. bysort X1RACE : missings table
+
+--------------------------------------------------------------------------------------------------
+-> X1RACE = Amer. In
+
+Checking missings in all variables:
+22 observations with missing values
+
+       # of |
+    missing |
+     values |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |        143       86.67       86.67
+          1 |         22       13.33      100.00
+------------+-----------------------------------
+      Total |        165      100.00
+
+--------------------------------------------------------------------------------------------------
+-> X1RACE = Asian, n
+
+Checking missings in all variables:
+179 observations with missing values
+
+       # of |
+    missing |
+     values |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |      1,773       90.83       90.83
+          1 |        173        8.86       99.69
+          2 |          6        0.31      100.00
+------------+-----------------------------------
+      Total |      1,952      100.00
+
+--------------------------------------------------------------------------------------------------
+-> X1RACE = Black/Af
+
+Checking missings in all variables:
+244 observations with missing values
+
+       # of |
+    missing |
+     values |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |      2,206       90.04       90.04
+          1 |        239        9.76       99.80
+          2 |          5        0.20      100.00
+------------+-----------------------------------
+      Total |      2,450      100.00
+
+--------------------------------------------------------------------------------------------------
+-> X1RACE = Hispanic
+
+Checking missings in all variables:
+40 observations with missing values
+
+       # of |
+    missing |
+     values |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |        382       90.52       90.52
+          1 |         40        9.48      100.00
+------------+-----------------------------------
+      Total |        422      100.00
+
+--------------------------------------------------------------------------------------------------
+-> X1RACE = Hispanic
+
+Checking missings in all variables:
+299 observations with missing values
+
+       # of |
+    missing |
+     values |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |      3,076       91.14       91.14
+          1 |        292        8.65       99.79
+          2 |          7        0.21      100.00
+------------+-----------------------------------
+      Total |      3,375      100.00
+
+--------------------------------------------------------------------------------------------------
+-> X1RACE = More tha
+
+Checking missings in all variables:
+155 observations with missing values
+
+       # of |
+    missing |
+     values |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |      1,786       92.01       92.01
+          1 |        153        7.88       99.90
+          2 |          2        0.10      100.00
+------------+-----------------------------------
+      Total |      1,941      100.00
+
+--------------------------------------------------------------------------------------------------
+-> X1RACE = Native H
+
+Checking missings in all variables:
+10 observations with missing values
+
+       # of |
+    missing |
+     values |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |        100       90.91       90.91
+          1 |         10        9.09      100.00
+------------+-----------------------------------
+      Total |        110      100.00
+
+--------------------------------------------------------------------------------------------------
+-> X1RACE = White, n
+
+Checking missings in all variables:
+976 observations with missing values
+
+       # of |
+    missing |
+     values |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |     11,106       91.92       91.92
+          1 |        951        7.87       99.79
+          2 |         25        0.21      100.00
+------------+-----------------------------------
+      Total |     12,082      100.00
+
+--------------------------------------------------------------------------------------------------
+-> X1RACE = .
+
+Checking missings in all variables:
+1006 observations with missing values
+
+       # of |
+    missing |
+     values |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          1 |        969       96.32       96.32
+          2 |         36        3.58       99.90
+          3 |          1        0.10      100.00
+------------+-----------------------------------
+      Total |      1,006      100.00
+
+. 
+. *===============================================================================
+. * Section 5.4 (continued): Panel Missing Analysis with xtmis (Legacy)
+. *===============================================================================
+. 
+. *----------------------------------------------------------------
+. * xtmis: frequency of missing values by panel unit
+. *----------------------------------------------------------------
+. 
+. /* Note: xtmis (Nguyen 2008) reports missing observations by group for
+>    xt data. It has been superseded by xtmispanel (Roudane 2026), demonstrated
+>    in Section 5.4.2 below, which provides more comprehensive panel-aware
+>    detection, mechanism testing, and visualization. xtmis is retained here
+>    for backward compatibility and comparison purposes. */
+. 
+. * Download IPEDS panel dataset
+. copy "https://raw.githubusercontent.com/higher-ed-policy-analysis-2nd-edition/data/main/ch5/Exam
+> ple_5_4.dta" ///
+>      "Example_5_4.dta", replace
+(file Example_5_4.dta not found)
+
+. 
+. use "Example_5_4.dta", clear
+
+. 
+. * Install dependencies (run once)
+. cap ssc install tomata
+
+. cap ssc install xtmis
+
+. 
+. * xtmis requires a string ID variable; create one from the numeric IPEDS code
+. tostring unitid, generate(unitid_s)
+unitid_s generated as str6
+
+. 
+. * Report missing observations for grantlow by institution
+. xtmis grantlow, id(unitid_s)
+
+          Variable:   grantlow
+          Group by |      Obs     Missing  Feq.Missings  NonMiss  Feq.NonMiss
+-------------------+---------------------------------------------------------
+            137564 |      9045       2234  24.698729       6811  75.301271
+            135939 |       112         37  33.035714         75  66.964286
+            444723 |       252         95  37.698413        157  62.301587
+            438601 |        48         17  35.416667         31  64.583333
+            233912 |        30         14  46.666667         16  53.333333
+            224402 |        84         47  55.952381         37  44.047619
+            161882 |        15         12         80          3         20
+            110051 |         6          6        100          0          0
+            138336 |         4          4        100          0          0
+-------------------+---------------------------------------------------------
+                   |      9596       2466  25.698208       7130  74.301792
+
+
+. 
+. *===============================================================================
+. * Section 5.4.1: Testing for Missing Completely at Random (MCAR)
+. *===============================================================================
+. 
+. *----------------------------------------------------------------
+. * 🔹 Little's MCAR test using mcartest
+. *----------------------------------------------------------------
+. 
+. /* Use the full public-use HSLS:09 dataset (2017 Student File), downloadable
+>    from NCES at https://nces.ed.gov/datalab/onlinecodebook (rename to HSLS09.dta).
+>    Stata/MP: set maxvar 60000 | Stata/SE: set maxvar 32000
+>    Then keep: STU_ID X1SEX X1RACE X1SES X1SESQ5 X4ATPRLVLA S3CLGPELL P1TUITION
+>    If unavailable, use the truncated version below. */
+. 
+. copy "https://raw.githubusercontent.com/higher-ed-policy-analysis-2nd-edition/data/main/ch5/Exam
+> ple_5_3.dta" ///
+>      "Example_5_3.dta", replace
+
+. 
+. use "Example_5_3.dta", clear
+
+. 
+. * Recode NCES missing codes to Stata system missing
+. mvdecode _all, mv(-9=.)
+      STU_ID: string variable ignored
+
+. 
+. * Install mcartest (run once): search mcartest, all → click st0318 → install
+. * cap net install st0318.pkg, replace
+. 
+. * Test 1: MCAR with equal variances
+. mcartest S3CLGPELL P1TUITION
+note: 32 observations omitted from EM estimation because of all imputation variables missing.
+
+Little's MCAR test
+
+Number of obs       = 23471
+Chi-square distance = 68.1557     
+Degrees of freedom  = 2
+Prob > chi-square   = 0.0000
+
+. 
+. * Test 2: MCAR with unequal variances
+. mcartest S3CLGPELL P1TUITION, unequal
+note: 32 observations omitted from EM estimation because of all imputation variables missing.
+
+Little's MCAR test with unequal variances
+
+Number of obs       = 23471
+Chi-square distance = 76.0439     
+Degrees of freedom  = 4
+Prob > chi-square   = 0.0000
+
+. 
+. * Test 3: Covariate-dependent missingness (CDM) — controlling for race-ethnicity
+. mcartest S3CLGPELL P1TUITION = i.X1RACE if X1RACE != ., ///
+>          unequal emoutput nolog
+note: 32 observations omitted from EM estimation because of all imputation variables missing.
+
+Expectation-maximization estimation      Number obs           =     22465
+                                         Number missing       =      1772
+                                         Number patterns      =         3
+Prior: uniform                           Obs per pattern: min =       404
+                                                          avg =  7488.333
+                                                          max =     20693
+
+Observed log likelihood = -80052.204 at iteration 6
+
+-----------------------------------
+             | S3CLGPELL  P1TUITION 
+-------------+---------------------
+Coef         |                     
+   1b.X1RACE |         0          0 
+    2.X1RACE |  2.566391   .5038324 
+    3.X1RACE |  1.102913    .590291 
+    4.X1RACE | -.3349718  -1.390813 
+    5.X1RACE |  .9184874   .2190636 
+    6.X1RACE |  1.246321   .9427008 
+    7.X1RACE |  .4102142   .2168802 
+    8.X1RACE |  1.798048   1.152957 
+       _cons | -3.909168  -6.200928 
+-------------+---------------------
+Sigma        |                     
+   S3CLGPELL |  20.58743   4.445989 
+   P1TUITION |  4.445989   11.75155 
+-----------------------------------
+
+Little's CDM test with unequal variances
+
+Number of obs       = 22465
+Chi-square distance = 105.2008    
+Degrees of freedom  = 18
+Prob > chi-square   = 0.0000
+
+. 
+. *===============================================================================
+. * Section 5.4.2: Panel-Specific Missing Data Analysis with xtmispanel
+. *===============================================================================
+. 
+. *----------------------------------------------------------------
+. * Setup: load SHEEO panel and install xtmispanel
+. *----------------------------------------------------------------
+. 
+. /* xtmispanel (Roudane 2026) is a comprehensive, all-in-one command for
+>    handling missing values in panel (time-series cross-sectional) data.
+>    Released: SSC, March 2026. SSC handle: S459624.
+>    Note: The GitHub version of Example5_2.dta spans FY 1980–2024 and includes
+>    pre-2001 years where Appropriations is missing. A locally generated
+>    Example_5_2.dta (from Section 5.2's drop if FY < 2010) covers FY 2010–2024
+>    only. Both files work with xtmispanel; the full-range file provides a richer
+>    missing-data demonstration. If you have not previously saved Example_5_2.dta,
+>    download the GitHub version below. */
+. copy "https://raw.githubusercontent.com/higher-ed-policy-analysis-2nd-edition/data/main/ch5/Exam
+> ple5_2.dta" ///  
+> "Example_5_2.dta", replace
+(file Example_5_2.dta not found)
+
+. 
+. use "Example_5_2.dta", clear
+
+. 
+. * Declare it a panel dataset.
+. xtset state_fips FY, yearly
+
+Panel variable: state_fips (strongly balanced)
+ Time variable: FY, 1980 to 2024
+         Delta: 1 year
+
+. 
+. * Install xtmispanel from SSC (run once)
+. cap ssc install xtmispanel, replace
+
+. 
+. *----------------------------------------------------------------
+. * 🔹 Module 1: Detection — missingness by variable, state, and fiscal year
+. *----------------------------------------------------------------
+. 
+. /* The detect module generates three simultaneous tables:
+>    (1) Variable-level: count, percent, and pattern of missing values
+>    (2) Panel-unit: which states have the highest missingness rates
+>    (3) Time-period: whether missingness clusters in specific fiscal years
+>    Unlike mdesc or misstable, xtmispanel never conflates cross-sectional
+>    and temporal sources of missingness. */
+. 
+. xtmispanel NetTuition Appropriations, detect
+
+------------------------------------------------------------------------------
+xtmispanel         Missing Data Diagnostics for Panel Data        v1.0.0
+------------------------------------------------------------------------------
+Panel variable: state_fips             Time variable: FY
+Panels: 50                             Time periods: 45
+------------------------------------------------------------------------------
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║  TABLE 1: Missing Data Summary by Variable                              ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+  --------------------------------------------------------------------------
+  Variable           N_Total    N_Miss    %Miss     Mean      SD       Status
+  --------------------------------------------------------------------------
+  NetTuitionandF~e     2,250         0      0.0%   7.1e+08    9.7e+08  ✓ Complete
+  Appropriations       2,250     1,050     46.7%   1.6e+09    2.0e+09  ■ High
+  --------------------------------------------------------------------------
+  Overall              4,500     1,050     23.3%
+  --------------------------------------------------------------------------
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║  TABLE 2: Missing Data Summary by Panel                                 ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+  --------------------------------------------------------------------------
+  Panel          N_Obs     N_Miss    %Miss     Gaps    Max_Gap     Status
+  --------------------------------------------------------------------------
+  1                  90        21     23.3%       0        0       Moderate
+  2                  90        21     23.3%       0        0       Moderate
+  4                  90        21     23.3%       0        0       Moderate
+  5                  90        21     23.3%       0        0       Moderate
+  6                  90        21     23.3%       0        0       Moderate
+  8                  90        21     23.3%       0        0       Moderate
+  9                  90        21     23.3%       0        0       Moderate
+  10                 90        21     23.3%       0        0       Moderate
+  12                 90        21     23.3%       0        0       Moderate
+  13                 90        21     23.3%       0        0       Moderate
+  15                 90        21     23.3%       0        0       Moderate
+  16                 90        21     23.3%       0        0       Moderate
+  17                 90        21     23.3%       0        0       Moderate
+  18                 90        21     23.3%       0        0       Moderate
+  19                 90        21     23.3%       0        0       Moderate
+  20                 90        21     23.3%       0        0       Moderate
+  21                 90        21     23.3%       0        0       Moderate
+  22                 90        21     23.3%       0        0       Moderate
+  23                 90        21     23.3%       0        0       Moderate
+  24                 90        21     23.3%       0        0       Moderate
+  25                 90        21     23.3%       0        0       Moderate
+  26                 90        21     23.3%       0        0       Moderate
+  27                 90        21     23.3%       0        0       Moderate
+  28                 90        21     23.3%       0        0       Moderate
+  29                 90        21     23.3%       0        0       Moderate
+  30                 90        21     23.3%       0        0       Moderate
+  31                 90        21     23.3%       0        0       Moderate
+  32                 90        21     23.3%       0        0       Moderate
+  33                 90        21     23.3%       0        0       Moderate
+  34                 90        21     23.3%       0        0       Moderate
+  35                 90        21     23.3%       0        0       Moderate
+  36                 90        21     23.3%       0        0       Moderate
+  37                 90        21     23.3%       0        0       Moderate
+  38                 90        21     23.3%       0        0       Moderate
+  39                 90        21     23.3%       0        0       Moderate
+  40                 90        21     23.3%       0        0       Moderate
+  41                 90        21     23.3%       0        0       Moderate
+  42                 90        21     23.3%       0        0       Moderate
+  44                 90        21     23.3%       0        0       Moderate
+  45                 90        21     23.3%       0        0       Moderate
+  46                 90        21     23.3%       0        0       Moderate
+  47                 90        21     23.3%       0        0       Moderate
+  48                 90        21     23.3%       0        0       Moderate
+  49                 90        21     23.3%       0        0       Moderate
+  50                 90        21     23.3%       0        0       Moderate
+  51                 90        21     23.3%       0        0       Moderate
+  53                 90        21     23.3%       0        0       Moderate
+  54                 90        21     23.3%       0        0       Moderate
+  55                 90        21     23.3%       0        0       Moderate
+  56                 90        21     23.3%       0        0       Moderate
+  --------------------------------------------------------------------------
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║  TABLE 3: Missing Data Summary by Time Period                           ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+  --------------------------------------------------
+  Period         N_Miss      %Missing     Bar
+  --------------------------------------------------
+  1980               50       50.0%       █████████████████
+  1981               50       50.0%       █████████████████
+  1982               50       50.0%       █████████████████
+  1983               50       50.0%       █████████████████
+  1984               50       50.0%       █████████████████
+  1985               50       50.0%       █████████████████
+  1986               50       50.0%       █████████████████
+  1987               50       50.0%       █████████████████
+  1988               50       50.0%       █████████████████
+  1989               50       50.0%       █████████████████
+  1990               50       50.0%       █████████████████
+  1991               50       50.0%       █████████████████
+  1992               50       50.0%       █████████████████
+  1993               50       50.0%       █████████████████
+  1994               50       50.0%       █████████████████
+  1995               50       50.0%       █████████████████
+  1996               50       50.0%       █████████████████
+  1997               50       50.0%       █████████████████
+  1998               50       50.0%       █████████████████
+  1999               50       50.0%       █████████████████
+  2000               50       50.0%       █████████████████
+  2001                0        0.0%       
+  2002                0        0.0%       
+  2003                0        0.0%       
+  2004                0        0.0%       
+  2005                0        0.0%       
+  2006                0        0.0%       
+  2007                0        0.0%       
+  2008                0        0.0%       
+  2009                0        0.0%       
+  2010                0        0.0%       
+  2011                0        0.0%       
+  2012                0        0.0%       
+  2013                0        0.0%       
+  2014                0        0.0%       
+  2015                0        0.0%       
+  2016                0        0.0%       
+  2017                0        0.0%       
+  2018                0        0.0%       
+  2019                0        0.0%       
+  2020                0        0.0%       
+  2021                0        0.0%       
+  2022                0        0.0%       
+  2023                0        0.0%       
+  2024                0        0.0%       
+  --------------------------------------------------
+
+  --------------------------------------------------------------------------
+  TABLE 4: Missing Data Pattern (Variable Co-occurrence)
+  --------------------------------------------------------------------------
+
+  Pattern  NetT~e  Appr~s    N
+  --------------------------------------------------------------------------
+  #1         .    X                                           1,050
+  #2         .    .                                           1,200
+  --------------------------------------------------------------------------
+  Legend: . = observed  X = missing
+
+
+xtmispanel completed successfully.
+
+
+. 
+. *----------------------------------------------------------------
+. * 🔹 Module 2: Mechanism test (panel-aware MCAR test with stored results)
+. *----------------------------------------------------------------
+. 
+. /* The test module runs Little's MCAR test in a panel-aware manner and stores
+>    the diagnosed mechanism in r(mechanism), the chi-squared statistic in
+>    r(mcar_chi2), and the p-value in r(mcar_pval). */
+. 
+. xtmispanel NetTuition Appropriations, test
+
+------------------------------------------------------------------------------
+xtmispanel         Missing Data Diagnostics for Panel Data        v1.0.0
+------------------------------------------------------------------------------
+Panel variable: state_fips             Time variable: FY
+Panels: 50                             Time periods: 45
+------------------------------------------------------------------------------
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║  MODULE 2: Missing Data Mechanism Tests                                 ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+  Test 1: Little's MCAR Test (Approximate)
+  ------------------------------------------------------------
+  H0: Data are Missing Completely At Random (MCAR)
+  H1: Data are NOT MCAR
+
+  Test could not be computed (insufficient variation).
+
+  Test 2: MAR Logistic Regression Test
+  ------------------------------------------------------------
+  For each variable, regress its missingness indicator
+  on all other observed variables.
+
+  ------------------------------------------------------------------
+  Variable       chi2        p-value     Pseudo-R²     Conclusion
+  ------------------------------------------------------------------
+  NetTuitionan~e   ---         ---         ---         No missing
+  Appropriations  848.63          .       0.2729       MCAR
+  ------------------------------------------------------------------
+
+  Test 3: Missingness Pattern Classification
+  ------------------------------------------------------------
+  Pattern type:  Arbitrary (Non-monotone)
+  → Missing values appear in irregular positions.
+  → MICE / chained equations recommended.
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║  OVERALL RECOMMENDATION                                                 ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+  ► Mechanism: Possibly MNAR
+  ► Advanced methods needed. Consider:
+    - Selection models (Heckman)
+    - Sensitivity analysis across multiple methods
+  ► Use: xtmispanel varname, sensitivity
+
+
+xtmispanel completed successfully.
+
+
+. 
+. di "Mechanism: " r(mechanism)
+Mechanism: .
+
+. di "MCAR chi2 = " r(mcar_chi2) " p = " r(mcar_pval)
+MCAR chi2 = . p = .
+
+. 
+. *----------------------------------------------------------------
+. * 🔹 Module 5: Visualization — missingness heatmap and dashboard
+. *----------------------------------------------------------------
+. 
+. /* The graph module produces up to eight named graphs.
+>    Key outputs displayed here:
+>      xtmis_heatmap  — panel unit (y-axis) × time period (x-axis) grid,
+>                       cells shaded by proportion of variables missing
+>      xtmis_combined — dashboard assembling heatmap + bar charts by
+>                       variable, panel unit, and time period
+>    The heatmap makes it immediately apparent whether missingness is random,
+>    clustered in specific years, or confined to particular states. */
+. 
+. xtmispanel NetTuition Appropriations, graph
+
+------------------------------------------------------------------------------
+xtmispanel         Missing Data Diagnostics for Panel Data        v1.0.0
+------------------------------------------------------------------------------
+Panel variable: state_fips             Time variable: FY
+Panels: 50                             Time periods: 45
+------------------------------------------------------------------------------
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║  VISUALIZATION MODULE: Generating Diagnostic Graphs                     ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+  [1/8] Generating missing data heatmap...
+    ✓ xtmis_heatmap stored
+  [2/8] Generating per-variable missing bar chart...
+    ✓ xtmis_barvar stored
+  [3/8] Generating per-panel missing bar chart...
+    ✓ xtmis_barpanel stored
+  [4/8] Generating per-time-period missing chart...
+    ✓ xtmis_bartime stored
+  [5/8] Generating missingness pattern plot...
+    ✓ xtmis_pattern stored
+  [6/8] Generating density overlay...
+    Density plot skipped (no missing data in NetTuitionandFeeRevenue)
+  [7/8] Generating panel timeline scatter...
+    ✓ xtmis_timeline stored
+  [8/8] Generating combined diagnostic dashboard...
+    ✓ xtmis_combined stored
+
+  ------------------------------------------------------------
+  Graphs generated:
+    ✓ xtmis_heatmap   — Missing data heatmap
+    ✓ xtmis_barvar    — % missing per variable
+    ✓ xtmis_barpanel  — % missing per panel
+    ✓ xtmis_bartime   — % missing over time
+    ✓ xtmis_pattern   — Missingness patterns
+    ✓ xtmis_timeline  — Panel timeline scatter
+    ✓ xtmis_combined  — Diagnostic dashboard
+
+  To view:  graph display xtmis_heatmap
+  To export: graph export xtmis_heatmap.png, name(xtmis_heatmap) replace width(1200)
+  ------------------------------------------------------------
+
+
+xtmispanel completed successfully.
+
+
+. 
+. graph display xtmis_heatmap
+
+. graph display xtmis_combined
+
+. 
+. * Export all xtmispanel graphs to the graphs output directory
+. * width(1200) produces 1200-pixel-wide PNGs suitable for publication
+. foreach gname in heatmap barvar barpanel bartime pattern timeline combined {
+  2.     capture graph export "output/graphs/xtmis_`gname'.png", ///
+>         name(xtmis_`gname') replace width(1200)
+  3. }
+
+. 
+. *===============================================================================
+. * END OF CHAPTER 5 CODE
+. *===============================================================================
+. 
+. /*
+> KEY RECOMMENDATIONS FOR GETTING TO KNOW THY DATA:
+> 
+> 1. STORAGE TYPES AND MEMORY:
+>    - Always run compress after importing data to reduce memory consumption
+>    - Use describe before and after compress to verify changes
+>    - Use recast int varname if compress stops at byte but int is needed
+>    - Run describe, short for very large datasets (e.g., HSLS:09)
+> 
+> 2. MISSING DATA CODING IN SECONDARY DATA:
+>    - Use codebook to identify how missings are coded in NCES datasets (-9, -8, etc.)
+>    - Use mvdecode _all, mv(-9=.) to convert special codes to Stata system missing
+>    - Never assume missings are already coded as "." when importing from NCES
+> 
+> 3. MISSING DATA ANALYSIS TOOLS — CROSS-SECTIONAL / SURVEY DATA:
+>    - mdesc: simplest summary — count, total, and percent missing per variable
+>    - misstable tree: nested pattern of missingness (percent or frequency)
+>    - misstable patterns: cross-tabulated missing-value patterns across variables
+>    - missings (with bysort): examine missingness patterns within subgroups
+>    - Install: cap ssc install mdesc; net install dm0085_1.pkg
+> 
+> 4. MISSING DATA ANALYSIS TOOLS — PANEL DATA:
+>    - xtmis (legacy): frequency of missing by panel unit; install: ssc install xtmis
+>    - xtmispanel (current, Roudane 2026): comprehensive detection + testing +
+>      visualization in a single panel-aware command
+>      Recommended workflow:
+>        Step 1  xtmispanel varlist, detect    (who/when is missing)
+>        Step 2  xtmispanel varlist, test      (what mechanism: MCAR/MAR/MNAR)
+>        Step 3  xtmispanel varlist, graph     (visualize spatial/temporal pattern)
+>    - Imputation (Modules 3-4) is deferred to later chapters on panel estimation
+>    - Install: cap ssc install xtmispanel, replace
+> 
+> 5. MCAR TESTING:
+>    - Use mcartest (Li 2013) for cross-sectional / survey data
+>      Install: net install st0318.pkg, replace
+>      Options: equal variances (default), unequal, CDM with covariates
+>    - Use xtmispanel, test for panel data (panel-aware MCAR test)
+>    - Stored results: r(mechanism), r(mcar_chi2), r(mcar_pval) enable
+>      conditional branching (e.g., trigger MI if mechanism is MAR or MNAR)
+> 
+> 6. PANEL STRUCTURE BEST PRACTICES:
+>    - Always re-run xtset after loading or merging panel data
+>    - Use state_fips (not stateid) as the panel variable for state-level data
+>      to enable merges with other FIPS-coded files
+>    - Check balance: xtdescribe after xtset
+>    - Strongly balanced panels require no gaps in the time variable
+> 
+> 7. DATA SOURCES IN THIS CHAPTER:
+>    - SHEEO SHEF data: https://shef.sheeo.org/data-downloads/
+>    - HSLS:09 public-use file: https://nces.ed.gov/datalab/onlinecodebook
+>    - All example datasets: https://github.com/higher-ed-policy-analysis-2nd-edition/data/main/ch
+> 5/
+> 
+> 8. USER-WRITTEN PACKAGES USED IN THIS CHAPTER:
+>    - statastates  (Schpero 2018):  ssc install statastates
+>    - mdesc        (Medeiros & Blanchette 2011): ssc install mdesc
+>    - missings     (Cox 2015):      net install dm0085_1.pkg, replace
+>    - xtmis        (Nguyen 2008):   ssc install xtmis  [+ ssc install tomata]
+>    - mcartest     (Li 2013):       net install st0318.pkg, replace
+>    - xtmispanel   (Roudane 2026):  ssc install xtmispanel [released March 2026]
+> */
+. 
+. * Close log
+. log close
+      name:  <unnamed>
+       log:  C:\Users\marvi\Dropbox\Book\2nd Edition\Chapter 5\Ouput\logs\output/logs/Chapter5_out
+> put.log
+  log type:  text
+ closed on:  27 Mar 2026, 15:46:37
+--------------------------------------------------------------------------------------------------
