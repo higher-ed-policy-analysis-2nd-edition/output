@@ -1,42 +1,24 @@
 Chapter 4 R log
-Opened:  2026-03-27 20:31:57 
+Log file: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 4/Output/logs/Chapter4_R_output.log 
+Opened:  2026-03-27 20:40:34 
 ------------------------------------------------------------ 
-── Attaching core tidyverse packages ────────────────────────────────────────────────────────────────────────────── tidyverse 2.0.0 ──
-✔ lubridate 1.9.4     ✔ readr     2.1.5
-✔ purrr     1.0.4     ✔ tibble    3.2.1
-── Conflicts ──────────────────────────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
-✖ plm::between()      masks dplyr::between()
-✖ readr::col_factor() masks scales::col_factor()
-✖ purrr::discard()    masks scales::discard()
-✖ mice::filter()      masks dplyr::filter(), stats::filter()
-✖ plm::lag()          masks dplyr::lag(), stats::lag()
-✖ plm::lead()         masks dplyr::lead()
-ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
-Warning messages:
-1: package ‘tidyverse’ was built under R version 4.4.3 
-2: package ‘tibble’ was built under R version 4.4.3 
-3: package ‘readr’ was built under R version 4.4.3 
-4: package ‘purrr’ was built under R version 4.4.3 
-5: package ‘lubridate’ was built under R version 4.4.3 
-Warning message:
-package ‘writexl’ was built under R version 4.4.3 
-G3;
-=== Section 4.2.1: Primary Data ===
-gG3;Example 4.2.1 - Manually created dataset:
-g  variable_x variable_y variable_z
+
+=== Section 4.2.1: Primary Data === 
+Example 4.2.1 - Manually created dataset: 
+  variable_x variable_y variable_z
 1         31         57         18
 2         25         68         12
 3         35         60         13
 4         38         59         17
 5         30         59         15
-G3;
-=== Section 4.2.2: Cross-Sectional Dataset ===
-gtrying URL 'https://raw.githubusercontent.com/higher-ed-policy-analysis-2nd-edition/data/main/ch4/tabn302_50.xlsx'
+
+=== Section 4.2.2: Cross-Sectional Dataset === 
+trying URL 'https://raw.githubusercontent.com/higher-ed-policy-analysis-2nd-edition/data/main/ch4/tabn302_50.xlsx'
 Content type 'application/octet-stream' length 24890 bytes (24 KB)
 downloaded 24 KB
 
-G3;Structure of Table 302.50 data:
-gtibble [51 × 9] (S3: tbl_df/tbl/data.frame)
+Structure of Table 302.50 data: 
+tibble [51 × 9] (S3: tbl_df/tbl/data.frame)
  $ stateid  : num [1:51] 1 2 3 4 5 6 7 8 9 10 ...
  $ State    : chr [1:51] "Alabama" "Alaska" "Arizona" "Arkansas" ...
  $ Total    : num [1:51] 50164 8189 66218 30019 451364 ...
@@ -46,9 +28,9 @@ downloaded 24 KB
  $ homestate: num [1:51] 26567 2413 31132 18244 231215 ...
  $ anyrate  : num [1:51] 59 46 53 67 58 59 71 65 43 63 ...
  $ homerate : num [1:51] 53 29 47 61 51 44 39 46 8 55 ...
-G3;Cross-sectional dataset created: rows=51 cols=11
-gG3;Final structure:
-gtibble [51 × 11] (S3: tbl_df/tbl/data.frame)
+Cross-sectional dataset created: rows= 51  cols= 11 
+Final structure: 
+tibble [51 × 11] (S3: tbl_df/tbl/data.frame)
  $ state_abbrev: chr [1:51] "AL" "AK" "AZ" "AR" ...
   ..- attr(*, "label")= chr "State abbreviation"
  $ state_fips  : int [1:51] 1 2 4 5 6 8 9 10 11 12 ...
@@ -62,44 +44,44 @@ downloaded 24 KB
  $ homestate   : int [1:51] 26567 2413 31132 18244 231215 23268 17396 4632 450 94985 ...
  $ anyrate     : int [1:51] 59 46 53 67 58 59 71 65 43 63 ...
  $ homerate    : int [1:51] 53 29 47 61 51 44 39 46 8 55 ...
-G3;
-=== Section 4.2.2: Time-Series Dataset ===
-gtrying URL 'https://raw.githubusercontent.com/higher-ed-policy-analysis-2nd-edition/data/main/ch4/tabn302_10.xlsx'
+
+=== Section 4.2.2: Time-Series Dataset === 
+trying URL 'https://raw.githubusercontent.com/higher-ed-policy-analysis-2nd-edition/data/main/ch4/tabn302_10.xlsx'
 Content type 'application/octet-stream' length 39261 bytes (38 KB)
 downloaded 38 KB
 
-G3;Time-series dataset created: rows=56 cols=2
-gG3;Year range: 1960 to 2015
-gG3;
-=== Section 4.2.2: Panel Dataset ===
-gtrying URL 'https://raw.githubusercontent.com/higher-ed-policy-analysis-2nd-edition/data/main/ch4/tabn304_70.xlsx'
+Time-series dataset created: rows= 56  cols= 2 
+Year range: 1960 to 2015 
+
+=== Section 4.2.2: Panel Dataset === 
+trying URL 'https://raw.githubusercontent.com/higher-ed-policy-analysis-2nd-edition/data/main/ch4/tabn304_70.xlsx'
 Content type 'application/octet-stream' length 28840 bytes (28 KB)
 downloaded 28 KB
 
-G3;Available sheets: Digest 2018 Table 304.70, HSGrad
-gG3;Sheet 'HSGrad' - wide format: rows=51 cols=8
-gG3;Data in long format (from 'HSGrad' sheet): rows=306 cols=4
-gG3;
-Panel data structure (HSGrad sheet):
-gG3;Number of unique units (states): 51
-gG3;Time periods: 6
-gG3;Balanced panel: TRUE
-gG3;
-=== Section 4.2.2: Merging Multiple Variables ===
-gG3;Note: Using data from 'HSGrad' sheet for high school graduates
-gG3;Using same data structure for both enrollment and HS graduates
-gG3;
-Merging multiple datasets...
-gG3;Single sheet contains all data - no separate merge needed
-gG3;
-Complete panel data structure:
-gG3;Number of unique units (states): 51
-gG3;Time periods: 6
-gG3;Total observations: 306
-gG3;Balanced panel: TRUE
-gG3;
-First 10 observations of merged dataset:
-g# A tibble: 10 × 4
+Available sheets:  Digest 2018 Table 304.70, HSGrad 
+Sheet 'HSGrad' - wide format: rows=51 cols=8
+Data in long format (from 'HSGrad' sheet): rows=306 cols=4
+
+Panel data structure ( HSGrad  sheet): 
+Number of unique units (states):  51 
+Time periods:  6 
+Balanced panel:  TRUE 
+
+=== Section 4.2.2: Merging Multiple Variables === 
+Note: Using data from ' HSGrad ' sheet for high school graduates 
+Using same data structure for both enrollment and HS graduates 
+
+Merging multiple datasets... 
+Single sheet contains all data - no separate merge needed 
+
+Complete panel data structure: 
+Number of unique units (states):  51 
+Time periods:  6 
+Total observations:  306 
+Balanced panel:  TRUE 
+
+First 10 observations of merged dataset: 
+# A tibble: 10 × 4
       id State    year HSGrad
    <int> <chr>   <int>  <int>
  1     1 Alabama  2000 201389
@@ -112,23 +94,23 @@ First 10 observations of merged dataset:
  8     2 Alaska   2010  31925
  9     2 Alaska   2012  30018
 10     2 Alaska   2015  28818
-G3;
-=== Chapter 4 Processing Complete ===
-gG3;
-Key objects created:
-gG3;- example_4_2_1: Manually created dataset (Example 4.2.1)
-gG3;- tab302_50: Cross-sectional HS graduates data (Table 302.50)
-gG3;- tab302_10: Time-series enrollment percentages (Table 302.10)
-gG3;- tab304_70_wide: Undergraduate enrollment, wide format
-gG3;- tab304_70_long: Undergraduate enrollment, long format
-gG3;- pdata_ugrad: Panel data frame for undergraduate enrollment
-gG3;- tab304_70_hsgrad_long: High school graduates, long format
-gG3;- complete_panel: Merged panel dataset
-gG3;- pdata_complete: Panel data frame for complete merged data
-gG3;
-Note: All datasets referenced in this code are available at:
-gG3;https://github.com/higher-ed-policy-analysis-2nd-edition/data/tree/main/ch4
-gG3;
-For detailed documentation, see the README.md file in the code repository.
-g
-Chapter 4 log closed: 2026-03-27 20:32:00 
+
+=== Chapter 4 Processing Complete === 
+
+Key objects created: 
+- example_4_2_1: Manually created dataset (Example 4.2.1) 
+- tab302_50: Cross-sectional HS graduates data (Table 302.50) 
+- tab302_10: Time-series enrollment percentages (Table 302.10) 
+- tab304_70_wide: Undergraduate enrollment, wide format 
+- tab304_70_long: Undergraduate enrollment, long format 
+- pdata_ugrad: Panel data frame for undergraduate enrollment 
+- tab304_70_hsgrad_long: High school graduates, long format 
+- complete_panel: Merged panel dataset 
+- pdata_complete: Panel data frame for complete merged data 
+
+Note: All datasets referenced in this code are available at: 
+https://github.com/higher-ed-policy-analysis-2nd-edition/data/tree/main/ch4 
+
+For detailed documentation, see the README.md file in the code repository. 
+
+Chapter 4 log closed: 2026-03-27 20:40:35 
