@@ -1,20 +1,19 @@
---------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
       name:  <unnamed>
        log:  C:\Users\marvi\Dropbox\Book\2nd Edition\Chapter 11\Output/logs/Chapter11_Stata_output.log
   log type:  text
- opened on:  12 Apr 2026, 17:20:59
+ opened on:  25 Apr 2026, 15:10:09
 
 . di "Log file: " c(pwd) "/Output/logs/Chapter11_Stata_output.log"
 Log file: C:\Users\marvi\Dropbox\Book\2nd Edition\Chapter 11/Output/logs/Chapter11_Stata_output.log
 
 . di "Chapter 11 log opened: " c(current_date) " " c(current_time)
-Chapter 11 log opened: 12 Apr 2026 17:20:59
+Chapter 11 log opened: 25 Apr 2026 15:10:09
 
 . 
 . * ── Global macros ───────────────────────────────────────────────────────────
 . * Individual-level controls (same set as Chapter 10 for consistency)
-. global X_controls "female black hispanic asian age_ba firstgen parent_income_q parent_grad ugpa stem_m
-> ajor bus_major ed_major selective_inst public_ug state_unemp metro"
+. global X_controls "female black hispanic asian age_ba firstgen parent_income_q parent_grad ugpa stem_major bus_major ed_major selective_inst public_ug state_unemp metro"
 
 . global X "$X_controls"
 
@@ -64,13 +63,11 @@ Chapter 11 log opened: 12 Apr 2026 17:20:59
 . 
 . * ── Attempt to load from repository; generate synthetically if unavailable ──
 . capture copy ///
->     "https://raw.githubusercontent.com/higher-ed-policy-analysis-2nd-edition/data/main/ch11/Example_11
-> _1.dta" ///
+>     "https://raw.githubusercontent.com/higher-ed-policy-analysis-2nd-edition/data/main/ch11/Example_11_1.dta" ///
 >     "Example_11_1.dta", replace
 
 . if _rc != 0 {
 .     di as text "Remote data not found. Generating synthetic dataset."
-Remote data not found. Generating synthetic dataset.
 . }
 
 . 
@@ -297,7 +294,6 @@ Number of observations (_N) was 0, now 8,000.
 . 
 . * ── Save synthetic dataset ──────────────────────────────────────────────────
 . save "Example_11_1.dta", replace
-(file Example_11_1.dta not found)
 file Example_11_1.dta saved
 
 . di as text "Synthetic dataset saved as Example_11_1.dta"
@@ -729,6 +725,25 @@ c.masters#c.phat3 |   7.581594   6.796352     1.12   0.265    -5.741033    20.90
 . estimates store mte_cubic
 
 . 
+. * ── Joint significance test for MTE polynomial coefficients ─────────────────
+. * Individual coefficients are often imprecise due to multicollinearity among
+. * polynomial terms. The joint F-test is the appropriate assessment of whether
+. * the MTE curve is identified — i.e., whether treatment effect heterogeneity
+. * exists across the distribution of unobserved resistance to treatment.
+. test masters c.masters#c.phat c.masters#c.phat2 c.masters#c.phat3
+
+ ( 1)  masters = 0
+ ( 2)  c.masters#c.phat = 0
+ ( 3)  c.masters#c.phat2 = 0
+ ( 4)  c.masters#c.phat3 = 0
+
+       F(  4,  7976) =  103.60
+            Prob > F =    0.0000
+
+. di as text "Joint F-test p-value: " %6.4f r(p)
+Joint F-test p-value: 0.0000
+
+. 
 . * ── Store polynomial coefficients ───────────────────────────────────────────
 . local b0 = _b[masters]                      // MTE at u = 0
 
@@ -842,6 +857,62 @@ Treatment parameter hierarchy (this dataset): ATU > ATT > ATE = 0.4948 > 0.4054 
     Variable |        Obs        Mean    Std. dev.       Min        Max
 -------------+---------------------------------------------------------
  displaced_E |      8,000    .0206964    .1105844          0   .8521207
+
+. 
+. * ── Marginal Policy-Relevant Treatment Effect (MPRTE) ────────────────────────
+. * MPRTE = E[MTE(U) | margin shifted by the $100k cap]
+. *       = displacement-weighted average of individual MTEs.
+. * Each student is weighted by their share of total expected displacement.
+. * Restricted to completers (displaced_E = 0 for non-completers by construction).
+. *
+. * Interpretation:
+. *   MPRTE > 0  → cap displaces high-return students (efficiency loss)
+. *   MPRTE ≈ 0  → cap displaces marginal students (efficiency neutral)
+. *   MPRTE < 0  → cap displaces low-return students (efficiency gain)
+. *
+. * Note on Stata syntax: gen ... sum() returns a *running* (cumulative) sum,
+. * not a total. We use a scalar from summarize r(sum) to compute proper
+. * normalized weights that sum to 1.
+. qui sum displaced_E if masters == 1
+
+. scalar total_disp = r(sum)
+
+. gen mprte_weight = displaced_E / total_disp if masters == 1
+(4,910 missing values generated)
+
+. gen mprte_i      = mte_hat * mprte_weight   if masters == 1
+(4,910 missing values generated)
+
+. qui sum mprte_i  if masters == 1
+
+. scalar mprte = r(sum)
+
+. 
+. di _n "--- Treatment Parameter Hierarchy (Point Estimates) ---"
+
+--- Treatment Parameter Hierarchy (Point Estimates) ---
+
+. di "ATE   (population average):           " %6.4f `ate'
+ATE   (population average):           0.2393
+
+. di "ATT   (E[MTE | D=1], completers):     " %6.4f `att'
+ATT   (E[MTE | D=1], completers):     0.4054
+
+. di "ATU   (E[MTE | D=0], non-completers): " %6.4f `atu'
+ATU   (E[MTE | D=0], non-completers): 0.4948
+
+. di "MPRTE (cap-displaced margin):         " %6.4f mprte
+MPRTE (cap-displaced margin):         0.4594
+
+. di _n "MPRTE compares the average return on the policy margin to the" 
+
+MPRTE compares the average return on the policy margin to the
+
+. di    "population-wide ATE. If MPRTE < ATT, the cap is removing students"
+population-wide ATE. If MPRTE < ATT, the cap is removing students
+
+. di    "with below-average returns among completers (efficiency-improving)."
+with below-average returns among completers (efficiency-improving).
 
 . 
 . * ── Present value factor ─────────────────────────────────────────────────────
@@ -1117,7 +1188,7 @@ Coefficient positions — b0: 1, b1: 2, b2: 3, b3: 4
 >     cross_sub_loss_s           ///  Cross-subsidy disruption ($000s)
 >     nb_extended_s              ///  Extended NB including institutional costs ($000s)
 >     using `sim_results', replace
-(file C:\Users\marvi\AppData\Local\Temp\ST_49c_000001.tmp not found)
+(file C:\Users\marvi\AppData\Local\Temp\ST_27f8_000001.tmp not found)
 
 . 
 . * ── Simulation loop ──────────────────────────────────────────────────────────
@@ -2108,5 +2179,5 @@ Output files:
       name:  <unnamed>
        log:  C:\Users\marvi\Dropbox\Book\2nd Edition\Chapter 11\Output/logs/Chapter11_Stata_output.log
   log type:  text
- closed on:  12 Apr 2026, 17:21:13
---------------------------------------------------------------------------------------------------------
+ closed on:  25 Apr 2026, 15:10:25
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
