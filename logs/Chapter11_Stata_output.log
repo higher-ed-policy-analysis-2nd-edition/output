@@ -1,19 +1,22 @@
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------
       name:  <unnamed>
-       log:  C:\Users\marvi\Dropbox\Book\2nd Edition\Chapter 11\Output/logs/Chapter11_Stata_output.log
+       log:  C:\Users\marvi\Dropbox\Book\2nd Edition\Chapter 11\Output/logs/Chapter11_Stata_output
+> .log
   log type:  text
- opened on:  25 Apr 2026, 15:10:09
+ opened on:  25 Apr 2026, 18:11:17
 
 . di "Log file: " c(pwd) "/Output/logs/Chapter11_Stata_output.log"
-Log file: C:\Users\marvi\Dropbox\Book\2nd Edition\Chapter 11/Output/logs/Chapter11_Stata_output.log
+Log file: C:\Users\marvi\Dropbox\Book\2nd Edition\Chapter 11/Output/logs/Chapter11_Stata_output.lo
+> g
 
 . di "Chapter 11 log opened: " c(current_date) " " c(current_time)
-Chapter 11 log opened: 25 Apr 2026 15:10:09
+Chapter 11 log opened: 25 Apr 2026 18:11:17
 
 . 
 . * ── Global macros ───────────────────────────────────────────────────────────
 . * Individual-level controls (same set as Chapter 10 for consistency)
-. global X_controls "female black hispanic asian age_ba firstgen parent_income_q parent_grad ugpa stem_major bus_major ed_major selective_inst public_ug state_unemp metro"
+. global X_controls "female black hispanic asian age_ba firstgen parent_income_q parent_grad ugpa 
+> stem_major bus_major ed_major selective_inst public_ug state_unemp metro"
 
 . global X "$X_controls"
 
@@ -63,7 +66,8 @@ Chapter 11 log opened: 25 Apr 2026 15:10:09
 . 
 . * ── Attempt to load from repository; generate synthetically if unavailable ──
 . capture copy ///
->     "https://raw.githubusercontent.com/higher-ed-policy-analysis-2nd-edition/data/main/ch11/Example_11_1.dta" ///
+>     "https://raw.githubusercontent.com/higher-ed-policy-analysis-2nd-edition/data/main/ch11/Exam
+> ple_11_1.dta" ///
 >     "Example_11_1.dta", replace
 
 . if _rc != 0 {
@@ -1176,7 +1180,7 @@ Coefficient positions — b0: 1, b1: 2, b2: 3, b3: 4
 . postfile sim_handle ///
 >     draw          ///
 >     b0_s b1_s b2_s b3_s        ///  Posterior draws on MTE polynomial
->     ate_s att_s atu_s          ///  Treatment parameters per draw
+>     ate_s att_s atu_s mprte_s  ///  Treatment parameters per draw (incl. MPRTE)
 >     fiscal_s                   ///  Fiscal savings ($000s)
 >     behav_cost_s               ///  Behavioral cost ($000s)
 >     effic_gain_s               ///  Efficiency gain from low-return exit ($000s)
@@ -1247,62 +1251,69 @@ Running 1000 posterior draws...
  14.         sum mte_s if masters == 0
  15.         local atu_s = r(mean)
  16. 
+.         * MPRTE: displacement-weighted average of draw-specific MTE.
+.         * Reuses total_disp scalar from Section 6 (constant across draws since
+.         * displaced_E is a function of loan_overage, not the MTE polynomial).
+.         gen mprte_i_s = displaced_E * mte_s / total_disp if masters == 1
+ 17.         sum mprte_i_s if masters == 1
+ 18.         local mprte_s = r(sum)
+ 19. 
 .         * Fiscal savings (uses draw-specific subsidy rate)
 .         gen fs_i_s = loan_overage * `sub_rate_s' * above_cap
- 17.         sum fs_i_s
- 18.         local fiscal_s = r(sum)
- 19. 
+ 20.         sum fs_i_s
+ 21.         local fiscal_s = r(sum)
+ 22. 
 .         * Behavioral cost: human capital loss for displaced high-return students
 .         gen bc_i_s = displaced_E * max(0, mte_s) * (`base_sal_s'/1000) * `pv_factor'
- 20.         sum bc_i_s if masters == 1
- 21.         local behav_cost_s = r(sum)
- 22. 
+ 23.         sum bc_i_s if masters == 1
+ 24.         local behav_cost_s = r(sum)
+ 25. 
 .         * Efficiency gain: removing low-return constrained students
 .         gen eg_i_s = displaced_E * max(0, -mte_s) * (`base_sal_s'/1000) * `pv_factor'
- 23.         sum eg_i_s if masters == 1
- 24.         local effic_gain_s = r(sum)
- 25. 
+ 26.         sum eg_i_s if masters == 1
+ 27.         local effic_gain_s = r(sum)
+ 28. 
 .         * Net benefit
 .         local net_benefit_s = `fiscal_s' - `behav_cost_s' + `effic_gain_s'
- 26. 
+ 29. 
 .         * Per-displaced-student net benefit
 .         sum displaced_E if masters == 1
- 27.         local n_disp_s = max(1, r(sum))
- 28.         local nb_per_student_s = `net_benefit_s' / `n_disp_s'
- 29. 
+ 30.         local n_disp_s = max(1, r(sum))
+ 31.         local nb_per_student_s = `net_benefit_s' / `n_disp_s'
+ 32. 
 .         * Benefit-cost ratio
 .         local bcr_s = (`fiscal_s' + `effic_gain_s') / max(1, `behav_cost_s')
- 30. 
+ 33. 
 .         * Efficiency indicator
 .         local pnb_positive_s = (`net_benefit_s' > 0)
- 31. 
+ 34. 
 .         * Institutional revenue loss
 .         * Net tuition revenue forgone when displaced students leave.
 .         * Draw-specific tuition multiplier propagates pricing uncertainty.
 .         * Cross-subsidy disruption adds 20% for upstream undergraduate impact.
 .         gen ir_i_s = displaced_E * net_inst_rev * `tuition_mult_s'
- 32.         sum ir_i_s if masters == 1
- 33.         local inst_rev_loss_s = r(sum)
- 34.         local cross_sub_loss_s = 0.20 * `inst_rev_loss_s'
- 35.         local nb_extended_s = `net_benefit_s' - `inst_rev_loss_s' - `cross_sub_loss_s'
- 36. 
-.         drop mte_s fs_i_s bc_i_s eg_i_s ir_i_s
- 37.     }
- 38. 
+ 35.         sum ir_i_s if masters == 1
+ 36.         local inst_rev_loss_s = r(sum)
+ 37.         local cross_sub_loss_s = 0.20 * `inst_rev_loss_s'
+ 38.         local nb_extended_s = `net_benefit_s' - `inst_rev_loss_s' - `cross_sub_loss_s'
+ 39. 
+.         drop mte_s mprte_i_s fs_i_s bc_i_s eg_i_s ir_i_s
+ 40.     }
+ 41. 
 .     * ── Post results ──────────────────────────────────────────────────────────
 .     post sim_handle ///
 >         (`s') ///
 >         (`b0_s') (`b1_s') (`b2_s') (`b3_s') ///
->         (`ate_s') (`att_s') (`atu_s') ///
+>         (`ate_s') (`att_s') (`atu_s') (`mprte_s') ///
 >         (`fiscal_s') (`behav_cost_s') (`effic_gain_s') ///
 >         (`net_benefit_s') (`nb_per_student_s') (`bcr_s') (`pnb_positive_s') ///
 >         (`inst_rev_loss_s') (`cross_sub_loss_s') (`nb_extended_s')
- 39. 
+ 42. 
 .     * Progress indicator every 100 draws
 .     if mod(`s', 100) == 0 {
- 40.         di as text "  Draw `s' / $S_draws complete"
- 41.     }
- 42. }
+ 43.         di as text "  Draw `s' / $S_draws complete"
+ 44.     }
+ 45. }
   Draw 100 / 1000 complete
   Draw 200 / 1000 complete
   Draw 300 / 1000 complete
@@ -1391,7 +1402,7 @@ nb_extended_s:  mean =  -82050.34  95% CI: [ -99884.02,  -67639.10]
 
 P(Extended NB > 0, incl. institutional costs): 0.000
 
-. tabstat b0_s b1_s b2_s b3_s ate_s att_s atu_s, ///
+. tabstat b0_s b1_s b2_s b3_s ate_s att_s atu_s mprte_s, ///
 >     stats(mean sd) columns(statistics)
 
     Variable |      Mean        SD
@@ -1403,7 +1414,47 @@ P(Extended NB > 0, incl. institutional costs): 0.000
        ate_s |  .2436105  .1460513
        att_s |  .4057586  .0250335
        atu_s |  .4954646    .02762
+     mprte_s |  .4598788  .0248928
 ----------------------------------
+
+. 
+. * ── Treatment Parameter Posterior Summary (Table 11.5 inputs) ────────────────
+. * Posterior means and 95% credible intervals for ATE, ATT, MPRTE, ATU.
+. * These four numbers populate the Estimate column of Table 11.5 and provide
+. * the inferential basis for the MPRTE > ATT claim in the chapter narrative.
+. di _n "--- Treatment Parameter Posterior (log-salary units) ---"
+
+--- Treatment Parameter Posterior (log-salary units) ---
+
+. foreach var in ate_s att_s mprte_s atu_s {
+  2.     qui sum `var'
+  3.     local xm = r(mean)
+  4.     local xs = r(sd)
+  5.     _pctile `var', p(2.5 97.5)
+  6.     di "`var':  mean = " %6.4f `xm' ///
+>         "  sd = " %6.4f `xs' ///
+>         "  95% CI: [" %6.4f r(r1) ", " %6.4f r(r2) "]"
+  7. }
+ate_s:  mean = 0.2436  sd = 0.1461  95% CI: [-0.0362, 0.5371]
+att_s:  mean = 0.4058  sd = 0.0250  95% CI: [0.3553, 0.4536]
+mprte_s:  mean = 0.4599  sd = 0.0249  95% CI: [0.4115, 0.5089]
+atu_s:  mean = 0.4955  sd = 0.0276  95% CI: [0.4407, 0.5500]
+
+. 
+. * ── P(MPRTE > ATT) — formal inferential statement ────────────────────────────
+. * The chapter's central policy claim — that the cap pushes out students with
+. * above-average returns among completers — is true if MPRTE > ATT in the
+. * posterior. We compute this probability directly from the joint draws.
+. gen mprte_gt_att = (mprte_s > att_s)
+
+. qui sum mprte_gt_att
+
+. di _n "P(MPRTE > ATT | data): " %5.3f r(mean) ///
+>     "   (posterior probability cap binds high-return margin)"
+
+P(MPRTE > ATT | data): 1.000   (posterior probability cap binds high-return margin)
+
+. drop mprte_gt_att
 
 . 
 . * ── P(Net Benefit > 0) ───────────────────────────────────────────────────────
@@ -2177,7 +2228,8 @@ Output files:
 . 
 . log close
       name:  <unnamed>
-       log:  C:\Users\marvi\Dropbox\Book\2nd Edition\Chapter 11\Output/logs/Chapter11_Stata_output.log
+       log:  C:\Users\marvi\Dropbox\Book\2nd Edition\Chapter 11\Output/logs/Chapter11_Stata_output
+> .log
   log type:  text
- closed on:  25 Apr 2026, 15:10:25
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ closed on:  25 Apr 2026, 18:11:34
+--------------------------------------------------------------------------------------------------
