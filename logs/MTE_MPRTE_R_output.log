@@ -1,144 +1,3 @@
-Chapter 11 log opened: 2026-06-28 20:05:25 
-Graphs directory: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs 
-NOTE: optional packages not installed: fwildclusterboot 
-      Install for full feature parity (Heckman ML, wild cluster bootstrap):
-      install.packages(c( "fwildclusterboot" ))
-MTE/IV package check complete.
-
-==========================================================
- Section 11.1.3: Conditional Average Treatment Effects
-==========================================================
-CATE.R log opened: 2026-06-28 20:05:30 
-Log file: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/logs/CATE_output.log 
-
---- Strategy (a): Subgroup IV/2SLS ---
-
-  Subgroup 1 : Full sample (LATE) 
-    b = 0.4031  SE = 0.0489  N = 8000
-
-  Subgroup 2 : STEM majors 
-    b = 0.3522  SE = 0.1117  N = 1963
-
-  Subgroup 3 : Non-STEM majors 
-    b = 0.4216  SE = 0.0537  N = 6037
-
-  Subgroup 4 : Business majors 
-    b = 0.6333  SE = 0.1270  N = 1196
-
-  Subgroup 5 : First-generation 
-    b = 0.4064  SE = 0.0780  N = 2823
-
-  Subgroup 6 : Non-first-generation 
-    b = 0.4005  SE = 0.0627  N = 5177
-
-  Subgroup 7 : Low parental income 
-    b = 0.0613  SE = 0.2522  N = 326
-
-  Subgroup 8 : Higher parental income 
-    b = 0.4127  SE = 0.0500  N = 7674
-
-Subgroup CATE matrix:
-                   b     se    lo95   hi95    N
-Full_sample   0.4031 0.0489  0.3072 0.4991 8000
-STEM          0.3522 0.1117  0.1333 0.5711 1963
-Non_STEM      0.4216 0.0537  0.3164 0.5269 6037
-Business      0.6333 0.1270  0.3845 0.8822 1196
-First_gen     0.4064 0.0780  0.2535 0.5594 2823
-Non_first_gen 0.4005 0.0627  0.2776 0.5235 5177
-Low_income    0.0613 0.2522 -0.4329 0.5556  326
-Higher_income 0.4127 0.0500  0.3147 0.5106 7674
-
---- Strategy (b): Interaction IV ---
-
-t test of coefficients:
-
-                  Estimate Std. Error t value  Pr(>|t|)    
-(Intercept)      9.5293895  0.2116907 45.0156 < 2.2e-16 ***
-masters          0.4233079  0.0642199  6.5915 4.629e-11 ***
-D_x_stem_major  -0.0661223  0.1234443 -0.5356 0.5922194    
-D_x_lowinc      -0.0982804  0.1309737 -0.7504 0.4530462    
-D_x_firstgen     0.0017025  0.0859934  0.0198 0.9842053    
-female          -0.0705258  0.0173834 -4.0571 5.017e-05 ***
-black           -0.0548225  0.0284661 -1.9259 0.0541542 .  
-hispanic        -0.0789961  0.0267805 -2.9498 0.0031894 ** 
-asian            0.0711905  0.0324644  2.1929 0.0283451 *  
-age_ba           0.0205488  0.0069987  2.9361 0.0033331 ** 
-firstgen        -0.0280308  0.0375781 -0.7459 0.4557294    
-parent_income_q  0.0206521  0.0095632  2.1595 0.0308383 *  
-parent_grad      0.0275955  0.0204059  1.3523 0.1763089    
-ugpa             0.1379483  0.0447198  3.0847 0.0020444 ** 
-stem_major       0.2750824  0.0673126  4.0866 4.420e-05 ***
-bus_major        0.2023586  0.0259535  7.7970 7.142e-15 ***
-ed_major        -0.1168030  0.0327083 -3.5710 0.0003576 ***
-selective_inst   0.0705710  0.0189023  3.7335 0.0001902 ***
-public_ug        0.0218067  0.0179043  1.2180 0.2232766    
-state_unemp      0.0041134  0.0071143  0.5782 0.5631549    
-metro            0.1065616  0.0198695  5.3631 8.411e-08 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-
-Interaction IV -- key coefficients:
-  Base CATE (non-STEM, higher-income, non-firstgen):
-    b = 0.4233
-  STEM increment:       -0.0661
-  Low-income increment: -0.0983
-  First-gen increment:  0.0017
-
-Linear hypothesis test:
-D_x_stem_major = 0
-D_x_lowinc = 0
-D_x_firstgen = 0
-
-Model 1: restricted model
-Model 2: ln_salary ~ masters + D_x_stem_major + D_x_lowinc + D_x_firstgen + 
-    female + black + hispanic + asian + age_ba + firstgen + parent_income_q + 
-    parent_grad + ugpa + stem_major + bus_major + ed_major + 
-    selective_inst + public_ug + state_unemp + metro | ga_funding_adj + 
-    Z_x_stem_major + Z_x_lowinc + Z_x_firstgen + female + black + 
-    hispanic + asian + age_ba + firstgen + parent_income_q + 
-    parent_grad + ugpa + stem_major + bus_major + ed_major + 
-    selective_inst + public_ug + state_unemp + metro
-
-Note: Coefficient covariance matrix supplied.
-
-  Res.Df Df  Chisq Pr(>Chisq)
-1   7982                     
-2   7979  3 0.8653     0.8338
-
-Joint Wald test (all interactions = 0): chi2(3) =  0.865  p = 0.8338
-
-Implied CATEs (log-points):
-  Non-STEM, Higher-income: 0.4233
-  STEM, Higher-income:     0.3572
-  Non-STEM, Low-income:    0.3250
-  STEM, Low-income:        0.2589
-
---- Producing CATE forest plot ---
-  fig11_7_cate_forest exported.
-
---- Producing CATE interaction coefficient plot ---
-  fig11_8_cate_interact exported.
-
---- Producing CATE comparison table ---
-
-Table 11.2. OLS, LATE, and Conditional Average Treatment Effects
- Statistic       OLS   IV/LATE CATE: STEM CATE: First-gen CATE: Low-income
-         b 0.9633*** 0.4031***  0.3522***       0.4064***           0.0613
-        se  (0.0178)  (0.0489)   (0.1117)        (0.0780)         (0.2522)
-         N      8000      8000       1963            2823              326
- R-squared     0.318     0.224      0.246           0.235            0.164
-  tab11_2_cate_subgroup.rtf exported.
-
-==========================================================
- Section 11.1.3 (CATE.R) complete.
- Outputs:
-   C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_7_cate_forest.png 
-   C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_8_cate_interact.png 
-   C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/tables/tab11_2_cate_subgroup.rtf 
-==========================================================
-
-CATE.R log closed: 2026-06-28 20:05:36 
 MTE_MPRTE.R log opened: 2026-06-28 20:05:37 
 Log file: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/logs/MTE_MPRTE_R_output.log 
 
@@ -621,7 +480,15 @@ F-statistic: 20.09 on 17 and 3050 DF,  p-value: < 2.2e-16
 Heckman two-step: lambda = -0.5829  rho = -0.7800  sigma = 0.7473
 
 --- Heckman ML (full information) ---
---------------------------------------------
+G3;Loading required package: maxLik
+gG3;Loading required package: miscTools
+gG3;
+Please cite the 'maxLik' package as:
+Henningsen, Arne and Toomet, Ott (2011). maxLik: A package for maximum likelihood estimation in R. Computational Statistics 26(3), 443-458. DOI 10.1007/s00180-010-0217-1.
+
+If you have questions, suggestions, or comments regarding the 'maxLik' package, please use a forum or 'tracker' at maxLik's R-Forge site:
+https://r-forge.r-project.org/projects/maxlik/
+g--------------------------------------------
 Tobit 2 model (sample selection model)
 Maximum Likelihood estimation
 Newton-Raphson maximisation, 5 iterations
@@ -1060,5 +927,3 @@ END OF MTE/MPRTE ANALYSIS
 ==============================================
 
 MTE_MPRTE.R log closed: 2026-06-28 20:08:04 
-
-Chapter 11 log closed: 2026-06-28 20:08:10 

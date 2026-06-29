@@ -1,1856 +1,19 @@
-------------------------------------------------------------------------------------------------------------------------
-      name:  <unnamed>
-       log:  C:\\Users\\marvi\\Dropbox\\Book\\2nd Edition\\Chapter 10\\Output\\logs\\Chapter10_Stata_output.log
+-------------------------------------------------------------------------------------------------------------
+      name:  mte_mprte
+       log:  C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/logs/MTE_MPRTE_output.log
   log type:  text
- opened on:   8 May 2026, 16:36:49
-. }
+ opened on:  28 Jun 2026, 19:39:02
 
-. else {
-.     global graphs_dir "Output/graphs"
-.     capture mkdir "Output"
-.     capture mkdir "Output/graphs"
-.     capture mkdir "Output/logs"
-.     log using "Output/logs/Chapter10_Stata_output.log", replace text
-. }
-
-. 
-. di "Chapter 10 log opened: " c(current_date) " " c(current_time)
-Chapter 10 log opened:  8 May 2026 16:36:49
-
-. di "Graphs directory: $graphs_dir"
-Graphs directory: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs
-
-. 
-. clear all
-
-. set more off
-
-. version 19
-
-. set seed 20251130
-
-. set scheme s2mono        // Monochrome scheme for Springer B&W print
-
-. 
-. *========================================================================
-. *========================================================================
-. *
-. *    PART A: CAUSAL INFERENCE — GEORGIA HIGHER EDUCATION CONSOLIDATION
-. *            (Sections 10.3 – 10.9)
-. *
-. *========================================================================
-. *========================================================================
-. 
-. *=======================================================
-. * Analysis of Georgia's Higher Education Consolidation
-. * Policy Using Multiple Causal Inference Techniques
-. *=======================================================
-. 
-. clear all
-
-. set more off
-
-. version 19
-
-. 
-. *=======================================================
-. * Section 10.3.1: Data Structure and Variable Construction
-. * (Application: TWFE DiD for Georgia Consolidation)
-. *=======================================================
-. 
-. * Download data from GitHub repository
-. copy "https://raw.githubusercontent.com/higher-ed-policy-analysis-2nd-edition/data/main/ch10/Example_10_3_1.csv" ///
->      "Example_10_3_1.csv", replace
-
-. 
-. * Import CSV file
-. import delimited "Example_10_3_1.csv", clear
-(encoding automatically selected: UTF-8)
-(10 vars, 1,082 obs)
-
-. 
-. * Clean state names
-. replace state = strtrim(state)
-(0 real changes made)
-
-. 
-. * Create SREB indicator (16 Southern states)
-. gen sreb = inlist(state, "Alabama", "Arkansas", "Delaware", "Florida", ///
->            "Georgia", "Kentucky", "Louisiana", "Maryland", "Mississippi") ///
->     | inlist(state, "North Carolina", "Oklahoma", "South Carolina", ///
->              "Tennessee", "Texas", "Virginia", "West Virginia")
-
-. 
-. keep if sreb == 1
-(746 observations deleted)
-
-. 
-. * Create FIPS codes for panel identification
-. gen fips = .
-(336 missing values generated)
-
-. replace fips = 1  if state == "Alabama"
-(21 real changes made)
-
-. replace fips = 5  if state == "Arkansas"
-(21 real changes made)
-
-. replace fips = 10 if state == "Delaware"
-(21 real changes made)
-
-. replace fips = 12 if state == "Florida"
-(21 real changes made)
-
-. replace fips = 13 if state == "Georgia"
-(21 real changes made)
-
-. replace fips = 21 if state == "Kentucky"
-(21 real changes made)
-
-. replace fips = 22 if state == "Louisiana"
-(21 real changes made)
-
-. replace fips = 24 if state == "Maryland"
-(21 real changes made)
-
-. replace fips = 28 if state == "Mississippi"
-(21 real changes made)
-
-. replace fips = 37 if state == "North Carolina"
-(21 real changes made)
-
-. replace fips = 40 if state == "Oklahoma"
-(21 real changes made)
-
-. replace fips = 45 if state == "South Carolina"
-(21 real changes made)
-
-. replace fips = 47 if state == "Tennessee"
-(21 real changes made)
-
-. replace fips = 48 if state == "Texas"
-(21 real changes made)
-
-. replace fips = 51 if state == "Virginia"
-(21 real changes made)
-
-. replace fips = 54 if state == "West Virginia"
-(21 real changes made)
-
-. 
-. * Treatment state indicator (Georgia = 1)
-. gen treat_state = (state == "Georgia")
-
-. 
-. * Post-treatment period (2018 onwards)
-. gen post = (fy >= 2018)
-
-. 
-. * DiD interaction term
-. gen did = treat_state * post
-
-. 
-. * Placebo test indicators
-. gen post_placebo = (fy >= 2012)
-
-. gen did_placebo = treat_state * post_placebo
-
-. 
-. * Log-transformed variables
-. gen lngenop = log(general_public_operations)
-
-. label variable lngenop "Log(General Operating Expenses)"
-
-. 
-. gen lntotsup = log(total_state_support)
-
-. label variable lntotsup "Log(Total State Support)"
-
-. 
-. gen lnfinaid = log(total_financial_aid)
-
-. label variable lnfinaid "Log(Total Financial Aid)"
-
-. 
-. gen lntuifee = log(net_tuition_and_fee_revenue)
-
-. label variable lntuifee "Log(Net Tuition & Fee Revenue)"
-
-. 
-. gen lnfte = log(net_fte_enrollment)
-
-. label variable lnfte "Log(FTE Enrollment)"
-
-. 
-. * Define control variables
-. global controls "lntotsup lnfinaid lntuifee lnfte"
-
-. 
-. *=======================================================
-. * Section 10.3.2: TWFE Estimation Results
-. * (Two-Way Fixed Effects DiD)
-. *=======================================================
-. 
-. * Declare panel structure
-. xtset fips fy
-
-Panel variable: fips (strongly balanced)
- Time variable: fy, 2001 to 2021
-         Delta: 1 unit
-
-. 
-. * Two-Way Fixed Effects (TWFE) DiD
-. xtreg lngenop did $controls i.fy, fe vce(cluster fips)
-
-Fixed-effects (within) regression               Number of obs     =        336
-Group variable: fips                            Number of groups  =         16
-
-R-squared:                                      Obs per group:
-     Within  = 0.9111                                         min =         21
-     Between = 0.9785                                         avg =       21.0
-     Overall = 0.9740                                         max =         21
-
-                                                F(15, 15)         =          .
-corr(u_i, Xb) = -0.9173                         Prob > F          =          .
-
-                                  (Std. err. adjusted for 16 clusters in fips)
-------------------------------------------------------------------------------
-             |               Robust
-     lngenop | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
--------------+----------------------------------------------------------------
-         did |  -.0427127   .0183103    -2.33   0.034    -.0817403   -.0036851
-    lntotsup |   1.185232    .069625    17.02   0.000      1.03683    1.333634
-    lnfinaid |  -.0898411   .0227798    -3.94   0.001    -.1383951   -.0412872
-    lntuifee |   .0791758   .0469805     1.69   0.113    -.0209608    .1793125
-       lnfte |   .2970798    .167996     1.77   0.097    -.0609952    .6551549
-             |
-          fy |
-       2002  |    -.01329   .0089112    -1.49   0.157    -.0322839    .0057038
-       2003  |  -.0326712   .0147473    -2.22   0.043    -.0641044   -.0012381
-       2004  |  -.0571007   .0209236    -2.73   0.016    -.1016983    -.012503
-       2005  |  -.0730714    .025314    -2.89   0.011     -.127027   -.0191157
-       2006  |  -.0822867   .0277106    -2.97   0.010    -.1413504    -.023223
-       2007  |  -.0960822   .0304614    -3.15   0.007    -.1610091   -.0311554
-       2008  |  -.1139024     .03598    -3.17   0.006    -.1905919   -.0372128
-       2009  |  -.1423289   .0368375    -3.86   0.002    -.2208462   -.0638117
-       2010  |  -.2512993   .0462211    -5.44   0.000    -.3498172   -.1527813
-       2011  |  -.2612435   .0580994    -4.50   0.000    -.3850794   -.1374075
-       2012  |  -.1980059   .0487947    -4.06   0.001    -.3020094   -.0940024
-       2013  |  -.1975904   .0522261    -3.78   0.002    -.3089077   -.0862731
-       2014  |  -.1967187   .0537629    -3.66   0.002    -.3113116   -.0821258
-       2015  |  -.1914164   .0548433    -3.49   0.003    -.3083122   -.0745206
-       2016  |  -.2072377   .0605195    -3.42   0.004     -.336232   -.0782435
-       2017  |  -.2018546   .0591903    -3.41   0.004    -.3280158   -.0756934
-       2018  |   -.201032    .061786    -3.25   0.005    -.3327257   -.0693382
-       2019  |  -.2011604   .0595906    -3.38   0.004    -.3281748    -.074146
-       2020  |  -.2229903   .0645473    -3.45   0.004    -.3605697    -.085411
-       2021  |  -.2494196   .0694934    -3.59   0.003    -.3975413   -.1012979
-             |
-       _cons |  -7.630737    2.23446    -3.42   0.004    -12.39338   -2.868098
--------------+----------------------------------------------------------------
-     sigma_u |  .33717718
-     sigma_e |  .05086995
-         rho |  .97774479   (fraction of variance due to u_i)
-------------------------------------------------------------------------------
-
-. 
-. * Store TWFE results
-. estimates store twfe_did
-
-. 
-. * Placebo test (pre-treatment falsification)
-. xtreg lngenop did_placebo $controls i.fy if fy < 2018, ///
->   fe vce(cluster fips)
-
-Fixed-effects (within) regression               Number of obs     =        272
-Group variable: fips                            Number of groups  =         16
-
-R-squared:                                      Obs per group:
-     Within  = 0.9002                                         min =         17
-     Between = 0.9788                                         avg =       17.0
-     Overall = 0.9746                                         max =         17
-
-                                                F(15, 15)         =          .
-corr(u_i, Xb) = -0.9330                         Prob > F          =          .
-
-                                  (Std. err. adjusted for 16 clusters in fips)
-------------------------------------------------------------------------------
-             |               Robust
-     lngenop | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
--------------+----------------------------------------------------------------
- did_placebo |  -.0370001    .024013    -1.54   0.144    -.0881827    .0141824
-    lntotsup |    1.21039   .0663074    18.25   0.000     1.069059    1.351721
-    lnfinaid |  -.0914784   .0210953    -4.34   0.001    -.1364419   -.0465148
-    lntuifee |   .0718089   .0601416     1.19   0.251    -.0563798    .1999977
-       lnfte |    .304807   .1634615     1.86   0.082    -.0436028    .6532169
-             |
-          fy |
-       2002  |  -.0134691   .0081622    -1.65   0.120    -.0308665    .0039283
-       2003  |   -.032245     .01374    -2.35   0.033    -.0615311   -.0029588
-       2004  |   -.055877   .0221334    -2.52   0.023    -.1030532   -.0087008
-       2005  |  -.0722824   .0265437    -2.72   0.016    -.1288591   -.0157058
-       2006  |  -.0823656   .0325016    -2.53   0.023    -.1516412     -.01309
-       2007  |   -.098008   .0362854    -2.70   0.016    -.1753485   -.0206675
-       2008  |  -.1175972   .0411714    -2.86   0.012     -.205352   -.0298423
-       2009  |  -.1447453   .0431755    -3.35   0.004    -.2367716   -.0527189
-       2010  |    -.25362   .0560433    -4.53   0.000    -.3730735   -.1341665
-       2011  |  -.2627797   .0688228    -3.82   0.002     -.409472   -.1160874
-       2012  |   -.194602   .0570077    -3.41   0.004    -.3161111   -.0730929
-       2013  |  -.1934601    .062652    -3.09   0.008    -.3269996   -.0599206
-       2014  |  -.1928947   .0654824    -2.95   0.010    -.3324673   -.0533222
-       2015  |  -.1875186   .0674565    -2.78   0.014    -.3312987   -.0437386
-       2016  |  -.2033422   .0744498    -2.73   0.015    -.3620282   -.0446562
-       2017  |   -.198264   .0719328    -2.76   0.015    -.3515851   -.0449428
-             |
-       _cons |  -8.072125   1.952567    -4.13   0.001    -12.23392   -3.910326
--------------+----------------------------------------------------------------
-     sigma_u |  .35904949
-     sigma_e |   .0464875
-         rho |  .98351292   (fraction of variance due to u_i)
-------------------------------------------------------------------------------
-
-. 
-. *=======================================================
-. * Section 10.3.3: Parallel Trends Assessment
-. *=======================================================
-. 
-. * Visual inspection - trends plot
-. preserve
-
-. collapse (mean) lngenop, by(treat_state fy)
-
-. twoway (connected lngenop fy if treat_state == 0, ///
->           lpattern(dash) lcolor(gs8) mcolor(gs8) msymbol(Oh)) ///
->        (connected lngenop fy if treat_state == 1, ///
->           lpattern(solid) lcolor(gs0) mcolor(gs0) msymbol(O)), ///
->   xline(2018, lpattern(dot) lcolor(gs6)) ///
->   legend(label(1 "Control States") label(2 "Georgia")) ///
->   ytitle("Log Operating Expenses") xtitle("Fiscal Year") ///
->   title("Parallel Trends: Treatment vs Control") ///
->   name(fig10_1_parallel_trends, replace)
-
-. graph export "$graphs_dir/fig10_1_parallel_trends_Stata.png", replace width(1200)
-file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/fig10_1_parallel_trends_Stata.png saved as PNG
-    format
-
-. restore
-
-. 
-. * Formal pre-trends test
-. reghdfe lngenop c.treat_state#c.fy $controls if fy < 2018, ///
->   absorb(fips fy) vce(cluster fips)
-(MWFE estimator converged in 2 iterations)
-
-HDFE Linear regression                            Number of obs   =        272
-Absorbing 2 HDFE groups                           F(   5,     15) =     142.00
-Statistics robust to heteroskedasticity           Prob > F        =     0.0000
-                                                  R-squared       =     0.9974
-                                                  Adj R-squared   =     0.9970
-                                                  Within R-sq.    =     0.8339
-Number of clusters (fips)    =         16         Root MSE        =     0.0459
-
-                                        (Std. err. adjusted for 16 clusters in fips)
-------------------------------------------------------------------------------------
-                   |               Robust
-           lngenop | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
--------------------+----------------------------------------------------------------
-c.treat_state#c.fy |   -.007648   .0017308    -4.42   0.000     -.011337   -.0039589
-                   |
-          lntotsup |   1.211339   .0667665    18.14   0.000     1.069029    1.353648
-          lnfinaid |  -.0925674   .0200896    -4.61   0.000    -.1353875   -.0497473
-          lntuifee |   .0937407   .0503136     1.86   0.082    -.0135003    .2009817
-             lnfte |   .3306879   .1528796     2.16   0.047     .0048327    .6565431
-             _cons |  -8.010321   1.616861    -4.95   0.000    -11.45658   -4.564063
-------------------------------------------------------------------------------------
-
-Absorbed degrees of freedom:
------------------------------------------------------+
- Absorbed FE | Categories  - Redundant  = Num. Coefs |
--------------+---------------------------------------|
-        fips |        16          16           0    *|
-          fy |        17           1          16     |
------------------------------------------------------+
-* = FE nested within cluster; treated as redundant for DoF computation
-
-. 
-. test c.treat_state#c.fy = 0
-
- ( 1)  c.treat_state#c.fy = 0
-
-       F(  1,    15) =   19.53
-            Prob > F =    0.0005
-
-. 
-. *=======================================================
-. * Section 10.3.4: Robustness Checks
-. *=======================================================
-. 
-. * Alternative treatment timing (2013)
-. gen post_2013 = (fy >= 2013)
-
-. gen did_2013 = treat_state * post_2013
-
-. 
-. xtreg lngenop did_2013 $controls i.fy, fe vce(cluster fips)
-
-Fixed-effects (within) regression               Number of obs     =        336
-Group variable: fips                            Number of groups  =         16
-
-R-squared:                                      Obs per group:
-     Within  = 0.9112                                         min =         21
-     Between = 0.9787                                         avg =       21.0
-     Overall = 0.9742                                         max =         21
-
-                                                F(15, 15)         =          .
-corr(u_i, Xb) = -0.9191                         Prob > F          =          .
-
-                                  (Std. err. adjusted for 16 clusters in fips)
-------------------------------------------------------------------------------
-             |               Robust
-     lngenop | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
--------------+----------------------------------------------------------------
-    did_2013 |  -.0409305   .0219187    -1.87   0.082    -.0876491     .005788
-    lntotsup |   1.187678   .0709184    16.75   0.000     1.036519    1.338837
-    lnfinaid |  -.0911409    .022636    -4.03   0.001    -.1393883   -.0428935
-    lntuifee |   .0898498   .0493364     1.82   0.089    -.0153083     .195008
-       lnfte |   .2926365   .1673052     1.75   0.101    -.0639661    .6492391
-             |
-          fy |
-       2002  |  -.0137544   .0088647    -1.55   0.142     -.032649    .0051401
-       2003  |  -.0339422   .0144565    -2.35   0.033    -.0647554   -.0031289
-       2004  |  -.0590813   .0205611    -2.87   0.012    -.1029064   -.0152563
-       2005  |  -.0759811   .0250867    -3.03   0.008    -.1294521   -.0225101
-       2006  |  -.0863305   .0279295    -3.09   0.007    -.1458608   -.0268002
-       2007  |  -.1007274   .0307218    -3.28   0.005    -.1662093   -.0352455
-       2008  |  -.1192408   .0364027    -3.28   0.005    -.1968313   -.0416504
-       2009  |  -.1480541   .0370854    -3.99   0.001    -.2270998   -.0690084
-       2010  |  -.2579187   .0466339    -5.53   0.000    -.3573165   -.1585209
-       2011  |  -.2685943   .0579256    -4.64   0.000    -.3920597   -.1451289
-       2012  |  -.2064919   .0484385    -4.26   0.001    -.3097361   -.1032476
-       2013  |   -.204152   .0525735    -3.88   0.001    -.3162098   -.0920942
-       2014  |  -.2038498   .0544167    -3.75   0.002    -.3198363   -.0878633
-       2015  |  -.1990234   .0556743    -3.57   0.003    -.3176903   -.0803565
-       2016  |  -.2153944   .0614568    -3.50   0.003    -.3463865   -.0844023
-       2017  |  -.2104554   .0601629    -3.50   0.003    -.3386896   -.0822212
-       2018  |  -.2125568   .0621478    -3.42   0.004    -.3450216   -.0800919
-       2019  |  -.2127398   .0598813    -3.55   0.003    -.3403737   -.0851059
-       2020  |  -.2347905   .0652338    -3.60   0.003     -.373833    -.095748
-       2021  |  -.2611709   .0703318    -3.71   0.002    -.4110795   -.1112623
-             |
-       _cons |  -7.816627   2.201291    -3.55   0.003    -12.50857   -3.124687
--------------+----------------------------------------------------------------
-     sigma_u |  .33933188
-     sigma_e |  .05082762
-         rho |  .97805609   (fraction of variance due to u_i)
-------------------------------------------------------------------------------
-
-. 
-. * Alternative treatment timing (2015)
-. gen post_2015 = (fy >= 2015)
-
-. gen did_2015 = treat_state * post_2015
-
-. 
-. xtreg lngenop did_2015 $controls i.fy, fe vce(cluster fips)
-
-Fixed-effects (within) regression               Number of obs     =        336
-Group variable: fips                            Number of groups  =         16
-
-R-squared:                                      Obs per group:
-     Within  = 0.9113                                         min =         21
-     Between = 0.9787                                         avg =       21.0
-     Overall = 0.9741                                         max =         21
-
-                                                F(16, 15)         =          .
-corr(u_i, Xb) = -0.9190                         Prob > F          =          .
-
-                                  (Std. err. adjusted for 16 clusters in fips)
-------------------------------------------------------------------------------
-             |               Robust
-     lngenop | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
--------------+----------------------------------------------------------------
-    did_2015 |  -.0431158   .0187369    -2.30   0.036    -.0830527    -.003179
-    lntotsup |   1.188734   .0707797    16.79   0.000     1.037871    1.339597
-    lnfinaid |  -.0906618   .0225888    -4.01   0.001    -.1388087    -.042515
-    lntuifee |   .0864319   .0473843     1.82   0.088    -.0145655    .1874292
-       lnfte |   .2934192   .1671898     1.76   0.100    -.0629375    .6497759
-             |
-          fy |
-       2002  |  -.0136317   .0088609    -1.54   0.145    -.0325183    .0052548
-       2003  |  -.0335537   .0144356    -2.32   0.035    -.0643225   -.0027848
-       2004  |  -.0584483   .0204836    -2.85   0.012    -.1021082   -.0147885
-       2005  |  -.0751333   .0248311    -3.03   0.009    -.1280596    -.022207
-       2006  |   -.085261   .0274158    -3.11   0.007    -.1436964   -.0268255
-       2007  |  -.0996395   .0301473    -3.31   0.005     -.163897    -.035382
-       2008  |  -.1180841   .0357583    -3.30   0.005    -.1943011    -.041867
-       2009  |  -.1466773   .0363086    -4.04   0.001    -.2240672   -.0692875
-       2010  |  -.2562497   .0458675    -5.59   0.000     -.354014   -.1584853
-       2011  |  -.2666561    .057302    -4.65   0.000    -.3887925   -.1445197
-       2012  |   -.204065   .0473767    -4.31   0.001    -.3050462   -.1030839
-       2013  |  -.2040836   .0508903    -4.01   0.001    -.3125536   -.0956136
-       2014  |   -.203665   .0525899    -3.87   0.002    -.3157577   -.0915724
-       2015  |  -.1960296   .0544593    -3.60   0.003    -.3121069   -.0799523
-       2016  |  -.2122689    .060136    -3.53   0.003    -.3404457   -.0840921
-       2017  |  -.2072432   .0587278    -3.53   0.003    -.3324186   -.0820679
-       2018  |  -.2092971   .0607151    -3.45   0.004    -.3387082    -.079886
-       2019  |   -.209524   .0585557    -3.58   0.003    -.3343326   -.0847154
-       2020  |  -.2316319   .0638002    -3.63   0.002    -.3676189    -.095645
-       2021  |  -.2580849   .0690854    -3.74   0.002     -.405337   -.1108327
-             |
-       _cons |  -7.788879   2.183897    -3.57   0.003    -12.44374   -3.134014
--------------+----------------------------------------------------------------
-     sigma_u |  .33961878
-     sigma_e |  .05080951
-         rho |  .97810761   (fraction of variance due to u_i)
-------------------------------------------------------------------------------
-
-. 
-. * Exclude border states
-. gen border = inlist(state, "Florida", "Alabama", ///
->                     "South Carolina", "Tennessee", "North Carolina")
-
-. 
-. xtreg lngenop did $controls i.fy if border == 0, ///
->   fe vce(cluster fips)
-
-Fixed-effects (within) regression               Number of obs     =        231
-Group variable: fips                            Number of groups  =         11
-
-R-squared:                                      Obs per group:
-     Within  = 0.9031                                         min =         21
-     Between = 0.9774                                         avg =       21.0
-     Overall = 0.9729                                         max =         21
-
-                                                F(11, 10)         =          .
-corr(u_i, Xb) = -0.9322                         Prob > F          =          .
-
-                                  (Std. err. adjusted for 11 clusters in fips)
-------------------------------------------------------------------------------
-             |               Robust
-     lngenop | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
--------------+----------------------------------------------------------------
-         did |  -.0309294   .0223174    -1.39   0.196    -.0806557    .0187969
-    lntotsup |   1.147664   .0974034    11.78   0.000     .9306356    1.364692
-    lnfinaid |   -.071554   .0323954    -2.21   0.052    -.1437354    .0006274
-    lntuifee |   .0359578   .0707792     0.51   0.622    -.1217481    .1936637
-       lnfte |   .3858711   .2325576     1.66   0.128    -.1322995    .9040416
-             |
-          fy |
-       2002  |  -.0104676   .0101066    -1.04   0.325    -.0329865    .0120513
-       2003  |  -.0299101   .0164692    -1.82   0.099    -.0666058    .0067855
-       2004  |  -.0534556   .0232238    -2.30   0.044    -.1052015   -.0017098
-       2005  |  -.0682383   .0243838    -2.80   0.019    -.1225688   -.0139078
-       2006  |  -.0675104    .024813    -2.72   0.022    -.1227971   -.0122236
-       2007  |  -.0727337   .0286166    -2.54   0.029    -.1364954   -.0089719
-       2008  |  -.0831098   .0363538    -2.29   0.045    -.1641112   -.0021085
-       2009  |  -.1097051   .0376638    -2.91   0.015    -.1936253    -.025785
-       2010  |  -.2113157   .0502313    -4.21   0.002    -.3232379   -.0993935
-       2011  |  -.2266373   .0627901    -3.61   0.005    -.3665423   -.0867322
-       2012  |  -.1695397   .0467712    -3.62   0.005    -.2737524   -.0653269
-       2013  |  -.1631404   .0546041    -2.99   0.014     -.284806   -.0414748
-       2014  |   -.164265   .0572365    -2.87   0.017     -.291796    -.036734
-       2015  |  -.1622149   .0581788    -2.79   0.019    -.2918452   -.0325845
-       2016  |  -.1795299   .0665176    -2.70   0.022    -.3277403   -.0313195
-       2017  |  -.1709721   .0633281    -2.70   0.022     -.312076   -.0298683
-       2018  |  -.1670003   .0690546    -2.42   0.036    -.3208636   -.0131371
-       2019  |  -.1597718   .0682149    -2.34   0.041     -.311764   -.0077795
-       2020  |  -.1817268   .0752859    -2.41   0.036    -.3494742   -.0139794
-       2021  |  -.2106784   .0880743    -2.39   0.038    -.4069202   -.0144365
-             |
-       _cons |  -7.303541   2.477793    -2.95   0.015    -12.82441   -1.782674
--------------+----------------------------------------------------------------
-     sigma_u |  .40566335
-     sigma_e |  .05300344
-         rho |  .98321486   (fraction of variance due to u_i)
-------------------------------------------------------------------------------
-
-. 
-. * Weighted regression by enrollment
-. * Note: Create time-invariant weight (mean enrollment by state)
-. bysort fips: egen mean_fte = mean(net_fte_enrollment)
-
-. xtreg lngenop did $controls i.fy [aweight=mean_fte], ///
->   fe vce(cluster fips)
-
-Fixed-effects (within) regression               Number of obs     =        336
-Group variable: fips                            Number of groups  =         16
-
-R-squared:                                      Obs per group:
-     Within  = 0.9165                                         min =         21
-     Between = 0.9734                                         avg =       21.0
-     Overall = 0.9681                                         max =         21
-
-                                                F(15, 15)         =          .
-corr(u_i, Xb) = -0.9409                         Prob > F          =          .
-
-                                  (Std. err. adjusted for 16 clusters in fips)
-------------------------------------------------------------------------------
-             |               Robust
-     lngenop | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
--------------+----------------------------------------------------------------
-         did |  -.0398948   .0134587    -2.96   0.010    -.0685814   -.0112081
-    lntotsup |   1.139512   .1015119    11.23   0.000     .9231444    1.355879
-    lnfinaid |  -.0481473   .0398775    -1.21   0.246    -.1331442    .0368496
-    lntuifee |   .0338586   .0549586     0.62   0.547    -.0832829        .151
-       lnfte |   .4772065   .2034473     2.35   0.033     .0435688    .9108441
-             |
-          fy |
-       2002  |  -.0270149   .0099281    -2.72   0.016    -.0481762   -.0058535
-       2003  |  -.0486435   .0160701    -3.03   0.008    -.0828961   -.0143908
-       2004  |  -.0733953    .021317    -3.44   0.004    -.1188314   -.0279592
-       2005  |  -.0850606   .0189489    -4.49   0.000    -.1254493   -.0446719
-       2006  |  -.0813528   .0245264    -3.32   0.005    -.1336295   -.0290761
-       2007  |   -.094951   .0348036    -2.73   0.016    -.1691331   -.0207688
-       2008  |   -.113603    .044561    -2.55   0.022    -.2085825   -.0186234
-       2009  |  -.1465394   .0395289    -3.71   0.002    -.2307933   -.0622855
-       2010  |  -.2564144   .0507461    -5.05   0.000    -.3645772   -.1482515
-       2011  |  -.2610128   .0654531    -3.99   0.001    -.4005228   -.1215029
-       2012  |  -.2120876   .0496991    -4.27   0.001    -.3180186   -.1061565
-       2013  |  -.2046552   .0559661    -3.66   0.002    -.3239442   -.0853662
-       2014  |  -.1946036   .0572924    -3.40   0.004    -.3167196   -.0724877
-       2015  |  -.1902621    .057026    -3.34   0.005    -.3118102   -.0687141
-       2016  |  -.2014084   .0610419    -3.30   0.005    -.3315161   -.0713008
-       2017  |  -.2073455   .0598316    -3.47   0.003    -.3348735   -.0798175
-       2018  |  -.2008181   .0690004    -2.91   0.011     -.347889   -.0537472
-       2019  |  -.2014623   .0724319    -2.78   0.014    -.3558472   -.0470774
-       2020  |  -.2231344   .0772213    -2.89   0.011    -.3877277   -.0585411
-       2021  |  -.2303025   .0818729    -2.81   0.013    -.4048105   -.0557944
-             |
-       _cons |  -8.989409   2.234514    -4.02   0.001    -13.75216   -4.226656
--------------+----------------------------------------------------------------
-     sigma_u |  .44903201
-     sigma_e |  .05777101
-         rho |  .98371696   (fraction of variance due to u_i)
-------------------------------------------------------------------------------
-
-. 
-. *=======================================================
-. * Section 10.4.2-10.4.3: LASSO-Residualized DiD
-. * Belloni, Chernozhukov & Hansen (2014) -- Double Selection
-. *
-. * This implements the residualized (double-selection) approach,
-. * which differs from post-LASSO OLS (single selection). The
-. * procedure involves three steps:
-. *
-. *   Step 1. Partial out state and year fixed effects from the
-. *           outcome (lngenop), the DiD indicator (did), and all
-. *           candidate controls via within-transformation
-. *           (reghdfe with no regressors -> predict resid).
-. *
-. *   Step 2. Run rlasso of the FE-partialled outcome on the
-. *           FE-partialled candidate controls -> selected set S_Y.
-. *           Run rlasso of the FE-partialled DiD indicator on
-. *           the same partialled controls -> selected set S_D.
-. *           rlasso uses the theory-driven BRT penalty rather than
-. *           cross-validation, which is required for valid
-. *           post-selection inference.
-. *
-. *   Step 3. Estimate the DiD via reghdfe, absorbing state and
-. *           year FEs and including the union S_Y u S_D as controls.
-. *           Unioning the two selected sets (double selection)
-. *           ensures the DiD coefficient is consistent and the
-. *           clustered standard errors are valid even though
-. *           controls were chosen by LASSO.
-. *
-. * Reference: Belloni, A., Chernozhukov, V., & Hansen, C. (2014).
-. *   High-dimensional methods and inference on structural and
-. *   treatment effects. Journal of Economic Perspectives, 28(2), 29-50.
-. *=======================================================
-. 
-. * Install required package (lassopack provides both lasso2 and rlasso)
-. capture ssc install lassopack, replace
-
-. 
-. * --- Interaction terms: expand the candidate control set ---
-. * Post x covariate and treat x covariate interactions allow LASSO
-. * to select controls that differ in their post-treatment or
-. * treatment-group relationship with the outcome.
-. * Note: post and treat_state are excluded from the candidate list --
-. * state FEs absorb treat_state and year FEs absorb post in TWFE.
-. foreach var of global controls {
-  2.     capture drop `var'_post `var'_treat
-  3.     gen `var'_post  = `var' * post
-  4.     gen `var'_treat = `var' * treat_state
-  5. }
-
-. 
-. * Build candidate control list: base controls + interactions
-. local candidates ""
-
-. foreach var of global controls {
-  2.     local candidates "`candidates' `var' `var'_post `var'_treat"
-  3. }
-
-. 
-. * --- Step 1: Partial out state and year fixed effects ---
-. * The resid option must be declared at estimation time in reghdfe.
-. * A subsequent predict retrieves the cached within-residuals.
-. * capture drop guards against errors on re-runs.
-. 
-. capture drop res_y
-
-. reghdfe lngenop, absorb(fips fy) resid
-(MWFE estimator converged in 2 iterations)
-
-HDFE Linear regression                            Number of obs   =        336
-Absorbing 2 HDFE groups                           F(   0,    300) =          .
-                                                  Prob > F        =          .
-                                                  R-squared       =     0.9794
-                                                  Adj R-squared   =     0.9770
-                                                  Within R-sq.    =     0.0000
-                                                  Root MSE        =     0.1304
-
-------------------------------------------------------------------------------
-     lngenop | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
--------------+----------------------------------------------------------------
-       _cons |   20.73139    .007115  2913.76   0.000     20.71739    20.74539
-------------------------------------------------------------------------------
-
-Absorbed degrees of freedom:
------------------------------------------------------+
- Absorbed FE | Categories  - Redundant  = Num. Coefs |
--------------+---------------------------------------|
-        fips |        16           0          16     |
-          fy |        21           1          20     |
------------------------------------------------------+
-
-. predict res_y, resid
-
-. 
-. capture drop res_did
-
-. reghdfe did, absorb(fips fy) resid
-(MWFE estimator converged in 2 iterations)
-
-HDFE Linear regression                            Number of obs   =        336
-Absorbing 2 HDFE groups                           F(   0,    300) =          .
-                                                  Prob > F        =          .
-                                                  R-squared       =     0.2319
-                                                  Adj R-squared   =     0.1423
-                                                  Within R-sq.    =     0.0000
-                                                  Root MSE        =     0.1006
-
-------------------------------------------------------------------------------
-         did | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
--------------+----------------------------------------------------------------
-       _cons |   .0119048   .0054878     2.17   0.031     .0011053    .0227043
-------------------------------------------------------------------------------
-
-Absorbed degrees of freedom:
------------------------------------------------------+
- Absorbed FE | Categories  - Redundant  = Num. Coefs |
--------------+---------------------------------------|
-        fips |        16           0          16     |
-          fy |        21           1          20     |
------------------------------------------------------+
-
-. predict res_did, resid
-
-. 
-. foreach var of local candidates {
-  2.     capture drop res_`var'
-  3.     quietly reghdfe `var', absorb(fips fy) resid
-  4.     predict res_`var', resid
-  5. }
-
-. 
-. * Build list of residualized candidate controls for rlasso
-. local res_candidates ""
-
-. foreach var of local candidates {
-  2.     local res_candidates "`res_candidates' res_`var'"
-  3. }
-
-. 
-. * --- Step 2: Double selection via rlasso ---
-. 
-. * Selection for outcome equation: which controls predict lngenop?
-. rlasso res_y `res_candidates'
-Warning: . negative penalty loadings encountered/adjusted.
-Variables affected: 
-
----------------------------------------------------
-         Selected |           Lasso   Post-est OLS
-------------------+--------------------------------
-     res_lntotsup |       1.0454491      1.1261345
-     res_lnfinaid |      -0.0515217     -0.0925438
-res_lntuifee_post |       0.0101799      0.0378930
-        res_lnfte |       0.2461985      0.2832222
-            _cons |*      0.0000000      0.0000000
----------------------------------------------------
-*Not penalized
-
-. local selected_y "`e(selected)'"
-
-. 
-. * Selection for treatment equation: which controls predict did?
-. rlasso res_did `res_candidates'
-Warning: . negative penalty loadings encountered/adjusted.
-Variables affected: 
-
----------------------------------------------------
-         Selected |           Lasso   Post-est OLS
-------------------+--------------------------------
-res_lntotsup_tr~t |       1.8120226      2.6450924
-res_lnfinaid_post |       0.0106881      0.0235528
-  res_lnfte_treat |      -0.2033802     -1.2298846
-            _cons |*     -0.0000000     -0.0000000
----------------------------------------------------
-*Not penalized
-
-. local selected_d "`e(selected)'"
-
-. 
-. * Form union S_Y u S_D and map back to original variable names
-. * by stripping the "res_" prefix added in Step 1.
-. local union_res : list selected_y | selected_d
-
-. local union_orig ""
-
-. foreach var of local union_res {
-  2.     local orig = subinstr("`var'", "res_", "", 1)
-  3.     local union_orig "`union_orig' `orig'"
-  4. }
-
-. local union_orig : list uniq union_orig
-
-. 
-. * Report selection results
-. di _newline "=== Double-Selection Results ==="
-
-=== Double-Selection Results ===
-
-. di "Outcome equation  (S_Y):                  `selected_y'"
-Outcome equation  (S_Y):                  res_lntotsup res_lnfinaid res_lntuifee_post res_lnfte
-
-. di "Treatment equation (S_D):                 `selected_d'"
-Treatment equation (S_D):                 res_lntotsup_treat res_lnfinaid_post res_lnfte_treat
-
-. di "Union S_Y u S_D (passed to final DiD):    `union_orig'"
-Union S_Y u S_D (passed to final DiD):    lntotsup lnfinaid lntuifee_post lnfte lntotsup_treat lnfinaid_post lnfte_treat
-
-. 
-. * --- Step 3: Final DiD estimation ---
-. * Absorb state and year FEs; include union of selected controls;
-. * cluster standard errors at the state level.
-. reghdfe lngenop did `union_orig', ///
->     absorb(fips fy) vce(cluster fips)
-(MWFE estimator converged in 2 iterations)
-
-HDFE Linear regression                            Number of obs   =        336
-Absorbing 2 HDFE groups                           F(   8,     15) =     168.76
-Statistics robust to heteroskedasticity           Prob > F        =     0.0000
-                                                  R-squared       =     0.9970
-                                                  Adj R-squared   =     0.9966
-                                                  Within R-sq.    =     0.8560
-Number of clusters (fips)    =         16         Root MSE        =     0.0502
-
-                                    (Std. err. adjusted for 16 clusters in fips)
---------------------------------------------------------------------------------
-               |               Robust
-       lngenop | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
----------------+----------------------------------------------------------------
-           did |   .0167536   .0194673     0.86   0.403    -.0247399    .0582471
-      lntotsup |   1.123648   .0760521    14.77   0.000     .9615466    1.285749
-      lnfinaid |  -.0891117   .0209523    -4.25   0.001    -.1337704    -.044453
- lntuifee_post |   .0506017   .0180134     2.81   0.013      .012207    .0889963
-         lnfte |   .3108706   .1711991     1.82   0.089    -.0540316    .6757728
-lntotsup_treat |    .034574   .0319462     1.08   0.296    -.0335176    .1026657
- lnfinaid_post |  -.0189356   .0162902    -1.16   0.263    -.0536574    .0157862
-   lnfte_treat |    -.24194   .1036737    -2.33   0.034    -.4629152   -.0209648
-         _cons |  -5.028076   2.499315    -2.01   0.063    -10.35524    .2990873
---------------------------------------------------------------------------------
-
-Absorbed degrees of freedom:
------------------------------------------------------+
- Absorbed FE | Categories  - Redundant  = Num. Coefs |
--------------+---------------------------------------|
-        fips |        16          16           0    *|
-          fy |        21           1          20     |
------------------------------------------------------+
-* = FE nested within cluster; treated as redundant for DoF computation
-
-. 
-. estimates store lasso_did
-
-. 
-. 
-. *=======================================================
-. * Section 10.5.3: SCM Application to Georgia Consolidation
-. * (Synthetic Control Method)
-. *=======================================================
-. 
-. * Install synth package
-. ssc install synth, replace
-checking synth consistency and verifying not already installed...
-all files already exist and are up to date.
-
-. 
-. * Prepare data for synth command
-. * Keep only outcome and predictors
-. keep if !missing(lngenop, lntotsup, lnfinaid, lntuifee, lnfte)
-(0 observations deleted)
-
 . 
-. * Preserve data before running synth
-. preserve
+. di as text "MTE_MPRTE.do log opened: " c(current_date) " " c(current_time)
+MTE_MPRTE.do log opened: 28 Jun 2026 19:39:02
 
-. 
-. * Run synthetic control
-. synth lngenop lngenop(2005) lngenop(2010) lngenop(2015) ///
->   lntotsup(2005(1)2017) lnfinaid(2005(1)2017) ///
->   lntuifee(2005(1)2017) lnfte(2005(1)2017), ///
->   trunit(13) trperiod(2018) nested ///
->   keep(synth_output) replace          // fig suppressed; graph reconstructed below
-------------------------------------------------------------------------------------------------------------------------
-Synthetic Control Method for Comparative Case Studies
-------------------------------------------------------------------------------------------------------------------------
-
-First Step: Data Setup
-------------------------------------------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------------------------------------------
-Data Setup successful
-------------------------------------------------------------------------------------------------------------------------
-                Treated Unit: 13
-               Control Units: 1 5 10 12 21 22 24 28 37 40 45 47 48 51 54
-------------------------------------------------------------------------------------------------------------------------
-          Dependent Variable: lngenop
-  MSPE minimized for periods: 2001 2002 2003 2004 2005 2006 2007 2008 2009 2010 2011 2012 2013 2014 2015 2016 2017
-Results obtained for periods: 2001 2002 2003 2004 2005 2006 2007 2008 2009 2010 2011 2012 2013 2014 2015 2016 2017 2018
-                              2019 2020 2021
-------------------------------------------------------------------------------------------------------------------------
-                  Predictors: lngenop(2005) lngenop(2010) lngenop(2015) lntotsup(2005(1)2017) lnfinaid(2005(1)2017)
-                              lntuifee(2005(1)2017) lnfte(2005(1)2017)
-------------------------------------------------------------------------------------------------------------------------
-Unless period is specified
-predictors are averaged over: 2001 2002 2003 2004 2005 2006 2007 2008 2009 2010 2011 2012 2013 2014 2015 2016 2017
-------------------------------------------------------------------------------------------------------------------------
-
-Second Step: Run Optimization
-------------------------------------------------------------------------------------------------------------------------
-Nested optimization requested
-Starting nested optimization module
-Optimization done
-------------------------------------------------------------------------------------------------------------------------
-Optimization done
-------------------------------------------------------------------------------------------------------------------------
-
-Third Step: Obtain Results
-------------------------------------------------------------------------------------------------------------------------
-Loss: Root Mean Squared Prediction Error
-
---------------------
-   RMSPE |  .0345132 
---------------------
-------------------------------------------------------------------------------------------------------------------------
-Unit Weights:
-
------------------------
-    Co_No | Unit_Weight
-----------+------------
-        1 |           0
-        5 |           0
-       10 |           0
-       12 |        .476
-       21 |           0
-       22 |           0
-       24 |           0
-       28 |           0
-       37 |        .229
-       40 |           0
-       45 |        .143
-       47 |        .153
-       48 |           0
-       51 |           0
-       54 |           0
------------------------
-------------------------------------------------------------------------------------------------------------------------
-Predictor Balance:
-
------------------------------------------------------
-                               |   Treated  Synthetic 
--------------------------------+---------------------
-                 lngenop(2005) |   21.2783   21.33432 
-                 lngenop(2010) |  21.22609   21.32515 
-                 lngenop(2015) |   21.4156   21.46612 
-         lntotsup(2005(1)2017) |  21.76619   21.76001 
-         lnfinaid(2005(1)2017) |  20.12349   19.80338 
-         lntuifee(2005(1)2017) |  20.64779   20.91244 
-            lnfte(2005(1)2017) |  12.73125   12.82572 
------------------------------------------------------
-------------------------------------------------------------------------------------------------------------------------
-
-. 
-. * Calculate treatment effect
-. use synth_output, clear
-
-. gen synth_gap = _Y_treated - _Y_synthetic
-
-. 
-. * Reconstruct SCM figure in B&W
-. twoway (line _Y_treated   _time, lcolor(gs0) lwidth(medthick) lpattern(solid)) ///
->        (line _Y_synthetic _time, lcolor(gs8) lwidth(medthick) lpattern(dash)),  ///
->   xline(2018, lpattern(dot) lcolor(gs6)) ///
->   legend(label(1 "Georgia") label(2 "Synthetic Georgia")) ///
->   ytitle("Log Operating Expenses") xtitle("Fiscal Year") ///
->   title("Synthetic Control: Georgia vs. Synthetic Georgia") ///
->   name(fig10_2_synth_control, replace)
-
-. graph export "$graphs_dir/fig10_2_synth_control_Stata.png", replace width(1200)
-file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/fig10_2_synth_control_Stata.png saved as PNG
-    format
-
-. 
-. * Post-treatment average effect
-. summarize synth_gap if _time >= 2018
-
-    Variable |        Obs        Mean    Std. dev.       Min        Max
--------------+---------------------------------------------------------
-   synth_gap |          4   -.0256028    .0483801   -.097418    .004092
-
-. 
-. * Return to main dataset
-. restore
-
-. 
-. * Create SCM figure
-. synth_runner lngenop $controls, ///
->   trunit(13) trperiod(2018) ///
->   gen_vars mspeperiod(2005(1)2017)
-Estimating the treatment effects
-Estimating the possible placebo effects (one set for each of the 1 treatment periods)
-|             | Total: 15
-..............| 2.00s elapsed. 
-
-Conducting inference: 5 steps, and 15 placebo averages
-Step 1... Finished
-Step 2... Finished
-Step 3... Finished
-Step 4... Finished
-Step 5... Finished
-
-Post-treatment results: Effects, p-values, standardized p-values
-
-             | estimates      pvals  pvals_std 
--------------+--------------------------------
-          c1 |   .132036         .6   .2666667 
-          c2 |  .1404738   .6666667   .2666667 
-          c3 |  .1672185         .6   .2666667 
-          c4 |  .1205947   .7333333   .3333333 
-
-. 
-. *=======================================================
-. * Section 10.6.3: SDID Results - Single State Analysis
-. * (Synthetic Difference-in-Differences)
-. *=======================================================
-. 
-. * Install sdid package
-. ssc install sdid, replace
-checking sdid consistency and verifying not already installed...
-all files already exist and are up to date.
-
-. 
-. * Run SDID estimation
-. * Note: Use placebo inference (not bootstrap) for single treated unit
-. gen treat_sdid = (fips == 13 & fy >= 2018)
-
-. 
-. sdid lngenop fips fy treat_sdid, ///
->   vce(placebo) seed(123) graph ///
->   covariates($controls, projected)
-Placebo replications (50). This may take some time.
-----+--- 1 ---+--- 2 ---+--- 3 ---+--- 4 ---+--- 5
-..................................................     50
-
-
-Synthetic Difference-in-Differences Estimator
-
------------------------------------------------------------------------------
-     lngenop |     ATT     Std. Err.     t      P>|t|    [95% Conf. Interval]
--------------+---------------------------------------------------------------
-  treat_sdid |  -0.01959    0.05318    -0.37    0.713    -0.12383     0.08464
------------------------------------------------------------------------------
-95% CIs and p-values are based on large-sample approximations.
-Refer to Arkhangelsky et al., (2021) for theoretical derivations.
-
-. 
-. * Store SDID results
-. estimates store sdid_model
-
-. 
-. graph export "$graphs_dir/fig10_4_sdid_Stata.png", replace width(1200)
-file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/fig10_4_sdid_Stata.png saved as PNG format
-
-. 
-. *=======================================================
-. * Section 10.2.4 & 10.3.3: Event Study Specifications
-. * (Part of Parallel Trends Assessment)
-. *=======================================================
-. 
-. * Install csdid package
-. ssc install csdid, replace
-checking csdid consistency and verifying not already installed...
-all files already exist and are up to date.
-
-. ssc install drdid, replace
-checking drdid consistency and verifying not already installed...
-all files already exist and are up to date.
-
-. ssc install eventstudyinteract, replace
-checking eventstudyinteract consistency and verifying not already installed...
-all files already exist and are up to date.
-
-. 
-. * Create relative time indicators
-. gen rel_time = fy - 2018 if treat_state == 1
-(315 missing values generated)
-
-. replace rel_time = 0 if treat_state == 0
-(315 real changes made)
-
-. 
-. * Generate event time dummies
-. quietly tab rel_time, gen(event_)
-
-. 
-. * Event study regression
-. reghdfe lngenop event_1-event_17 $controls, ///
->   absorb(fips fy) vce(cluster fips)
-(MWFE estimator converged in 2 iterations)
-warning: missing F statistic; dropped variables due to collinearity or too few clusters
-
-HDFE Linear regression                            Number of obs   =        336
-Absorbing 2 HDFE groups                           F(  21,     15) =          .
-Statistics robust to heteroskedasticity           Prob > F        =          .
-                                                  R-squared       =     0.9971
-                                                  Adj R-squared   =     0.9965
-                                                  Within R-sq.    =     0.8605
-Number of clusters (fips)    =         16         Root MSE        =     0.0505
-
-                                  (Std. err. adjusted for 16 clusters in fips)
-------------------------------------------------------------------------------
-             |               Robust
-     lngenop | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
--------------+----------------------------------------------------------------
-     event_1 |   .1319097   .0425925     3.10   0.007      .041126    .2226934
-     event_2 |   .1139254   .0355712     3.20   0.006     .0381072    .1897436
-     event_3 |   .1070791   .0322405     3.32   0.005     .0383601    .1757981
-     event_4 |   .1067176   .0339406     3.14   0.007     .0343749    .1790603
-     event_5 |   .1105774    .034078     3.24   0.005     .0379419    .1832128
-     event_6 |    .110638   .0288315     3.84   0.002     .0491851     .172091
-     event_7 |   .1039157   .0257842     4.03   0.001      .048958    .1588735
-     event_8 |   .0816137   .0217456     3.75   0.002      .035264    .1279633
-     event_9 |   .0384772     .02109     1.82   0.088    -.0064751    .0834295
-    event_10 |  -.1093988   .0305496    -3.58   0.003    -.1745137    -.044284
-    event_11 |   .0272009   .0362805     0.75   0.465    -.0501292    .1045309
-    event_12 |  -.0252455   .0139526    -1.81   0.090    -.0549848    .0044937
-    event_13 |   .0333965   .0115183     2.90   0.011     .0088458    .0579472
-    event_14 |   .0368989   .0109431     3.37   0.004     .0135741    .0602236
-    event_15 |   .0214902   .0113317     1.90   0.077    -.0026628    .0456432
-    event_16 |   .0241701   .0142805     1.69   0.111    -.0062681    .0546083
-    event_17 |   .0082928   .0153259     0.54   0.596    -.0243736    .0409592
-    lntotsup |   1.176985   .0776961    15.15   0.000      1.01138    1.342591
-    lnfinaid |  -.0912664   .0222752    -4.10   0.001    -.1387449   -.0437878
-    lntuifee |    .113202   .0486521     2.33   0.034     .0095026    .2169014
-       lnfte |   .3484966   .1698395     2.05   0.058    -.0135078     .710501
-       _cons |   -8.90935    2.05439    -4.34   0.001    -13.28818   -4.530523
-------------------------------------------------------------------------------
-
-Absorbed degrees of freedom:
------------------------------------------------------+
- Absorbed FE | Categories  - Redundant  = Num. Coefs |
--------------+---------------------------------------|
-        fips |        16          16           0    *|
-          fy |        21           1          20     |
------------------------------------------------------+
-* = FE nested within cluster; treated as redundant for DoF computation
-
-. 
-. 
-. * Plot event study coefficients
-. coefplot, keep(event_*) vertical ///
->   yline(0, lpattern(dash) lcolor(gs8)) xlabel(, angle(45)) ///
->   mcolor(gs0) msymbol(O) lcolor(gs0) ///
->   ciopts(lcolor(gs6)) ///
->   ytitle("Effect on Log Operating Expenses") ///
->   xtitle("Years Relative to Treatment") ///
->   coeflabels(event_1 = "-17" event_2 = "-16" event_3 = "-15" ///
->              event_4 = "-14" event_5 = "-13" event_6 = "-12" ///
->              event_7 = "-11" event_8 = "-10" event_9 = "-9"  ///
->              event_10 = "-8" event_11 = "-7" event_12 = "-6" ///
->              event_13 = "-5" event_14 = "-4" event_15 = "-3" ///
->              event_16 = "-2" event_17 = "-1") ///
->   name(fig10_4_event_study, replace)
-
-.   graph export "$graphs_dir/fig10_4_event_study_Stata.png", ///
->   name(fig10_4_event_study) replace width(1200)
-file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/fig10_4_event_study_Stata.png saved as PNG
-    format
-
-. 
-. * Callaway-Sant'Anna DiD
-. * Create treatment year variable (0 for never-treated)
-. gen treat_year = 0
-
-. replace treat_year = 2018 if treat_state == 1
-(21 real changes made)
-
-. 
-. csdid lngenop $controls, ivar(fips) time(fy) ///
->   gvar(treat_year) method(dripw)
-...x......x..xxxxxxx
-Difference-in-difference with Multiple Time Periods
-
-                                                           Number of obs = 224
-Outcome model  : least squares
-Treatment model: inverse probability
-------------------------------------------------------------------------------
-             | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
--------------+----------------------------------------------------------------
-g2018        |
- t_2001_2002 |   .0453802   .0414854     1.09   0.274    -.0359297    .1266901
- t_2002_2003 |  -.0506363   .0248994    -2.03   0.042    -.0994382   -.0018344
- t_2003_2004 |   .0627425   .0344742     1.82   0.069    -.0048256    .1303106
- t_2004_2005 |          0  (omitted)
- t_2005_2006 |   .1020954   .0272062     3.75   0.000     .0487723    .1554186
- t_2006_2007 |   -.074002   .0268911    -2.75   0.006    -.1267076   -.0212964
- t_2007_2008 |   .0436576   .0287136     1.52   0.128      -.01262    .0999352
- t_2008_2009 |  -.0481209   .0324622    -1.48   0.138    -.1117457    .0155039
- t_2009_2010 |  -.0430994   .0551152    -0.78   0.434    -.1511232    .0649245
- t_2010_2011 |    .022211   .0228891     0.97   0.332    -.0226508    .0670727
- t_2011_2012 |          0  (omitted)
- t_2012_2013 |  -.0379755   .0260635    -1.46   0.145    -.0890589     .013108
- t_2013_2014 |  -.0982943   .0209512    -4.69   0.000    -.1393579   -.0572308
- t_2014_2015 |          0  (omitted)
- t_2015_2016 |          0  (omitted)
- t_2016_2017 |          0  (omitted)
- t_2017_2018 |          0  (omitted)
- t_2017_2019 |          0  (omitted)
- t_2017_2020 |          0  (omitted)
- t_2017_2021 |          0  (omitted)
-------------------------------------------------------------------------------
-Control: Never Treated
-
-See Callaway and Sant'Anna (2021) for details
-
-. 
-. * Note: Single cohort (2018), so estat simple returns 0
-. * Instead, examine individual time period effects above
-. * Or aggregate manually across post-treatment periods
-. 
-. *=======================================================
-. * Section 10.7.3-10.7.5: Multi-State Staggered Analysis
-. * (Staggered Adoption Designs)
-. *=======================================================
-. 
-. /* Extension: Three-state staggered consolidation design
->    - Georgia (FIPS 13): 2013
->    - Wisconsin (FIPS 55): 2018  
->    - Pennsylvania (FIPS 42): 2022
-> */
-. 
-. preserve
-
-. 
-. * Import expanded dataset (48 states)
-. copy "https://raw.githubusercontent.com/higher-ed-policy-analysis-2nd-edition/data/main/ch10/Example_10_7_3.csv" ///
->      "Example_10_7_3.csv", replace
-
-. import delimited "Example_10_7_3.csv", clear
-(encoding automatically selected: ISO-8859-1)
-(9 vars, 1,152 obs)
-
-. 
-. * Create logged variables
-. gen lngenop = log(generalpublicoperations)
-
-. gen lntotsup = log(totalstatesupport)
-
-. gen lnfinaid = log(totalfinancialaid)
-(3 missing values generated)
-
-. gen lntuifee = log(nettuitionandfeerevenue)
-
-. gen lnfte = log(netfteenrollment)
-
-. 
-. * Drop missing observations
-. drop if missing(lngenop, lntotsup, lnfinaid, lntuifee, lnfte)
-(3 observations deleted)
-
-. 
-. * Create staggered treatment variable
-. gen gyear = .
-(1,149 missing values generated)
-
-. replace gyear = 2013 if fips == 13     // Georgia
-(24 real changes made)
-
-. replace gyear = 2018 if fips == 55     // Wisconsin
-(24 real changes made)
-
-. replace gyear = 2022 if fips == 42     // Pennsylvania
-(24 real changes made)
-
-. 
-. * Set panel structure and check balance
-. xtset fips fy
-
-Panel variable: fips (unbalanced)
- Time variable: fy, 2001 to 2024, but with a gap
-         Delta: 1 unit
-
-. 
-. * Simple approach: Keep only complete state-year combinations
-. * Count observations per state
-. bysort fips: gen obs_count = _N
-
-. * Keep only states with same number of observations as the mode
-. egen mode_count = mode(obs_count)
-
-. keep if obs_count == mode_count
-(21 observations deleted)
-
-. drop obs_count mode_count
-
-. 
-. * Verify panel is balanced
-. qui xtset fips fy
-
-. di as text _newline "Panel structure after balancing: " as result "`r(balanced)'"
-
-Panel structure after balancing: strongly balanced
-
-. di as result "Number of states: " r(N_g)
-Number of states: .
-
-. di as result "Time periods: " r(tmin) " to " r(tmax)
-Time periods: 2001 to 2024
-
-. 
-. * CSDID estimation (baseline - no controls)
-. csdid lngenop, ivar(fips) time(fy) gvar(gyear) method(dripw)
-No never treated observations found. Using Not yet treated data
-....................xxx....................xxxxxxx
-xxxxxxxxxxxxxxxxxxx
-Difference-in-difference with Multiple Time Periods
+. di as text "Log file: $logdir/MTE_MPRTE_output.log"
+Log file: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/logs/MTE_MPRTE_output.log
 
-                                                            Number of obs = 63
-Outcome model  : least squares
-Treatment model: inverse probability
-------------------------------------------------------------------------------
-             | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
--------------+----------------------------------------------------------------
-g2013        |
- t_2001_2002 |  -.0325451   .0116204    -2.80   0.005    -.0553206   -.0097695
- t_2002_2003 |  -.0112514    .012957    -0.87   0.385    -.0366466    .0141437
- t_2003_2004 |   .0371075   .0038654     9.60   0.000     .0295315    .0446835
- t_2004_2005 |   .0261478   .0112576     2.32   0.020     .0040834    .0482123
- t_2005_2006 |   .0842133   .0097673     8.62   0.000     .0650697    .1033568
- t_2006_2007 |   .0010395   .0047407     0.22   0.826    -.0082521    .0103311
- t_2007_2008 |   .0308647   .0093236     3.31   0.001     .0125909    .0491386
- t_2008_2009 |  -.0943699   .0154102    -6.12   0.000    -.1245734   -.0641664
- t_2009_2010 |   -.108264    .056642    -1.91   0.056    -.2192802    .0027523
- t_2010_2011 |   .1129351    .013895     8.13   0.000     .0857014    .1401687
- t_2011_2012 |   .1213617   .0251161     4.83   0.000      .072135    .1705885
- t_2012_2013 |   .0024481   .0094267     0.26   0.795     -.016028    .0209241
- t_2012_2014 |   .0845346   .0063611    13.29   0.000      .072067    .0970022
- t_2012_2015 |   .0686712   .0009326    73.63   0.000     .0668433    .0704991
- t_2012_2016 |   .1690159   .0168304    10.04   0.000     .1360289    .2020029
- t_2012_2017 |   .1900511   .0335266     5.67   0.000     .1243401    .2557621
- t_2012_2018 |   .1878681          .        .       .            .           .
- t_2012_2019 |   .1764336          .        .       .            .           .
- t_2012_2020 |   .1896687          .        .       .            .           .
- t_2012_2021 |   .1005135          .        .       .            .           .
- t_2012_2022 |          0  (omitted)
- t_2012_2023 |          0  (omitted)
- t_2012_2024 |          0  (omitted)
--------------+----------------------------------------------------------------
-g2018        |
- t_2001_2002 |   .0328674          .        .       .            .           .
- t_2002_2003 |   .0366478          .        .       .            .           .
- t_2003_2004 |  -.0109329          .        .       .            .           .
- t_2004_2005 |  -.0318413          .        .       .            .           .
- t_2005_2006 |   -.027626          .        .       .            .           .
- t_2006_2007 |   .0134087          .        .       .            .           .
- t_2007_2008 |    .026371          .        .       .            .           .
- t_2008_2009 |   .0435867          .        .       .            .           .
- t_2009_2010 |   .1602077          .        .       .            .           .
- t_2010_2011 |   .0393009          .        .       .            .           .
- t_2011_2012 |   .0710392          .        .       .            .           .
- t_2012_2013 |   .0266628          .        .       .            .           .
- t_2013_2014 |  -.0446548          .        .       .            .           .
- t_2014_2015 |   .0153542          .        .       .            .           .
- t_2015_2016 |  -.0449657          .        .       .            .           .
- t_2016_2017 |   -.047224          .        .       .            .           .
- t_2017_2018 |   .0061798          .        .       .            .           .
- t_2017_2019 |  -.0125732          .        .       .            .           .
- t_2017_2020 |  -.0305767          .        .       .            .           .
- t_2017_2021 |   -.001997          .        .       .            .           .
- t_2017_2022 |          0  (omitted)
- t_2017_2023 |          0  (omitted)
- t_2017_2024 |          0  (omitted)
--------------+----------------------------------------------------------------
-g2022        |
- t_2001_2002 |          0  (omitted)
- t_2002_2003 |          0  (omitted)
- t_2003_2004 |          0  (omitted)
- t_2004_2005 |          0  (omitted)
- t_2005_2006 |          0  (omitted)
- t_2006_2007 |          0  (omitted)
- t_2007_2008 |          0  (omitted)
- t_2008_2009 |          0  (omitted)
- t_2009_2010 |          0  (omitted)
- t_2010_2011 |          0  (omitted)
- t_2011_2012 |          0  (omitted)
- t_2012_2013 |          0  (omitted)
- t_2013_2014 |          0  (omitted)
- t_2014_2015 |          0  (omitted)
- t_2015_2016 |          0  (omitted)
- t_2016_2017 |          0  (omitted)
- t_2017_2018 |          0  (omitted)
- t_2018_2019 |          0  (omitted)
- t_2019_2020 |          0  (omitted)
- t_2020_2021 |          0  (omitted)
- t_2021_2022 |          0  (omitted)
- t_2021_2023 |          0  (omitted)
- t_2021_2024 |          0  (omitted)
-------------------------------------------------------------------------------
-Control: Not yet Treated
-
-See Callaway and Sant'Anna (2021) for details
-
-. 
-. * Overall ATT
-. estat simple
-Average Treatment Effect on Treated
-------------------------------------------------------------------------------
-             | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
--------------+----------------------------------------------------------------
-         ATT |   .0869414   .0403443     2.15   0.031      .007868    .1660147
-------------------------------------------------------------------------------
-
-. 
-. * Group-specific effects
-. estat group
-ATT by group
-------------------------------------------------------------------------------
-             | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
--------------+----------------------------------------------------------------
-    GAverage |   .0600849   .0026791    22.43   0.000      .054834    .0653359
-       G2013 |   .1299116   .0053582    24.25   0.000     .1194097    .1404136
-       G2018 |  -.0097418   6.13e-19 -1.6e+16   0.000    -.0097418   -.0097418
-------------------------------------------------------------------------------
-
-. 
-. * Event study
-. estat event
-ATT by Periods Before and After treatment
-Event Study:Dynamic effects
-------------------------------------------------------------------------------
-             | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
--------------+----------------------------------------------------------------
-     Pre_avg |   .0132674   .0033788     3.93   0.000      .006645    .0198897
-    Post_avg |   .1097096   .0126416     8.68   0.000     .0849325    .1344867
-        Tm16 |   .0328674          .        .       .            .           .
-        Tm15 |   .0366478          .        .       .            .           .
-        Tm14 |  -.0109329          .        .       .            .           .
-        Tm13 |  -.0318413          .        .       .            .           .
-        Tm12 |   -.027626   4.53e-18 -6.1e+15   0.000     -.027626    -.027626
-        Tm11 |  -.0095682   .0142593    -0.67   0.502    -.0375159    .0183795
-        Tm10 |   .0075598   .0115208     0.66   0.512    -.0150205    .0301401
-         Tm9 |   .0403471    .003662    11.02   0.000     .0331697    .0475245
-         Tm8 |   .0931778   .0504478     1.85   0.065    -.0056981    .1920537
-         Tm7 |   .0617571    .014087     4.38   0.000     .0341471     .089367
-         Tm6 |   .0360394   .0236527     1.52   0.128    -.0103191    .0823978
-         Tm5 |   .0287638   .0055556     5.18   0.000      .017875    .0396525
-         Tm4 |  -.0695124   .0152606    -4.56   0.000    -.0994225   -.0396022
-         Tm3 |  -.0464549   .0383989    -1.21   0.226    -.1217153    .0288055
-         Tm2 |   .0339847   .0596046     0.57   0.569    -.0828381    .1508075
-         Tm1 |   .0370688   .0667747     0.56   0.579    -.0938072    .1679449
-         Tp0 |   .0043139   .0042116     1.02   0.306    -.0039407    .0125686
-         Tp1 |   .0359807   .0328582     1.10   0.274    -.0284202    .1003816
-         Tp2 |   .0190473   .0348586     0.55   0.585    -.0492744    .0873689
-         Tp3 |   .0835094   .0567247     1.47   0.141    -.0276689    .1946878
-         Tp4 |   .1900511   .0335266     5.67   0.000     .1243401    .2557621
-         Tp5 |   .1878681          .        .       .            .           .
-         Tp6 |   .1764336          .        .       .            .           .
-         Tp7 |   .1896687          .        .       .            .           .
-         Tp8 |   .1005135          .        .       .            .           .
-------------------------------------------------------------------------------
-
-. * Note: csdid_plot does not accept lcolor(); styling is handled by set scheme s2mono
-. csdid_plot, style(rcap)
-
-. graph export "$graphs_dir/fig10_4_csdid_event_Stata.png", replace width(1200)
-file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/fig10_4_csdid_event_Stata.png saved as PNG
-    format
-
-. 
-. * Calendar time effects
-. estat calendar
-ATT by Calendar Period
-------------------------------------------------------------------------------
-             | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
--------------+----------------------------------------------------------------
-    CAverage |   .0913866   .0249967     3.66   0.000     .0423939    .1403792
-       T2013 |   .0024481   .0094267     0.26   0.795     -.016028    .0209241
-       T2014 |   .0845346   .0063611    13.29   0.000      .072067    .0970022
-       T2015 |   .0686712   .0009326    73.63   0.000     .0668433    .0704991
-       T2016 |   .1690159   .0168304    10.04   0.000     .1360289    .2020029
-       T2017 |   .1900511   .0335266     5.67   0.000     .1243401    .2557621
-       T2018 |    .097024   .0642365     1.51   0.131    -.0288773    .2229252
-       T2019 |   .0819302    .066824     1.23   0.220    -.0490425    .2129028
-       T2020 |    .079546   .0778685     1.02   0.307    -.0730735    .2321654
-       T2021 |   .0492582   .0362429     1.36   0.174    -.0217766     .120293
-------------------------------------------------------------------------------
-
-. 
-. * SDID robustness check with controls (panel already balanced)
-. gen treatment = 0
-
-. replace treatment = 1 if fips == 13 & fy >= 2013
-(12 real changes made)
-
-. replace treatment = 1 if fips == 55 & fy >= 2018
-(7 real changes made)
-
-. replace treatment = 1 if fips == 42 & fy >= 2022
-(3 real changes made)
-
-. 
-. sdid lngenop fips fy treatment, ///
->      vce(placebo) seed(123) ///
->      covariates(lntotsup lnfinaid lntuifee lnfte, projected) ///
->      graph
-Placebo replications (50). This may take some time.
-----+--- 1 ---+--- 2 ---+--- 3 ---+--- 4 ---+--- 5
-..................................................     50
-
-
-Synthetic Difference-in-Differences Estimator
-
------------------------------------------------------------------------------
-     lngenop |     ATT     Std. Err.     t      P>|t|    [95% Conf. Interval]
--------------+---------------------------------------------------------------
-   treatment |   0.00998    0.03506     0.28    0.776    -0.05874     0.07871
------------------------------------------------------------------------------
-95% CIs and p-values are based on large-sample approximations.
-Refer to Arkhangelsky et al., (2021) for theoretical derivations.
-
-. 
-. restore
-
-. 
-. *=======================================================
-. * Section 10.8.2: Permutation Inference
-. * (Sensitivity Analysis)
-. *=======================================================
-. 
-. * Permutation test (may take a while to run)
-. set seed 12345
-
-. permute did coef=_b[did], reps(1000) ///
->   saving(perm_results, replace): ///
->   xtreg lngenop did $controls i.fy, fe vce(cluster fips)
-(running xtreg on estimation sample)
-
-Permutations (1,000): .........10.........20.........30.........40.........50.........60.........70.........80.........9
-> 0.........100.........110.........120.........130.........140.........150.........160.........170.........180.........
-> 190.........200.........210.........220.........230.........240.........250.........260.........270.........280.......
-> ..290.........300.........310.........320.........330.........340.........350.........360.........370.........380.....
-> ....390.........400.........410.........420.........430.........440.........450.........460.........470.........480...
-> ......490.........500.........510.........520.........530.........540.........550.........560.........570.........580.
-> ........590.........600.........610.........620.........630.........640.........650.........660.........670.........68
-> 0.........690.........700.........710.........720.........730.........740.........750.........760.........770.........
-> 780.........790.........800.........810.........820.........830.........840.........850.........860.........870.......
-> ..880.........890.........900.........910.........920.........930.........940.........950.........960.........970.....
-> ....980.........990.........1,000 done
-
-Monte Carlo permutation results                  Number of observations =   336
-Permutation variable: did                        Number of permutations = 1,000
-
-      Command: xtreg lngenop did lntotsup lnfinaid lntuifee lnfte i.fy, fe vce(cluster fips)
-         coef: _b[did]
-
--------------------------------------------------------------------------------
-             |                                               Monte Carlo error
-             |                                              -------------------
-           T |    T(obs)       Test       c       n      p  SE(p)   [95% CI(p)]
--------------+-----------------------------------------------------------------
-        coef | -.0427127      lower      62    1000  .0620  .0076  .0479  .0788
-             |                upper     938    1000  .9380  .0076  .9212  .9521
-             |            two-sided                  .1240  .0104  .1036  .1444
--------------------------------------------------------------------------------
-Notes: For lower one-sided test, c = #{T <= T(obs)} and p = p_lower = c/n.
-       For upper one-sided test, c = #{T >= T(obs)} and p = p_upper = c/n.
-       For two-sided test, p = 2*min(p_lower, p_upper); SE and CI approximate.
-
-. 
-. * Analyze permutation results
-. use perm_results, clear
-(permute did : xtreg)
-
-. summarize coef
-
-    Variable |        Obs        Mean    Std. dev.       Min        Max
--------------+---------------------------------------------------------
-        coef |      1,000   -.0002394    .0263931  -.1022104   .1094455
-
-. histogram coef, normal ///
->   fcolor(gs10) lcolor(gs0) ///
->   normopts(lcolor(gs0) lwidth(medthick) lpattern(solid)) ///
->   name(fig10_5_permutation_hist, replace)
-(bin=29, start=-.10221038, width=.00729848)
-
-. graph export "$graphs_dir/fig10_5_permutation_hist_Stata.png", replace width(1200)
-file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/fig10_5_permutation_hist_Stata.png saved as PNG
-    format
-
-. 
-. *=======================================================
-. * Section 10.8.3: Leave-One-Out Analysis
-. * (Sensitivity Analysis)
-. *=======================================================
-. 
-. * Return to main data
-. * FIX: "Finance_Data.csv" was a stale filename from an earlier draft.
-. * The correct source is Example_10_3_1.csv, downloaded in Section 10.3.1.
-. * Re-import and reconstruct all variables exactly as in Section 10.3.1.
-. import delimited "Example_10_3_1.csv", clear
-(encoding automatically selected: UTF-8)
-(10 vars, 1,082 obs)
-
-. 
-. * Recreate all variables (abbreviated - see Section 10.3.1)
-. replace state = strtrim(state)
-(0 real changes made)
-
-. gen sreb = inlist(state, "Alabama", "Arkansas", "Delaware", "Florida", ///
->            "Georgia", "Kentucky", "Louisiana", "Maryland", "Mississippi") ///
->     | inlist(state, "North Carolina", "Oklahoma", "South Carolina", ///
->              "Tennessee", "Texas", "Virginia", "West Virginia")
-
-. keep if sreb == 1
-(746 observations deleted)
-
-. 
-. gen fips = .
-(336 missing values generated)
-
-. replace fips = 1  if state == "Alabama"
-(21 real changes made)
-
-. replace fips = 5  if state == "Arkansas"
-(21 real changes made)
-
-. replace fips = 10 if state == "Delaware"
-(21 real changes made)
-
-. replace fips = 12 if state == "Florida"
-(21 real changes made)
-
-. replace fips = 13 if state == "Georgia"
-(21 real changes made)
-
-. replace fips = 21 if state == "Kentucky"
-(21 real changes made)
-
-. replace fips = 22 if state == "Louisiana"
-(21 real changes made)
-
-. replace fips = 24 if state == "Maryland"
-(21 real changes made)
-
-. replace fips = 28 if state == "Mississippi"
-(21 real changes made)
-
-. replace fips = 37 if state == "North Carolina"
-(21 real changes made)
-
-. replace fips = 40 if state == "Oklahoma"
-(21 real changes made)
-
-. replace fips = 45 if state == "South Carolina"
-(21 real changes made)
-
-. replace fips = 47 if state == "Tennessee"
-(21 real changes made)
-
-. replace fips = 48 if state == "Texas"
-(21 real changes made)
-
-. replace fips = 51 if state == "Virginia"
-(21 real changes made)
-
-. replace fips = 54 if state == "West Virginia"
-(21 real changes made)
-
-. 
-. gen treat_state = (state == "Georgia")
-
-. gen post = (fy >= 2018)
-
-. gen did = treat_state * post
-
-. 
-. gen lngenop = log(general_public_operations)
-
-. gen lntotsup = log(total_state_support)
-
-. gen lnfinaid = log(total_financial_aid)
-
-. gen lntuifee = log(net_tuition_and_fee_revenue)
-
-. gen lnfte = log(net_fte_enrollment)
-
-. 
-. global controls "lntotsup lnfinaid lntuifee lnfte"
-
 . 
-. xtset fips fy
+. set scheme s2mono    // Springer B&W print (harmless if already set)
 
-Panel variable: fips (strongly balanced)
- Time variable: fy, 2001 to 2021
-         Delta: 1 unit
-
-. 
-. * Leave-one-out analysis
-. levelsof fips if treat_state == 0, local(control_states)
-1 5 10 12 21 22 24 28 37 40 45 47 48 51 54
-
-. 
-. foreach s of local control_states {
-  2.     quietly xtreg lngenop did $controls i.fy if fips != `s', ///
->       fe vce(cluster fips)
-  3.     
-.     matrix b = e(b)
-  4.     local coef_`s' = b[1,1]
-  5. }
-
-. 
-. * Report leave-one-out results
-. display as text _newline "Leave-One-Out Analysis:"
-
-Leave-One-Out Analysis:
-
-. foreach s of local control_states {
-  2.     display as result "Excluding FIPS `s': " %6.4f `coef_`s''
-  3. }
-Excluding FIPS 1: -0.0338
-Excluding FIPS 5: -0.0412
-Excluding FIPS 10: -0.0520
-Excluding FIPS 12: -0.0428
-Excluding FIPS 21: -0.0429
-Excluding FIPS 22: -0.0363
-Excluding FIPS 24: -0.0426
-Excluding FIPS 28: -0.0441
-Excluding FIPS 37: -0.0432
-Excluding FIPS 40: -0.0342
-Excluding FIPS 45: -0.0461
-Excluding FIPS 47: -0.0407
-Excluding FIPS 48: -0.0356
-Excluding FIPS 51: -0.0468
-Excluding FIPS 54: -0.0403
-
-. 
-. *=======================================================
-. * Section 10.9: Results Summary
-. * (Interpretation and Policy Implications)
-. *=======================================================
-. 
-. * Compare main methods
-. estimates table twfe_did lasso_did, ///
->   star(0.1 0.05 0.01) stats(N r2 r2_a)
-
-----------------------------------------------
-    Variable |   twfe_did        lasso_did    
--------------+--------------------------------
-         did | -.04271268**      .0167536     
-    lntotsup |  1.1852322***    1.1236478***  
-    lnfinaid | -.08984114***    -.0891117***  
-    lntuifee |  .07917584                     
-       lnfte |  .29707984*       .3108706*    
-             |
-          fy |
-       2002  | -.01329003                     
-       2003  | -.03267123**                   
-       2004  | -.05710065**                   
-       2005  | -.07307136**                   
-       2006  | -.08228669***                  
-       2007  | -.09608222***                  
-       2008  | -.11390236***                  
-       2009  | -.14232895***                  
-       2010  | -.25129926***                  
-       2011  | -.26124346***                  
-       2012  | -.19800589***                  
-       2013  |  -.1975904***                  
-       2014  | -.19671866***                  
-       2015  | -.19141644***                  
-       2016  | -.20723772***                  
-       2017  | -.20185457***                  
-       2018  | -.20103198***                  
-       2019  | -.20116036***                  
-       2020  | -.22299034***                  
-       2021  | -.24941961***                  
-             |
-lntuifee_p~t |                  .05060169**   
-lntotsup_t~t |                  .03457404     
-lnfinaid_p~t |                  -.0189356     
- lnfte_treat |                 -.24193999**   
-       _cons | -7.6307371***   -5.0280755*    
--------------+--------------------------------
-           N |        336             336     
-          r2 |  .91106808       .99703145     
-        r2_a |  .90389615        .9965943     
-----------------------------------------------
-           Legend: * p<.1; ** p<.05; *** p<.01
-
-. 
-. * Install export package if needed
-. capture which esttab
-
-. if _rc != 0 ssc install estout, replace
-
-. 
-. * Export results to CSV
-. estimates restore twfe_did
-(results twfe_did are active now)
-
-. esttab using results.csv, replace ///
->   title("TWFE DiD") b(4) se(4) star(* 0.10 ** 0.05 *** 0.01)
-(output written to results.csv)
-
-. 
-. estimates restore lasso_did
-(results lasso_did are active now)
-
-. esttab using results_lasso.csv, replace ///
->   title("LASSO DiD") b(4) se(4) star(* 0.10 ** 0.05 *** 0.01)
-(output written to results_lasso.csv)
-
-. 
-. * Combined table
-. esttab twfe_did lasso_did using results_combined.csv, replace ///
->   mtitles("TWFE DiD" "LASSO DiD") ///
->   b(4) se(4) star(* 0.10 ** 0.05 *** 0.01) ///
->   stats(N r2 r2_a, fmt(0 4 4))
-(output written to results_combined.csv)
-
-. 
-. *========================================================================
-. *========================================================================
-. *
-. *    PART B: MARGINAL TREATMENT EFFECTS — RETURNS TO MASTER'S DEGREE
-. *            (Sections 10.10 – 10.16)
-. *
-. *    NOTE: Part B loads a new dataset (Example_7_5_3_updated.dta /
-. *    Example_7_5_3.dta) and resets the random-number seed.
-. *    All locals and globals from Part A remain in scope but are not
-. *    referenced by Part B code.
-. *
-. *========================================================================
-. *========================================================================
 . 
 . ********************************************************************************
 . * SECTION 1: Load Dataset
@@ -1870,15 +33,14 @@ LOADING SYNTHETIC B&B DATASET
 . * Download Part B dataset from GitHub repository.
 . * Try the updated file (contains pre-generated ma_* variables) first;
 . * fall back to the base file if the updated version is unavailable.
-. * If neither is found locally, attempt to download from the repository.
 . capture confirm file "Example_7_5_3_updated.dta"
 
 . if _rc != 0 {
 .     di as text "Attempting to download Example_7_5_3_updated.dta from GitHub..."
 Attempting to download Example_7_5_3_updated.dta from GitHub...
 .     capture copy ///
->         "https://raw.githubusercontent.com/higher-ed-policy-analysis-2nd-edition/data/main/ch10/Example_7_5_3_updated.
-> dta" ///
+>         "https://raw.githubusercontent.com/higher-ed-policy-analysis-2nd-edition/data/main/ch10/Example_7_5
+> _3_updated.dta" ///
 >         "Example_7_5_3_updated.dta", replace
 .     if _rc != 0 di as text "Download failed — will try local file or base version."
 Download failed — will try local file or base version.
@@ -1893,12 +55,14 @@ Note: Example_7_5_3_updated.dta not found.
 .     di as text "Attempting to download Example_7_5_3.dta from GitHub (ch7 repository)..."
 Attempting to download Example_7_5_3.dta from GitHub (ch7 repository)...
 .     capture copy ///
->         "https://raw.githubusercontent.com/higher-ed-policy-analysis-2nd-edition/data/main/ch7/Example_7_5_3.dta" ///
+>         "https://raw.githubusercontent.com/higher-ed-policy-analysis-2nd-edition/data/main/ch7/Example_7_5_
+> 3.dta" ///
 >         "Example_7_5_3.dta", replace
 .     if _rc != 0 {
 .         di as error "ERROR: Download of Example_7_5_3.dta failed."
 .         di as error "Please download the file manually from:"
-.         di as error "https://github.com/higher-ed-policy-analysis-2nd-edition/data/blob/main/ch7/Example_7_5_3.dta"
+.         di as error "https://github.com/higher-ed-policy-analysis-2nd-edition/data/blob/main/ch7/Example_7_
+> 5_3.dta"
 .         di as error "and place it in the working directory before running Part B."
 .         exit 601
 .     }
@@ -1918,10 +82,10 @@ Loading Example_7_5_3.dta; ma_* will be generated in Section 1b.
 Contains data from Example_7_5_3.dta
  Observations:         8,000                  
     Variables:            39                  3 Dec 2025 20:07
-------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------
 Variable      Storage   Display    Value
     name         type    format    label      Variable label
-------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------
 id              float   %9.0g                 
 female          float   %9.0g                 Female (1=Yes)
 white           byte    %8.0g                 
@@ -1961,7 +125,7 @@ salary          float   %9.0g                 Annual Salary ($)
 _est_ols_model  byte    %8.0g                 esample() from estimates store
 _est_first_st~e byte    %8.0g                 esample() from estimates store
 _est_iv_model   byte    %8.0g                 esample() from estimates store
-------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------
 Sorted by: state
 
 . di _n "Sample size: " _N
@@ -2011,12 +175,7 @@ MASTER'S PROGRAM AREA INDICATORS
 .     * FIX G (v14): generate ma_* from undergraduate major fields when
 .     * the updated dataset is unavailable.  Uses a seeded random draw so
 .     * results are reproducible.  Transition probabilities match the
-.     * pipeline definitions in Sections 10b and the data-generation script:
-.     *   STEM undergrads   -> 55% enter STEM graduate programs
-.     *   Business undergrads -> 65% enter Business graduate programs
-.     *   Education undergrads -> 70% enter Education graduate programs
-.     *   SocSci/STEM overlap -> 40% enter Health graduate programs
-.     *   Remainder -> Other
+.     * pipeline definitions in Sections 10b and the data-generation script.
 .     *
 .     * All untreated obs (masters==0) receive ma_* = 0 throughout.
 .     di as text "Generating ma_* variables from undergraduate major fields..."
@@ -2028,30 +187,23 @@ Generating ma_* variables from undergraduate major fields...
 .     gen ma_health    = 0
 .     gen ma_other     = 0
 . 
-.     * Seeded draw — one random value per treated observation
 .     set seed 20251130
-. set scheme s2mono        // Monochrome scheme for Springer B&W print
 .     gen _rma = runiform() if masters == 1
 (4,932 missing values generated)
 .     replace _rma = . if masters == 0
 (0 real changes made)
 . 
-.     * STEM: 55% of STEM undergrads enter STEM grad
 .     replace ma_stem      = 1 if masters==1 & stem_major==1 & _rma <= 0.55
 (585 real changes made)
-.     * Business: 65% of bus undergrads enter Business grad
 .     replace ma_business  = 1 if masters==1 & bus_major==1  & _rma <= 0.65 & ma_stem==0
 (179 real changes made)
-.     * Education: 70% of ed undergrads enter Education grad
 .     replace ma_education = 1 if masters==1 & ed_major==1   & _rma <= 0.70 & ma_stem==0 & ma_business==0
 (213 real changes made)
-.     * Health: 40% of socsci/other undergrads; overflow STEM (_rma 0.55-0.75)
-.     replace ma_health    = 1 if masters==1 & socsci_major==1 & _rma <= 0.40 & ma_stem==0 & ma_business==0 & ma_educati
-> on==0
+.     replace ma_health    = 1 if masters==1 & socsci_major==1 & _rma <= 0.40 & ma_stem==0 & ma_business==0 &
+>  ma_education==0
 (553 real changes made)
 .     replace ma_health    = 1 if masters==1 & stem_major==1   & _rma >  0.55 & _rma <= 0.75 & ma_stem==0
 (234 real changes made)
-.     * Other: all remaining treated obs
 .     replace ma_other     = 1 if masters==1 & ma_stem==0 & ma_business==0 & ma_education==0 & ma_health==0
 (1,304 real changes made)
 . 
@@ -2326,8 +478,8 @@ INSTRUMENT RELEVANCE CHECK
 ==============================================
 
 . 
-. global X_controls "female black hispanic asian age_ba firstgen parent_income_q parent_grad ugpa stem_major bus_major e
-> d_major selective_inst public_ug state_unemp metro"
+. global X_controls "female black hispanic asian age_ba firstgen parent_income_q parent_grad ugpa stem_major 
+> bus_major ed_major selective_inst public_ug state_unemp metro"
 
 . global X "$X_controls"
 
@@ -2574,17 +726,6 @@ MTE ESTIMATION — POOLED POLYNOMIAL
 
 . di "=============================================="
 ==============================================
-
-. 
-. capture which mtefe
-
-. if _rc != 0 ssc install mtefe, replace
-
-. capture which moremata
-
-. if _rc != 0 ssc install moremata, replace
-checking moremata consistency and verifying not already installed...
-all files already exist and are up to date.
 
 . 
 . probit masters $Z $X
@@ -2945,13 +1086,6 @@ standard errors.
 
 . local mtefe_atu_q = _b[effects:atut]
 
-. 
-. * NOTE: The mtefe "mte" plot option is omitted here. Even with bootreps(0),
-. *   mtefe's internal graph-generation code calls sub-programs that leave
-. *   stale execution-context state, producing r(198) at EOF with nostop.
-. *   MTE curves are instead generated manually in Section 8, which produces
-. *   equivalent plots with full control over styling. The mtePlot graph
-. *   name is therefore not available; its capture display line is removed.
 . 
 . di _n "mtefe Results (Quadratic, pol=2):"
 
@@ -3341,19 +1475,20 @@ c.masters#c.ma_education#c.phat3 |  -14.82897    6.21228    -2.39   0.017    -27
 . di "  Base (Other): " %7.4f `B0' " + " %7.4f `B1' "*u + " %7.4f `B2' "*u^2 + " %7.4f `B3' "*u^3"
   Base (Other): -2.9296 + 22.2911*u + -36.5080*u^2 + 19.0475*u^3
 
-. di "  STEM:         " %7.4f `c0_stem' " + " %7.4f `c1_stem' "*u + " %7.4f `c2_stem' "*u^2 + " %7.4f `c3_stem' "*u^3"
+. di "  STEM:         " %7.4f `c0_stem' " + " %7.4f `c1_stem' "*u + " %7.4f `c2_stem' "*u^2 + " %7.4f `c3_ste
+> m' "*u^3"
   STEM:         -1.6339 + 13.4719*u + -18.5389*u^2 +  8.0797*u^3
 
-. di "  Business:     " %7.4f `c0_business' " + " %7.4f `c1_business' "*u + " %7.4f `c2_business' "*u^2 + " %7.4f `c3_bu
-> siness' "*u^3"
+. di "  Business:     " %7.4f `c0_business' " + " %7.4f `c1_business' "*u + " %7.4f `c2_business' "*u^2 + " %
+> 7.4f `c3_business' "*u^3"
   Business:     -2.7033 + 27.2014*u + -59.5009*u^2 + 42.5194*u^3
 
-. di "  Education:    " %7.4f `c0_education' " + " %7.4f `c1_education' "*u + " %7.4f `c2_education' "*u^2 + " %7.4f `c3
-> _education' "*u^3"
+. di "  Education:    " %7.4f `c0_education' " + " %7.4f `c1_education' "*u + " %7.4f `c2_education' "*u^2 + 
+> " %7.4f `c3_education' "*u^3"
   Education:    -2.1008 + 13.6979*u + -15.4770*u^2 +  4.2185*u^3
 
-. di "  Health:       " %7.4f `c0_health' " + " %7.4f `c1_health' "*u + " %7.4f `c2_health' "*u^2 + " %7.4f `c3_health' 
-> "*u^3"
+. di "  Health:       " %7.4f `c0_health' " + " %7.4f `c1_health' "*u + " %7.4f `c2_health' "*u^2 + " %7.4f `
+> c3_health' "*u^3"
   Health:       -2.4567 + 18.8718*u + -29.2991*u^2 + 14.5364*u^3
 
 . 
@@ -3390,15 +1525,20 @@ c.masters#c.ma_education#c.phat3 |  -14.82897    6.21228    -2.39   0.017    -27
 
 . 
 . * Area-specific MTE_hat variables
-. gen mte_hat_other     = `B0'           + `B1'           *phat + `B2'           *phat2 + `B3'           *phat3
+. gen mte_hat_other     = `B0'           + `B1'           *phat + `B2'           *phat2 + `B3'           *pha
+> t3
 
-. gen mte_hat_stem      = `c0_stem'      + `c1_stem'      *phat + `c2_stem'      *phat2 + `c3_stem'      *phat3
+. gen mte_hat_stem      = `c0_stem'      + `c1_stem'      *phat + `c2_stem'      *phat2 + `c3_stem'      *pha
+> t3
 
-. gen mte_hat_business  = `c0_business'  + `c1_business'  *phat + `c2_business'  *phat2 + `c3_business'  *phat3
+. gen mte_hat_business  = `c0_business'  + `c1_business'  *phat + `c2_business'  *phat2 + `c3_business'  *pha
+> t3
 
-. gen mte_hat_education = `c0_education' + `c1_education' *phat + `c2_education' *phat2 + `c3_education' *phat3
+. gen mte_hat_education = `c0_education' + `c1_education' *phat + `c2_education' *phat2 + `c3_education' *pha
+> t3
 
-. gen mte_hat_health    = `c0_health'    + `c1_health'    *phat + `c2_health'    *phat2 + `c3_health'    *phat3
+. gen mte_hat_health    = `c0_health'    + `c1_health'    *phat + `c2_health'    *phat2 + `c3_health'    *pha
+> t3
 
 . 
 . label var mte_hat_other     "Area-specific MTE hat: Other (base)"
@@ -3463,6 +1603,154 @@ c.masters#c.ma_education#c.phat3 |  -14.82897    6.21228    -2.39   0.017    -27
   ATU (pooled): 0.5528
 
 . 
+. ********************************************************************************
+. * SECTION 6b-ATU: PROSPECTIVE PROGRAM AREA ASSIGNMENT FOR UNTREATED
+. *
+. * ATU_a = E[MTE_a(phat) | masters==0, prospective_area==a]
+. *
+. * Because ma_* = 0 for all untreated observations by construction,
+. * area-specific ATU requires assigning untreated individuals to the
+. * graduate program area they would most likely have entered, given their
+. * undergraduate major field and the same transition probabilities used
+. * for the treated group in Section 1b.
+. *
+. * This is a counterfactual assignment — not an observed classification.
+. * Prose must note that ATU_a estimates the return for untreated students
+. * who, had they completed a master's degree, would most likely have
+. * entered program area a given their undergraduate background.
+. *
+. * Transition probabilities (mirroring Section 1b):
+. *   STEM:      stem_major,    p <= 0.55
+. *   Business:  bus_major,     p <= 0.65 (conditional on not STEM)
+. *   Education: ed_major,      p <= 0.70 (conditional on not STEM/Bus)
+. *   Health:    socsci_major   p <= 0.40 OR stem_major p in (0.55, 0.75]
+. *   Other:     residual
+. *
+. * Seed 20260102 (distinct from treated seed 20251130) ensures
+. * reproducibility without cross-contaminating the treated assignment.
+. ********************************************************************************
+. 
+. di _n "=============================================="
+
+==============================================
+
+. di "SECTION 6b-ATU: PROSPECTIVE PROGRAM AREA (UNTREATED)"
+SECTION 6b-ATU: PROSPECTIVE PROGRAM AREA (UNTREATED)
+
+. di "=============================================="
+==============================================
+
+. 
+. * Generate prospective indicators (untreated only; treated keep ma_* = 0)
+. gen ma_stem_pro      = 0
+
+. gen ma_business_pro  = 0
+
+. gen ma_education_pro = 0
+
+. gen ma_health_pro    = 0
+
+. gen ma_other_pro     = 0
+
+. 
+. label var ma_stem_pro      "Prospective STEM master's (untreated)"
+
+. label var ma_business_pro  "Prospective Business master's (untreated)"
+
+. label var ma_education_pro "Prospective Education master's (untreated)"
+
+. label var ma_health_pro    "Prospective Health master's (untreated)"
+
+. label var ma_other_pro     "Prospective Other master's (untreated)"
+
+. 
+. set seed 20260102
+
+. gen _rma_u = runiform() if masters == 0
+(3,068 missing values generated)
+
+. replace _rma_u = . if masters == 1
+(0 real changes made)
+
+. 
+. replace ma_stem_pro      = 1 if masters==0 & stem_major==1   & _rma_u <= 0.55
+(463 real changes made)
+
+. replace ma_business_pro  = 1 if masters==0 & bus_major==1    & _rma_u <= 0.65 ///
+>                                            & ma_stem_pro==0
+(598 real changes made)
+
+. replace ma_education_pro = 1 if masters==0 & ed_major==1     & _rma_u <= 0.70 ///
+>                                            & ma_stem_pro==0 & ma_business_pro==0
+(264 real changes made)
+
+. replace ma_health_pro    = 1 if masters==0 & socsci_major==1 & _rma_u <= 0.40 ///
+>                                            & ma_stem_pro==0 & ma_business_pro==0 ///
+>                                            & ma_education_pro==0
+(1,092 real changes made)
+
+. replace ma_health_pro    = 1 if masters==0 & stem_major==1   & _rma_u >  0.55 ///
+>                                            & _rma_u <= 0.75  & ma_stem_pro==0
+(189 real changes made)
+
+. replace ma_other_pro     = 1 if masters==0 & ma_stem_pro==0 & ma_business_pro==0 ///
+>                                            & ma_education_pro==0 & ma_health_pro==0
+(2,326 real changes made)
+
+. drop _rma_u
+
+. 
+. * Verification
+. qui count if masters == 0
+
+. local n_untreated = r(N)
+
+. di "Total untreated: " `n_untreated'
+Total untreated: 4932
+
+. foreach a in stem business education health other {
+  2.     qui count if masters==0 & ma_`a'_pro == 1
+  3.     di "  ma_`a'_pro: " r(N) "  (" %5.1f r(N)/`n_untreated'*100 "%)"
+  4. }
+  ma_stem_pro: 463  (  9.4%)
+  ma_business_pro: 598  ( 12.1%)
+  ma_education_pro: 264  (  5.4%)
+  ma_health_pro: 1281  ( 26.0%)
+  ma_other_pro: 2326  ( 47.2%)
+
+. 
+. * Check mutual exclusivity
+. gen _pro_check = ma_stem_pro + ma_business_pro + ma_education_pro ///
+>                + ma_health_pro + ma_other_pro if masters == 0
+(3,068 missing values generated)
+
+. qui count if masters==0 & _pro_check != 1
+
+. if r(N) > 0 di "WARNING: " r(N) " untreated obs with != 1 prospective area flag"
+
+. else         di "CHECK PASSED: all untreated obs have exactly 1 prospective area"
+CHECK PASSED: all untreated obs have exactly 1 prospective area
+
+. drop _pro_check
+
+. 
+. * Area-specific ATU point estimates
+. di _n "--- Area-Specific ATU (prospective assignment) ---"
+
+--- Area-Specific ATU (prospective assignment) ---
+
+. foreach a in stem business education health other {
+  2.     qui sum mte_hat_`a' if masters==0 & ma_`a'_pro==1
+  3.     local atu_`a' = r(mean)
+  4.     di "  ATU (`a'): " %6.4f `atu_`a''
+  5. }
+  ATU (stem): 1.0820
+  ATU (business): 0.3574
+  ATU (education): 0.7348
+  ATU (health): 0.5685
+  ATU (other): 0.4836
+
+. 
 . di _n "=============================================="
 
 ==============================================
@@ -3473,26 +1761,26 @@ AREA-SPECIFIC TREATMENT PARAMETER SUMMARY
 . di "=============================================="
 ==============================================
 
-. di "Area          ATE        ATT"
-Area          ATE        ATT
+. di "Area          ATE        ATT        ATU (prospective)"
+Area          ATE        ATT        ATU (prospective)
 
-. di "--------------------------------------------"
---------------------------------------------
+. di "----------------------------------------------------"
+----------------------------------------------------
 
-. di "  Other     " %7.4f `ate_other'     "    " %7.4f `att_other'
-  Other      0.8085     1.1750
+. di "  Other     " %7.4f `ate_other'     "    " %7.4f `att_other'     "    " %7.4f `atu_other'
+  Other      0.8085     1.1750     0.4836
 
-. di "  STEM      " %7.4f `ate_stem'      "    " %7.4f `att_stem'
-  STEM       0.9424     1.3566
+. di "  STEM      " %7.4f `ate_stem'      "    " %7.4f `att_stem'      "    " %7.4f `atu_stem'
+  STEM       0.9424     1.3566     1.0820
 
-. di "  Business  " %7.4f `ate_business'  "    " %7.4f `att_business'
-  Business   1.6936     1.0977
+. di "  Business  " %7.4f `ate_business'  "    " %7.4f `att_business'  "    " %7.4f `atu_business'
+  Business   1.6936     1.0977     0.3574
 
-. di "  Education " %7.4f `ate_education' "    " %7.4f `att_education'
-  Education  0.6437     1.2200
+. di "  Education " %7.4f `ate_education' "    " %7.4f `att_education' "    " %7.4f `atu_education'
+  Education  0.6437     1.2200     0.7348
 
-. di "  Health    " %7.4f `ate_health'    "    " %7.4f `att_health'
-  Health     0.8469     1.2086
+. di "  Health    " %7.4f `ate_health'    "    " %7.4f `att_health'    "    " %7.4f `atu_health'
+  Health     0.8469     1.2086     0.5685
 
 . 
 . ********************************************************************************
@@ -3504,7 +1792,7 @@ Area          ATE        ATT
 . *
 . * Architecture:
 . *   - postfile/postclose stores one row of estimates per replication
-. 
+. *
 . * -----------------------------------------------------------------------
 . * 6c-i  Manual cluster bootstrap — forvalues loop, NO continue in braces
 . *
@@ -3520,7 +1808,6 @@ Area          ATE        ATT
 . *   closing brace is always reached. No continue is used anywhere.
 . * -----------------------------------------------------------------------
 . 
-. * --- Bootstrap initialization (was lost in v10→v11 edit; restored here) ---
 . tempname bsh
 
 . tempfile bsf
@@ -3528,13 +1815,13 @@ Area          ATE        ATT
 . 
 . postfile `bsh'                ///
 >     b_ate b_att b_atu          ///
->     b_ate_stem    b_att_stem   ///
->     b_ate_bus     b_att_bus    ///
->     b_ate_ed      b_att_ed     ///
->     b_ate_hlth    b_att_hlth   ///
->     b_ate_oth     b_att_oth    ///
+>     b_ate_stem    b_att_stem   b_atu_stem  ///
+>     b_ate_bus     b_att_bus    b_atu_bus   ///
+>     b_ate_ed      b_att_ed     b_atu_ed    ///
+>     b_ate_hlth    b_att_hlth   b_atu_hlth  ///
+>     b_ate_oth     b_att_oth    b_atu_oth   ///
 >     using `bsf', replace
-(file C:\Users\marvi\AppData\Local\Temp\ST_3b34_000004.tmp not found)
+(file C:\Users\marvi\AppData\Local\Temp\ST_1908_000001.tmp not found)
 
 . 
 . set seed 20260101
@@ -3544,6 +1831,15 @@ Area          ATE        ATT
 . local n_ok = 0
 
 . 
+. * -----------------------------------------------------------------------
+. * NOTE — RUNTIME: This loop is the slowest part of the chapter's code.
+. * It re-estimates the full polynomial-control-function MTE model once per
+. * replication (R=500), each preceded by a preserve/resample/restore cycle.
+. * Expect roughly 2 minutes on a typical machine; this single section
+. * accounts for most of MTE_MPRTE.do's total run time. No action needed —
+. * just be patient and let it finish.
+. * -----------------------------------------------------------------------
+. 
 . di _n "Running manual cluster bootstrap (G=50, R=`R' reps)..."
 
 Running manual cluster bootstrap (G=50, R=500 reps)...
@@ -3551,20 +1847,17 @@ Running manual cluster bootstrap (G=50, R=500 reps)...
 . di "Each dot = 10 reps completed"
 Each dot = 10 reps completed
 
+. di "NOTE: this step is the slowest part of the script — expect roughly" ///
+>    " 1-2 minutes to complete."
+NOTE: this step is the slowest part of the script — expect roughly 1-2 minutes to complete.
+
 . 
 . forvalues b = 1/`R' {
   2. 
 .     preserve
   3. 
-.     * ok flag: set to 0 on any estimation failure, skip post at end
 .     local ok = 1
   4. 
-.     * BUG FIX v13: bsample wrapped in capture so that if cluster sampling
-.     * fails (e.g. cluster variable not found, collinear sample, etc.) the
-.     * loop does NOT abort mid-iteration.  Without capture, a bsample failure
-.     * terminates the forvalues loop before restore is reached, leaving a
-.     * stale preserve open and causing "already preserved r(621)" at the
-.     * next preserve call (SE extraction block after the loop).
 .     capture quietly bsample, cluster(state) idcluster(newstate)
   5.     if _rc != 0 local ok = 0
   6. 
@@ -3632,77 +1925,87 @@ Each dot = 10 reps completed
  46.         quietly gen _ms = `C0' + `C1'*_pb + `C2'*_pb2 + `C3'*_pb3
  47.         quietly sum _ms if ma_stem == 1
  48.         local b_att_stem_r = r(mean)
- 49.         drop _ms
- 50. 
+ 49.         quietly sum _ms if masters==0 & ma_stem_pro==1
+ 50.         local b_atu_stem_r = r(mean)
+ 51.         drop _ms
+ 52. 
 .         * Business
 .         local D0 = _b[c.masters#c.ma_business]
- 51.         local D1 = _b[c.masters#c.ma_business#c._pb]
- 52.         local D2 = _b[c.masters#c.ma_business#c._pb2]
- 53.         local D3 = _b[c.masters#c.ma_business#c._pb3]
- 54.         local C0 = `BB0' + `D0'
- 55.         local C1 = `BB1' + `D1'
- 56.         local C2 = `BB2' + `D2'
- 57.         local C3 = `BB3' + `D3'
- 58.         local b_ate_bus_r = `C0' + `C1'/2 + `C2'/3 + `C3'/4
- 59.         quietly gen _ms = `C0' + `C1'*_pb + `C2'*_pb2 + `C3'*_pb3
- 60.         quietly sum _ms if ma_business == 1
- 61.         local b_att_bus_r = r(mean)
- 62.         drop _ms
- 63. 
+ 53.         local D1 = _b[c.masters#c.ma_business#c._pb]
+ 54.         local D2 = _b[c.masters#c.ma_business#c._pb2]
+ 55.         local D3 = _b[c.masters#c.ma_business#c._pb3]
+ 56.         local C0 = `BB0' + `D0'
+ 57.         local C1 = `BB1' + `D1'
+ 58.         local C2 = `BB2' + `D2'
+ 59.         local C3 = `BB3' + `D3'
+ 60.         local b_ate_bus_r = `C0' + `C1'/2 + `C2'/3 + `C3'/4
+ 61.         quietly gen _ms = `C0' + `C1'*_pb + `C2'*_pb2 + `C3'*_pb3
+ 62.         quietly sum _ms if ma_business == 1
+ 63.         local b_att_bus_r = r(mean)
+ 64.         quietly sum _ms if masters==0 & ma_business_pro==1
+ 65.         local b_atu_bus_r = r(mean)
+ 66.         drop _ms
+ 67. 
 .         * Education
 .         local D0 = _b[c.masters#c.ma_education]
- 64.         local D1 = _b[c.masters#c.ma_education#c._pb]
- 65.         local D2 = _b[c.masters#c.ma_education#c._pb2]
- 66.         local D3 = _b[c.masters#c.ma_education#c._pb3]
- 67.         local C0 = `BB0' + `D0'
- 68.         local C1 = `BB1' + `D1'
- 69.         local C2 = `BB2' + `D2'
- 70.         local C3 = `BB3' + `D3'
- 71.         local b_ate_ed_r = `C0' + `C1'/2 + `C2'/3 + `C3'/4
- 72.         quietly gen _ms = `C0' + `C1'*_pb + `C2'*_pb2 + `C3'*_pb3
- 73.         quietly sum _ms if ma_education == 1
- 74.         local b_att_ed_r = r(mean)
- 75.         drop _ms
- 76. 
+ 68.         local D1 = _b[c.masters#c.ma_education#c._pb]
+ 69.         local D2 = _b[c.masters#c.ma_education#c._pb2]
+ 70.         local D3 = _b[c.masters#c.ma_education#c._pb3]
+ 71.         local C0 = `BB0' + `D0'
+ 72.         local C1 = `BB1' + `D1'
+ 73.         local C2 = `BB2' + `D2'
+ 74.         local C3 = `BB3' + `D3'
+ 75.         local b_ate_ed_r = `C0' + `C1'/2 + `C2'/3 + `C3'/4
+ 76.         quietly gen _ms = `C0' + `C1'*_pb + `C2'*_pb2 + `C3'*_pb3
+ 77.         quietly sum _ms if ma_education == 1
+ 78.         local b_att_ed_r = r(mean)
+ 79.         quietly sum _ms if masters==0 & ma_education_pro==1
+ 80.         local b_atu_ed_r = r(mean)
+ 81.         drop _ms
+ 82. 
 .         * Health
 .         local D0 = _b[c.masters#c.ma_health]
- 77.         local D1 = _b[c.masters#c.ma_health#c._pb]
- 78.         local D2 = _b[c.masters#c.ma_health#c._pb2]
- 79.         local D3 = _b[c.masters#c.ma_health#c._pb3]
- 80.         local C0 = `BB0' + `D0'
- 81.         local C1 = `BB1' + `D1'
- 82.         local C2 = `BB2' + `D2'
- 83.         local C3 = `BB3' + `D3'
- 84.         local b_ate_hlth_r = `C0' + `C1'/2 + `C2'/3 + `C3'/4
- 85.         quietly gen _ms = `C0' + `C1'*_pb + `C2'*_pb2 + `C3'*_pb3
- 86.         quietly sum _ms if ma_health == 1
- 87.         local b_att_hlth_r = r(mean)
- 88.         drop _ms
- 89. 
+ 83.         local D1 = _b[c.masters#c.ma_health#c._pb]
+ 84.         local D2 = _b[c.masters#c.ma_health#c._pb2]
+ 85.         local D3 = _b[c.masters#c.ma_health#c._pb3]
+ 86.         local C0 = `BB0' + `D0'
+ 87.         local C1 = `BB1' + `D1'
+ 88.         local C2 = `BB2' + `D2'
+ 89.         local C3 = `BB3' + `D3'
+ 90.         local b_ate_hlth_r = `C0' + `C1'/2 + `C2'/3 + `C3'/4
+ 91.         quietly gen _ms = `C0' + `C1'*_pb + `C2'*_pb2 + `C3'*_pb3
+ 92.         quietly sum _ms if ma_health == 1
+ 93.         local b_att_hlth_r = r(mean)
+ 94.         quietly sum _ms if masters==0 & ma_health_pro==1
+ 95.         local b_atu_hlth_r = r(mean)
+ 96.         drop _ms
+ 97. 
 .         * Other (base)
 .         local b_ate_oth_r = `BB0' + `BB1'/2 + `BB2'/3 + `BB3'/4
- 90.         quietly gen _mb = `BB0' + `BB1'*_pb + `BB2'*_pb2 + `BB3'*_pb3
- 91.         quietly sum _mb if ma_other == 1
- 92.         local b_att_oth_r = r(mean)
- 93.         drop _mb
- 94. 
+ 98.         quietly gen _mb = `BB0' + `BB1'*_pb + `BB2'*_pb2 + `BB3'*_pb3
+ 99.         quietly sum _mb if ma_other == 1
+100.         local b_att_oth_r = r(mean)
+101.         quietly sum _mb if masters==0 & ma_other_pro==1
+102.         local b_atu_oth_r = r(mean)
+103.         drop _mb
+104. 
 .         post `bsh' ///
->             (`b_ate_r')      (`b_att_r')      (`b_atu_r')     ///
->             (`b_ate_stem_r')  (`b_att_stem_r') ///
->             (`b_ate_bus_r')   (`b_att_bus_r')  ///
->             (`b_ate_ed_r')    (`b_att_ed_r')   ///
->             (`b_ate_hlth_r')  (`b_att_hlth_r') ///
->             (`b_ate_oth_r')   (`b_att_oth_r')
- 95. 
+>             (`b_ate_r')      (`b_att_r')      (`b_atu_r')      ///
+>             (`b_ate_stem_r')  (`b_att_stem_r') (`b_atu_stem_r') ///
+>             (`b_ate_bus_r')   (`b_att_bus_r')  (`b_atu_bus_r')  ///
+>             (`b_ate_ed_r')    (`b_att_ed_r')   (`b_atu_ed_r')   ///
+>             (`b_ate_hlth_r')  (`b_att_hlth_r') (`b_atu_hlth_r') ///
+>             (`b_ate_oth_r')   (`b_att_oth_r')  (`b_atu_oth_r')
+105. 
 .         local n_ok = `n_ok' + 1
- 96.     }
- 97. 
+106.     }
+107. 
 .     * Drop temp vars and restore — always executed every iteration
 .     capture drop _pb _pb2 _pb3 _mb _ms
- 98.     restore
- 99. 
+108.     restore
+109. 
 .     if mod(`b', 10) == 0 di "." _continue
-100. }
+110. }
 ..................................................
 . 
 . postclose `bsh'
@@ -3737,6 +2040,10 @@ Bootstrap complete: 500 of 500 reps successful
 
 .     local att_se_stem = r(sd)
 
+.     quietly sum b_atu_stem
+
+.     local atu_se_stem = r(sd)
+
 .     quietly sum b_ate_bus
 
 .     local ate_se_business = r(sd)
@@ -3744,6 +2051,10 @@ Bootstrap complete: 500 of 500 reps successful
 .     quietly sum b_att_bus
 
 .     local att_se_business = r(sd)
+
+.     quietly sum b_atu_bus
+
+.     local atu_se_business = r(sd)
 
 .     quietly sum b_ate_ed
 
@@ -3753,6 +2064,10 @@ Bootstrap complete: 500 of 500 reps successful
 
 .     local att_se_education = r(sd)
 
+.     quietly sum b_atu_ed
+
+.     local atu_se_education = r(sd)
+
 .     quietly sum b_ate_hlth
 
 .     local ate_se_health = r(sd)
@@ -3760,6 +2075,10 @@ Bootstrap complete: 500 of 500 reps successful
 .     quietly sum b_att_hlth
 
 .     local att_se_health = r(sd)
+
+.     quietly sum b_atu_hlth
+
+.     local atu_se_health = r(sd)
 
 .     quietly sum b_ate_oth
 
@@ -3769,38 +2088,29 @@ Bootstrap complete: 500 of 500 reps successful
 
 .     local att_se_other = r(sd)
 
+.     quietly sum b_atu_oth
+
+.     local atu_se_other = r(sd)
+
 . restore
 
 . 
 . * -----------------------------------------------------------------------
 . * 6c-iv  mtefe bootstrap SEs — aliased from Section 6c-i
 . *
-. * The fastest approach is to reuse the Section 6c-i bootstrap SEs.
 . * Both the manual polynomial estimator (Section 6) and mtefe target the
 . * same parameters (ATE, ATT, ATU, LATE) from the same data. The 500-rep
 . * cluster bootstrap already run in Section 6c-i bootstraps the full
 . * probit + polynomial pipeline, so those SEs characterise sampling
 . * uncertainty for any polynomial MTE estimator on this dataset.
-. *
-. * Running a separate mtefe bootstrap loop (~2-4 min per 200 reps) adds
-. * no information beyond what Section 6c-i already provides. We therefore
-. * alias directly — zero additional compute time.
-. *
-. * If you specifically want mtefe-internal SEs (e.g. for publication
-. * reviewers who insist on them), set R_mte to a small number (50) and
-. * uncomment the full loop that was in v10 of this script.
 . * -----------------------------------------------------------------------
 . 
-. * Alias: mtefe SEs = manual polynomial SEs from Section 6c-i
 . local mtefe_ate_se   = `ate_se'
 
 . local mtefe_att_se   = `att_se'
 
 . local mtefe_atu_se   = `atu_se'
 
-. * LATE SE from IV/2SLS (Section 5)  -- comment moved off the assignment line
-. * to avoid r(198): when iv_se is empty after macro expansion, the inline
-. * block comment becomes the sole token Stata tries to evaluate as an expression.
 . local mtefe_late_se  = `iv_se'
 
 . local mtefe_ate_q_se = `ate_se'
@@ -3840,28 +2150,11 @@ Bootstrap complete: 500 of 500 reps successful
   ATU:  0.0705  (BS SE = 0.1082)
 
 . 
-. * 6c-ii  To activate multi-core speedup (Option A):
-. *   Install: net install parallel,
-. *       from("https://raw.github.com/gvegayon/parallel/stable/")
-. *   Then replace the forvalues loop above with parfor syntax or
-. *   use the parallel package to distribute the loop across cores.
-. *   Set ncores to the number of physical cores on your machine.
-. *   With the postfile approach, parallel output can be combined with
-. *   "append using" after each parallel block.
-. * -----------------------------------------------------------------------
-. 
 . * -----------------------------------------------------------------------
 . * 6c-iii  Wild cluster bootstrap for OLS and IV stages
 . *   Webb weights, 9999 reps: runs in seconds, valid for G=50.
 . *   Requires: ssc install fwildclusterboot
 . * -----------------------------------------------------------------------
-. capture which boottest
-
-. if _rc != 0 {
-.     di "Installing fwildclusterboot..."
-.     ssc install fwildclusterboot, replace
-. }
-
 . 
 . di _n "--- Wild Cluster Bootstrap: OLS ---"
 
@@ -3873,8 +2166,8 @@ Bootstrap complete: 500 of 500 reps successful
 
 Overriding estimator's cluster/robust settings with cluster(state)
 
-Wild bootstrap-t, null imposed, 9999 replications, Wald test, clustering by state, bootstrap clustering by state, Radema
-> cher weights:
+Wild bootstrap-t, null imposed, 9999 replications, Wald test, clustering by state, bootstrap clustering by st
+> ate, Rademacher weights:
   masters
 
                            t(49) =    18.4108
@@ -3896,8 +2189,8 @@ Wild bootstrap-t, null imposed, 9999 replications, Wald test, clustering by stat
 
 Overriding estimator's cluster/robust settings with cluster(state)
 
-Wild bootstrap-t, null imposed, 9999 replications, Wald test, clustering by state, bootstrap clustering by state, Radema
-> cher weights:
+Wild bootstrap-t, null imposed, 9999 replications, Wald test, clustering by state, bootstrap clustering by st
+> ate, Rademacher weights:
   masters
 
                                z =     8.9641
@@ -3951,20 +2244,57 @@ Area          Point Est   BS SE    95% CI
 
 --- Bootstrap SEs: Area-Specific ATT ---
 
-. di "Area          Point Est   BS SE"
-Area          Point Est   BS SE
+. di "Area          Point Est   BS SE    95% CI                  Sig"
+Area          Point Est   BS SE    95% CI                  Sig
 
-. di "-----------------------------------"
------------------------------------
+. di "---------------------------------------------------------------"
+---------------------------------------------------------------
 
 . foreach a in other stem business education health {
-  2.     di "  `a'   " %7.4f `att_`a'' "    " %6.4f `att_se_`a''
-  3. }
-  other    1.1750    0.0519
-  stem    1.3566    0.0359
-  business    1.0977    0.0910
-  education    1.2200    0.0722
-  health    1.2086    0.0442
+  2.     local lo_att = `att_`a'' - 1.96 * `att_se_`a''
+  3.     local hi_att = `att_`a'' + 1.96 * `att_se_`a''
+  4.     local sig_att = cond(`lo_att' > 0, "***", cond(`hi_att' < 0, "***", "   "))
+  5.     di "  `a'" _col(14) %7.4f `att_`a'' "    " %6.4f `att_se_`a'' "   [" %7.4f `lo_att' ", " %7.4f `hi_a
+> tt' "]   `sig_att'"
+  6. }
+  other       1.1750    0.0519   [ 1.0732,  1.2767]   ***
+  stem        1.3566    0.0359   [ 1.2863,  1.4269]   ***
+  business    1.0977    0.0910   [ 0.9192,  1.2761]   ***
+  education   1.2200    0.0722   [ 1.0785,  1.3615]   ***
+  health      1.2086    0.0442   [ 1.1220,  1.2952]   ***
+
+. di "  *** = 95% CI excludes zero (p < 0.05, two-tailed)"
+  *** = 95% CI excludes zero (p < 0.05, two-tailed)
+
+. 
+. di _n "--- Bootstrap SEs: Area-Specific ATU (prospective assignment) ---"
+
+--- Bootstrap SEs: Area-Specific ATU (prospective assignment) ---
+
+. di "Area          Point Est   BS SE    95% CI                  Sig"
+Area          Point Est   BS SE    95% CI                  Sig
+
+. di "---------------------------------------------------------------"
+---------------------------------------------------------------
+
+. foreach a in other stem business education health {
+  2.     local lo_atu = `atu_`a'' - 1.96 * `atu_se_`a''
+  3.     local hi_atu = `atu_`a'' + 1.96 * `atu_se_`a''
+  4.     local sig_atu = cond(`lo_atu' > 0, "***", cond(`hi_atu' < 0, "***", "   "))
+  5.     di "  `a'" _col(14) %7.4f `atu_`a'' "    " %6.4f `atu_se_`a'' "   [" %7.4f `lo_atu' ", " %7.4f `hi_a
+> tu' "]   `sig_atu'"
+  6. }
+  other       0.4836    0.1214   [ 0.2458,  0.7215]   ***
+  stem        1.0820    0.0855   [ 0.9144,  1.2496]   ***
+  business    0.3574    0.1591   [ 0.0456,  0.6692]   ***
+  education   0.7348    0.1818   [ 0.3784,  1.0912]   ***
+  health      0.5685    0.1126   [ 0.3477,  0.7892]   ***
+
+. di "  *** = 95% CI excludes zero (p < 0.05, two-tailed)"
+  *** = 95% CI excludes zero (p < 0.05, two-tailed)
+
+. di "  Note: ATU based on prospective program area assignment (seed 20260102)."
+  Note: ATU based on prospective program area assignment (seed 20260102).
 
 . 
 . ********************************************************************************
@@ -4082,13 +2412,14 @@ Number of observations (_N) was 0, now 100.
 >            subtitle("Master's Degree Effect on Log Salary") ///
 >            note("Declining MTE indicates positive selection on gains") ///
 >            yline(0, lpattern(dash) lcolor(gs8)) ///
->            name(mte_curve, replace)
+>            name(fig11_3, replace)
 
-.     graph save "$graphs_dir/mte_curve.gph", replace
-file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/mte_curve.gph saved
+.     graph save "$graphs_dir/fig11_3.gph", replace
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_3.gph saved
 
-.     graph export "$graphs_dir/fig10_6_mte_curve_Stata.png", replace width(1200)
-file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/fig10_6_mte_curve_Stata.png saved as PNG format
+.     graph export "$graphs_dir/fig11_3_mte_curve_Stata.png", replace width(1200)
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_3_mte_curve_Stata.png saved as
+    PNG format
 
 . restore
 
@@ -4131,19 +2462,52 @@ Estimated MTE by Propensity Score Decile:
 >            title("Estimated MTE by Propensity Score Decile") ///
 >            subtitle("Evidence of Treatment Effect Heterogeneity") ///
 >            yline(0, lpattern(dash) lcolor(gs8)) ///
->            name(mte_by_decile, replace)
+>            name(fig11_7, replace)
 
-.     graph save "$graphs_dir/mte_by_decile.gph", replace
-file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/mte_by_decile.gph saved
+.     graph save "$graphs_dir/fig11_7.gph", replace
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_7.gph saved
 
-.     graph export "$graphs_dir/fig10_7_mte_by_decile_Stata.png", replace width(1200)
-file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/fig10_7_mte_by_decile_Stata.png saved as PNG
-    format
+.     graph export "$graphs_dir/fig11_7_mte_by_decile_Stata.png", replace width(1200)
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_7_mte_by_decile_Stata.png saved
+    as PNG format
 
 . restore
 
 . 
-. * MTE curves by program area (FIX 3: dkgreen replaces invalid forest_green)
+. * MTE curves by program area
+. * FIX: restrict each area-specific curve to that area's empirical
+. * propensity-score support (treated obs, ma_a==1). The cubic control-
+. * function polynomial is only identified where data exist; extrapolating
+. * it across the full [0,1] range previously caused curves for small-N
+. * areas (e.g., Business, N=179 treated) to diverge sharply near the
+. * boundary. Computed here, before preserve, while ma_*/phat are in scope.
+. foreach a in stem business education health {
+  2.     qui sum phat if masters==1 & ma_`a' == 1
+  3.     local lo_`a' = r(min)
+  4.     local hi_`a' = r(max)
+  5. }
+
+. qui sum phat if masters==1 & ma_other == 1
+
+. local lo_other = r(min)
+
+. local hi_other = r(max)
+
+. 
+. di _n "Empirical phat support by area (treated obs):"
+
+Empirical phat support by area (treated obs):
+
+. foreach a in stem business education health other {
+  2.     di "  `a': [" %5.3f `lo_`a'' ", " %5.3f `hi_`a'' "]"
+  3. }
+  stem: [0.046, 0.973]
+  business: [0.033, 0.684]
+  education: [0.051, 0.904]
+  health: [0.027, 0.952]
+  other: [0.028, 0.965]
+
+. 
 . preserve
 
 .     clear
@@ -4155,13 +2519,28 @@ Number of observations (_N) was 0, now 100.
 
 .     gen mte_other    = `B0'            + `B1'           *u + `B2'           *u^2 + `B3'           *u^3
 
+.     replace mte_other    = . if u < `lo_other'    | u > `hi_other'
+(6 real changes made, 6 to missing)
+
 .     gen mte_stem     = `c0_stem'       + `c1_stem'      *u + `c2_stem'      *u^2 + `c3_stem'      *u^3
+
+.     replace mte_stem     = . if u < `lo_stem'     | u > `hi_stem'
+(7 real changes made, 7 to missing)
 
 .     gen mte_business = `c0_business'   + `c1_business'  *u + `c2_business'  *u^2 + `c3_business'  *u^3
 
+.     replace mte_business = . if u < `lo_business' | u > `hi_business'
+(35 real changes made, 35 to missing)
+
 .     gen mte_educ     = `c0_education'  + `c1_education' *u + `c2_education' *u^2 + `c3_education' *u^3
 
+.     replace mte_educ     = . if u < `lo_education' | u > `hi_education'
+(15 real changes made, 15 to missing)
+
 .     gen mte_health   = `c0_health'     + `c1_health'    *u + `c2_health'    *u^2 + `c3_health'    *u^3
+
+.     replace mte_health   = . if u < `lo_health'   | u > `hi_health'
+(7 real changes made, 7 to missing)
 
 . 
 .     twoway (line mte_health   u, lcolor(gs0) lwidth(medthick) lpattern(solid))     ///
@@ -4174,17 +2553,18 @@ Number of observations (_N) was 0, now 100.
 >         title("MTE Curves by Graduate Program Area") ///
 >         subtitle("Field-specific returns to master's degree") ///
 >         yline(0, lpattern(shortdash) lcolor(gs10)) ///
+>         note("Curves restricted to each area's empirical propensity-score support (treated obs).") ///
 >         legend(order(1 "Health & Related" 2 "STEM" 3 "Business" ///
 >                      4 "Education" 5 "Other (base)") ///
 >                cols(3) size(small)) ///
->         name(mte_byarea_curve, replace)
+>         name(fig11_5, replace)
 
-.     graph save "$graphs_dir/mte_byarea_curve.gph", replace
-file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/mte_byarea_curve.gph saved
+.     graph save "$graphs_dir/fig11_5.gph", replace
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_5.gph saved
 
-.     graph export "$graphs_dir/fig10_8_mte_byarea_curve_Stata.png", replace width(1200)
-file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/fig10_8_mte_byarea_curve_Stata.png saved as PNG
-    format
+.     graph export "$graphs_dir/fig11_5_mte_byarea_curve_Stata.png", replace width(1200)
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_5_mte_byarea_curve_Stata.png
+    saved as PNG format
 
 . restore
 
@@ -4501,8 +2881,6 @@ PRTE  (Health & Related pipeline, $2.5k): 0.9745
 . ********************************************************************************
 . 
 . * Save phat mean BEFORE preserve/clear so it is available inside the block
-. * (Fix 2: qui sum phat was previously inside preserve/clear, where phat does
-. *  not exist, leaving p_baseline undefined and producing a blank graph.)
 . qui sum phat
 
 . local p_baseline = r(mean)
@@ -4556,14 +2934,14 @@ Number of observations (_N) was 0, now 20.
 >         title("MPRTE by Policy Intensity") ///
 >         subtitle("Marginal returns to GA funding expansion") ///
 >         yline(0, lpattern(dash) lcolor(gs8)) ///
->         name(mprte_intensity, replace)
+>         name(fig11_8, replace)
 
-.     graph save "$graphs_dir/mprte_by_intensity.gph", replace
-file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/mprte_by_intensity.gph saved
+.     graph save "$graphs_dir/fig11_8.gph", replace
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_8.gph saved
 
-.     graph export "$graphs_dir/fig10_9_mprte_by_intensity_Stata.png", replace width(1200)
-file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/fig10_9_mprte_by_intensity_Stata.png saved as
-    PNG format
+.     graph export "$graphs_dir/fig11_8_mprte_by_intensity_Stata.png", replace width(1200)
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_8_mprte_by_intensity_Stata.png
+    saved as PNG format
 
 . restore
 
@@ -4589,20 +2967,20 @@ Parameter     Manual(cubic)  BS SE(manual)  mtefe(quad)  BS SE(mtefe)
 . di "======================================================================="
 =======================================================================
 
-. di "ATE           " %6.4f `ate_est_cubic' " (" %6.4f `ate_se' ")    " %6.4f `mtefe_ate_q' "  (" %6.4f `mtefe_ate_q_se'
->  ")"
+. di "ATE           " %6.4f `ate_est_cubic' " (" %6.4f `ate_se' ")    " %6.4f `mtefe_ate_q' "  (" %6.4f `mtef
+> e_ate_q_se' ")"
 ATE           0.8468 (0.0376)    0.3589  (0.0376)
 
-. di "ATT           " %6.4f `att_est'       " (" %6.4f `att_se' ")    " %6.4f `mtefe_att_q' "  (" %6.4f `mtefe_att_q_se'
->  ")"
+. di "ATT           " %6.4f `att_est'       " (" %6.4f `att_se' ")    " %6.4f `mtefe_att_q' "  (" %6.4f `mtef
+> e_att_q_se' ")"
 ATT           1.2162 (0.0382)    0.8285  (0.0382)
 
-. di "ATU           " %6.4f `atu_est'       " (" %6.4f `atu_se' ")    " %6.4f `mtefe_atu_q' "  (" %6.4f `mtefe_atu_q_se'
->  ")"
+. di "ATU           " %6.4f `atu_est'       " (" %6.4f `atu_se' ")    " %6.4f `mtefe_atu_q' "  (" %6.4f `mtef
+> e_atu_q_se' ")"
 ATU           0.5528 (0.1082)    0.0705  (0.1082)
 
-. di "LATE (IV)     " %6.4f `iv_est'        " (" %6.4f `iv_se' ")    " %6.4f `mtefe_late' "  (" %6.4f `mtefe_late_se' ")
-> "
+. di "LATE (IV)     " %6.4f `iv_est'        " (" %6.4f `iv_se' ")    " %6.4f `mtefe_late' "  (" %6.4f `mtefe_
+> late_se' ")"
 LATE (IV)     0.4031 (0.0489)    0.3994  (0.0489)
 
 . di "---------------------------------------------------------"
@@ -4621,35 +2999,83 @@ MPRTE (STEM ug -> any grad)       1.2367
 MPRTE (Ed ug -> any grad)         1.1615
 
 . 
-. di _n "AREA-SPECIFIC PARAMETERS:"
+. di _n "AREA-SPECIFIC PARAMETERS WITH 95% CONFIDENCE INTERVALS:"
 
-AREA-SPECIFIC PARAMETERS:
+AREA-SPECIFIC PARAMETERS WITH 95% CONFIDENCE INTERVALS:
 
-. di "Area          ATE (BS SE)         ATT (BS SE)"
-Area          ATE (BS SE)         ATT (BS SE)
+. di "(Cluster bootstrap, G=50 states, R=500 reps)"
+(Cluster bootstrap, G=50 states, R=500 reps)
 
-. di "----------------------------------------------------"
-----------------------------------------------------
+. di "ATE estimates:"
+ATE estimates:
 
-. di "  Other     " %6.4f `ate_other'     " (" %6.4f `ate_se_other'     ")    " %6.4f `att_other'     " (" %6.4f `att_se
-> _other'     ")"
-  Other     0.8085 (0.0500)    1.1750 (0.0519)
+. di "Area          Estimate   (BS SE)    95% CI                  Sig"
+Area          Estimate   (BS SE)    95% CI                  Sig
 
-. di "  STEM      " %6.4f `ate_stem'      " (" %6.4f `ate_se_stem'      ")    " %6.4f `att_stem'      " (" %6.4f `att_se
-> _stem'      ")"
-  STEM      0.9424 (0.0892)    1.3566 (0.0359)
+. di "------------------------------------------------------------------"
+------------------------------------------------------------------
 
-. di "  Business  " %6.4f `ate_business'  " (" %6.4f `ate_se_business'  ")    " %6.4f `att_business'  " (" %6.4f `att_se
-> _business'  ")"
-  Business  1.6936 (0.6077)    1.0977 (0.0910)
+. foreach a in other stem business education health {
+  2.     local lo_ate = `ate_`a'' - 1.96 * `ate_se_`a''
+  3.     local hi_ate = `ate_`a'' + 1.96 * `ate_se_`a''
+  4.     local sig_ate = cond(`lo_ate' > 0, "***", cond(`hi_ate' < 0, "***", "   "))
+  5.     di "  `a'" _col(14) %6.4f `ate_`a'' "   (" %6.4f `ate_se_`a'' ")   [" %7.4f `lo_ate' ", " %7.4f `hi_
+> ate' "]   `sig_ate'"
+  6. }
+  other      0.8085   (0.0500)   [ 0.7105,  0.9064]   ***
+  stem       0.9424   (0.0892)   [ 0.7676,  1.1171]   ***
+  business   1.6936   (0.6077)   [ 0.5024,  2.8847]   ***
+  education  0.6437   (0.1910)   [ 0.2694,  1.0181]   ***
+  health     0.8469   (0.0449)   [ 0.7589,  0.9349]   ***
 
-. di "  Education " %6.4f `ate_education' " (" %6.4f `ate_se_education' ")    " %6.4f `att_education' " (" %6.4f `att_se
-> _education' ")"
-  Education 0.6437 (0.1910)    1.2200 (0.0722)
+. di _n "ATT estimates:"
 
-. di "  Health    " %6.4f `ate_health'    " (" %6.4f `ate_se_health'    ")    " %6.4f `att_health'    " (" %6.4f `att_se
-> _health'    ")"
-  Health    0.8469 (0.0449)    1.2086 (0.0442)
+ATT estimates:
+
+. di "Area          Estimate   (BS SE)    95% CI                  Sig"
+Area          Estimate   (BS SE)    95% CI                  Sig
+
+. di "------------------------------------------------------------------"
+------------------------------------------------------------------
+
+. foreach a in other stem business education health {
+  2.     local lo_att = `att_`a'' - 1.96 * `att_se_`a''
+  3.     local hi_att = `att_`a'' + 1.96 * `att_se_`a''
+  4.     local sig_att = cond(`lo_att' > 0, "***", cond(`hi_att' < 0, "***", "   "))
+  5.     di "  `a'" _col(14) %6.4f `att_`a'' "   (" %6.4f `att_se_`a'' ")   [" %7.4f `lo_att' ", " %7.4f `hi_
+> att' "]   `sig_att'"
+  6. }
+  other      1.1750   (0.0519)   [ 1.0732,  1.2767]   ***
+  stem       1.3566   (0.0359)   [ 1.2863,  1.4269]   ***
+  business   1.0977   (0.0910)   [ 0.9192,  1.2761]   ***
+  education  1.2200   (0.0722)   [ 1.0785,  1.3615]   ***
+  health     1.2086   (0.0442)   [ 1.1220,  1.2952]   ***
+
+. di _n "ATU estimates (prospective program area assignment):"
+
+ATU estimates (prospective program area assignment):
+
+. di "Area          Estimate   (BS SE)    95% CI                  Sig"
+Area          Estimate   (BS SE)    95% CI                  Sig
+
+. di "------------------------------------------------------------------"
+------------------------------------------------------------------
+
+. foreach a in other stem business education health {
+  2.     local lo_atu = `atu_`a'' - 1.96 * `atu_se_`a''
+  3.     local hi_atu = `atu_`a'' + 1.96 * `atu_se_`a''
+  4.     local sig_atu = cond(`lo_atu' > 0, "***", cond(`hi_atu' < 0, "***", "   "))
+  5.     di "  `a'" _col(14) %6.4f `atu_`a'' "   (" %6.4f `atu_se_`a'' ")   [" %7.4f `lo_atu' ", " %7.4f `hi_
+> atu' "]   `sig_atu'"
+  6. }
+  other      0.4836   (0.1214)   [ 0.2458,  0.7215]   ***
+  stem       1.0820   (0.0855)   [ 0.9144,  1.2496]   ***
+  business   0.3574   (0.1591)   [ 0.0456,  0.6692]   ***
+  education  0.7348   (0.1818)   [ 0.3784,  1.0912]   ***
+  health     0.5685   (0.1126)   [ 0.3477,  0.7892]   ***
+
+. di "  *** = 95% CI excludes zero (p < 0.05, two-tailed)"
+  *** = 95% CI excludes zero (p < 0.05, two-tailed)
 
 . 
 . di _n "MPRTE BY GRADUATE PIPELINE (Scenarios 5-8):"
@@ -4673,15 +3099,12 @@ MPRTE BY GRADUATE PIPELINE (Scenarios 5-8):
 . * SECTION 13: MPRTE VISUALIZATION
 . ********************************************************************************
 . 
-. * Fig 10.10: MTE Curve with Policy-Relevant Regions
-. * Build a 100-point grid in a tempfile to avoid preserve/clear issues
-. * that cause twoway rarea + line to fail silently in batch mode.
+. * Fig: MTE Curve with Policy-Relevant Regions
 . tempfile mte_grid
 
 . tempname mte_mem
 
 . 
-. * Save current dataset, build grid, plot, reload
 . qui save `mte_mem', replace emptyok
 
 . 
@@ -4703,7 +3126,6 @@ Number of observations (_N) was 0, now 100.
 . qui save `mte_grid', replace
 
 . 
-. * Plot directly — no name() to avoid batch-mode named-graph failure
 . twoway (rarea zero_line mte u if region_lo == 1, fcolor(gs5)  lwidth(none)) ///
 >        (rarea zero_line mte u if region_un == 1, fcolor(gs11) lwidth(none)) ///
 >        (line  mte u, lcolor(gs0) lwidth(medthick) lpattern(solid)),         ///
@@ -4712,18 +3134,18 @@ Number of observations (_N) was 0, now 100.
 >     xtitle("u (Unobserved Resistance to Treatment)") ///
 >     title("MTE Curve with Policy-Relevant Regions") ///
 >     legend(order(3 "Estimated MTE" 1 "Low-income margin" ///
->                  2 "Uniform policy margin") cols(2) size(small))
+>                  2 "Uniform policy margin") cols(2) size(small)) ///
+>     name(fig11_6, replace)
 
 . 
-. graph save   "$graphs_dir/mte_policy_regions.gph", replace
-file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/mte_policy_regions.gph saved
+. graph save   "$graphs_dir/fig11_6.gph", replace
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_6.gph saved
 
-. graph export "$graphs_dir/fig10_10_mte_policy_regions_Stata.png", replace width(1200)
-file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/fig10_10_mte_policy_regions_Stata.png saved as
-    PNG format
+. graph export "$graphs_dir/fig11_6_mte_policy_regions_Stata.png", replace width(1200)
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_6_mte_policy_regions_Stata.png
+    saved as PNG format
 
 . 
-. * Reload main dataset
 . qui use `mte_mem', clear
 
 . 
@@ -4746,14 +3168,14 @@ file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/fig10_10_m
 >         xtitle("Propensity Score") ///
 >         title("MTE by Propensity Score") ///
 >         legend(order(2 "Mean MTE" 1 "Obs. count")) ///
->         name(mte_by_propensity, replace)
+>         name(fig11_4, replace)
 
-.     graph save "$graphs_dir/mte_by_propensity.gph", replace
-file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/mte_by_propensity.gph saved
+.     graph save "$graphs_dir/fig11_4.gph", replace
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_4.gph saved
 
-.     graph export "$graphs_dir/fig10_11_mte_by_propensity_Stata.png", replace width(1200)
-file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/fig10_11_mte_by_propensity_Stata.png saved as
-    PNG format
+.     graph export "$graphs_dir/fig11_4_mte_by_propensity_Stata.png", replace width(1200)
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_4_mte_by_propensity_Stata.png
+    saved as PNG format
 
 . restore
 
@@ -4794,14 +3216,14 @@ Policy               MPRTE    Annual Gain   PV Gain    B/C Ratio
   6.     local annual_gain = `base_salary' * (exp(`mprte_val') - 1)
   7.     local pv_gain     = `annual_gain' * `pv_factor'
   8.     local bc_ratio    = `pv_gain' / `cost_per_degree'
-  9.     if "`scen'" == "unif"   di "Uniform             " %6.4f `mprte_val' "   $" %6.0f `annual_gain' "    $" %8.0f `p
-> v_gain' "   " %5.2f `bc_ratio'
- 10.     if "`scen'" == "lowinc" di "Low-income          " %6.4f `mprte_val' "   $" %6.0f `annual_gain' "    $" %8.0f `p
-> v_gain' "   " %5.2f `bc_ratio'
- 11.     if "`scen'" == "stem"   di "STEM ug             " %6.4f `mprte_val' "   $" %6.0f `annual_gain' "    $" %8.0f `p
-> v_gain' "   " %5.2f `bc_ratio'
- 12.     if "`scen'" == "ed"     di "Education ug        " %6.4f `mprte_val' "   $" %6.0f `annual_gain' "    $" %8.0f `p
-> v_gain' "   " %5.2f `bc_ratio'
+  9.     if "`scen'" == "unif"   di "Uniform             " %6.4f `mprte_val' "   $" %6.0f `annual_gain' "    
+> $" %8.0f `pv_gain' "   " %5.2f `bc_ratio'
+ 10.     if "`scen'" == "lowinc" di "Low-income          " %6.4f `mprte_val' "   $" %6.0f `annual_gain' "    
+> $" %8.0f `pv_gain' "   " %5.2f `bc_ratio'
+ 11.     if "`scen'" == "stem"   di "STEM ug             " %6.4f `mprte_val' "   $" %6.0f `annual_gain' "    
+> $" %8.0f `pv_gain' "   " %5.2f `bc_ratio'
+ 12.     if "`scen'" == "ed"     di "Education ug        " %6.4f `mprte_val' "   $" %6.0f `annual_gain' "    
+> $" %8.0f `pv_gain' "   " %5.2f `bc_ratio'
  13. }
 Uniform             0.9784   $ 78024    $ 1529307   30.59
 Low-income          0.9336   $ 72548    $ 1421967   28.44
@@ -4821,8 +3243,8 @@ Education ug        1.1615   $103148    $ 2021749   40.43
 
 . local base_hlth  = 68000
 
-. di "  Base salaries: STEM=$" %6.0f `base_stem' " Business=$" %6.0f `base_bus' " Ed=$" %6.0f `base_ed' " Health=$" %6.0
-> f `base_hlth'
+. di "  Base salaries: STEM=$" %6.0f `base_stem' " Business=$" %6.0f `base_bus' " Ed=$" %6.0f `base_ed' " Hea
+> lth=$" %6.0f `base_hlth'
   Base salaries: STEM=$ 65000 Business=$ 60000 Ed=$ 42000 Health=$ 68000
 
 . 
@@ -4839,7 +3261,8 @@ Pipeline            MPRTE    Annual Gain   PV Gain    B/C Ratio
 
 . local pvg = `ag' * `pv_factor'
 
-. di "STEM pipeline       " %6.4f `mv' "   $" %6.0f `ag' "    $" %8.0f `pvg' "   " %5.2f `pvg'/`cost_per_degree'
+. di "STEM pipeline       " %6.4f `mv' "   $" %6.0f `ag' "    $" %8.0f `pvg' "   " %5.2f `pvg'/`cost_per_degr
+> ee'
 STEM pipeline       1.2773   $168144    $ 3295703   65.91
 
 . 
@@ -4849,7 +3272,8 @@ STEM pipeline       1.2773   $168144    $ 3295703   65.91
 
 . local pvg = `ag' * `pv_factor'
 
-. di "Business pipeline   " %6.4f `mv' "   $" %6.0f `ag' "    $" %8.0f `pvg' "   " %5.2f `pvg'/`cost_per_degree'
+. di "Business pipeline   " %6.4f `mv' "   $" %6.0f `ag' "    $" %8.0f `pvg' "   " %5.2f `pvg'/`cost_per_degr
+> ee'
 Business pipeline   0.8192   $ 76123    $ 1492052   29.84
 
 . 
@@ -4859,7 +3283,8 @@ Business pipeline   0.8192   $ 76123    $ 1492052   29.84
 
 . local pvg = `ag' * `pv_factor'
 
-. di "Education pipeline  " %6.4f `mv' "   $" %6.0f `ag' "    $" %8.0f `pvg' "   " %5.2f `pvg'/`cost_per_degree'
+. di "Education pipeline  " %6.4f `mv' "   $" %6.0f `ag' "    $" %8.0f `pvg' "   " %5.2f `pvg'/`cost_per_degr
+> ee'
 Education pipeline  1.0317   $ 75843    $ 1486562   29.73
 
 . 
@@ -4869,7 +3294,8 @@ Education pipeline  1.0317   $ 75843    $ 1486562   29.73
 
 . local pvg = `ag' * `pv_factor'
 
-. di "Health pipeline     " %6.4f `mv' "   $" %6.0f `ag' "    $" %8.0f `pvg' "   " %5.2f `pvg'/`cost_per_degree'
+. di "Health pipeline     " %6.4f `mv' "   $" %6.0f `ag' "    $" %8.0f `pvg' "   " %5.2f `pvg'/`cost_per_degr
+> ee'
 Health pipeline     1.0186   $120315    $ 2358236   47.16
 
 . 
@@ -4962,24 +3388,92 @@ ANALYSIS COMPLETE
   8.  First-stage F:                   1297.2
 
 . 
-. di _n "AREA-SPECIFIC ATE (program area interacted MTE):"
+. di _n "AREA-SPECIFIC ATE, ATT, AND ATU WITH 95% CONFIDENCE INTERVALS"
 
-AREA-SPECIFIC ATE (program area interacted MTE):
+AREA-SPECIFIC ATE, ATT, AND ATU WITH 95% CONFIDENCE INTERVALS
 
-. di "  ATE (other):     " %6.4f `ate_other'     " (BS SE = " %6.4f `ate_se_other'     ")"
-  ATE (other):     0.8085 (BS SE = 0.0500)
+. di "(Cluster bootstrap, G=50 states, R=500 reps, seed 20260101)"
+(Cluster bootstrap, G=50 states, R=500 reps, seed 20260101)
 
-. di "  ATE (stem):      " %6.4f `ate_stem'      " (BS SE = " %6.4f `ate_se_stem'      ")"
-  ATE (stem):      0.9424 (BS SE = 0.0892)
+. di "ATU based on prospective program area assignment (seed 20260102)"
+ATU based on prospective program area assignment (seed 20260102)
 
-. di "  ATE (business):  " %6.4f `ate_business'  " (BS SE = " %6.4f `ate_se_business'  ")"
-  ATE (business):  1.6936 (BS SE = 0.6077)
+. di "=================================================================="
+==================================================================
 
-. di "  ATE (education): " %6.4f `ate_education' " (BS SE = " %6.4f `ate_se_education' ")"
-  ATE (education): 0.6437 (BS SE = 0.1910)
+. di "ATE estimates:"
+ATE estimates:
 
-. di "  ATE (health):    " %6.4f `ate_health'    " (BS SE = " %6.4f `ate_se_health'    ")"
-  ATE (health):    0.8469 (BS SE = 0.0449)
+. di "Area          Estimate   (BS SE)    95% CI                  Sig"
+Area          Estimate   (BS SE)    95% CI                  Sig
+
+. di "------------------------------------------------------------------"
+------------------------------------------------------------------
+
+. foreach a in other stem business education health {
+  2.     local lo_ate = `ate_`a'' - 1.96 * `ate_se_`a''
+  3.     local hi_ate = `ate_`a'' + 1.96 * `ate_se_`a''
+  4.     local sig_ate = cond(`lo_ate' > 0, "***", cond(`hi_ate' < 0, "***", "   "))
+  5.     di "  `a'" _col(14) %6.4f `ate_`a'' "   (" %6.4f `ate_se_`a'' ")   [" %7.4f `lo_ate' ", " %7.4f `hi_
+> ate' "]   `sig_ate'"
+  6. }
+  other      0.8085   (0.0500)   [ 0.7105,  0.9064]   ***
+  stem       0.9424   (0.0892)   [ 0.7676,  1.1171]   ***
+  business   1.6936   (0.6077)   [ 0.5024,  2.8847]   ***
+  education  0.6437   (0.1910)   [ 0.2694,  1.0181]   ***
+  health     0.8469   (0.0449)   [ 0.7589,  0.9349]   ***
+
+. di _n "ATT estimates:"
+
+ATT estimates:
+
+. di "Area          Estimate   (BS SE)    95% CI                  Sig"
+Area          Estimate   (BS SE)    95% CI                  Sig
+
+. di "------------------------------------------------------------------"
+------------------------------------------------------------------
+
+. foreach a in other stem business education health {
+  2.     local lo_att = `att_`a'' - 1.96 * `att_se_`a''
+  3.     local hi_att = `att_`a'' + 1.96 * `att_se_`a''
+  4.     local sig_att = cond(`lo_att' > 0, "***", cond(`hi_att' < 0, "***", "   "))
+  5.     di "  `a'" _col(14) %6.4f `att_`a'' "   (" %6.4f `att_se_`a'' ")   [" %7.4f `lo_att' ", " %7.4f `hi_
+> att' "]   `sig_att'"
+  6. }
+  other      1.1750   (0.0519)   [ 1.0732,  1.2767]   ***
+  stem       1.3566   (0.0359)   [ 1.2863,  1.4269]   ***
+  business   1.0977   (0.0910)   [ 0.9192,  1.2761]   ***
+  education  1.2200   (0.0722)   [ 1.0785,  1.3615]   ***
+  health     1.2086   (0.0442)   [ 1.1220,  1.2952]   ***
+
+. di _n "ATU estimates (prospective program area assignment):"
+
+ATU estimates (prospective program area assignment):
+
+. di "Area          Estimate   (BS SE)    95% CI                  Sig"
+Area          Estimate   (BS SE)    95% CI                  Sig
+
+. di "------------------------------------------------------------------"
+------------------------------------------------------------------
+
+. foreach a in other stem business education health {
+  2.     local lo_atu = `atu_`a'' - 1.96 * `atu_se_`a''
+  3.     local hi_atu = `atu_`a'' + 1.96 * `atu_se_`a''
+  4.     local sig_atu = cond(`lo_atu' > 0, "***", cond(`hi_atu' < 0, "***", "   "))
+  5.     di "  `a'" _col(14) %6.4f `atu_`a'' "   (" %6.4f `atu_se_`a'' ")   [" %7.4f `lo_atu' ", " %7.4f `hi_
+> atu' "]   `sig_atu'"
+  6. }
+  other      0.4836   (0.1214)   [ 0.2458,  0.7215]   ***
+  stem       1.0820   (0.0855)   [ 0.9144,  1.2496]   ***
+  business   0.3574   (0.1591)   [ 0.0456,  0.6692]   ***
+  education  0.7348   (0.1818)   [ 0.3784,  1.0912]   ***
+  health     0.5685   (0.1126)   [ 0.3477,  0.7892]   ***
+
+. di "  *** = 95% CI excludes zero (p < 0.05, two-tailed)"
+  *** = 95% CI excludes zero (p < 0.05, two-tailed)
+
+. di "  Note: Business ATE CI is wide — interpret point estimate with caution."
+  Note: Business ATE CI is wide — interpret point estimate with caution.
 
 . 
 . di _n "MPRTE SUMMARY - Original Scenarios:"
@@ -5041,29 +3535,25 @@ END OF MTE/MPRTE ANALYSIS
 ==============================================
 
 . 
-. capture graph display mte_curve
+. capture graph display fig11_3
 
-. capture graph display mte_by_decile
+. capture graph display fig11_4
 
-. capture graph display mte_byarea_curve
+. capture graph display fig11_5
 
-. capture graph display mprte_intensity
+. capture graph display fig11_6
 
-. capture graph display mte_policy_regions
+. capture graph display fig11_7
 
-. capture graph display mte_by_propensity
-
-. 
-. *========================================================================
-. * Close log and exit
-. *========================================================================
-. 
-. clear all
+. capture graph display fig11_8
 
 . 
-. log close
-      name:  <unnamed>
-       log:  C:\\Users\\marvi\\Dropbox\\Book\\2nd Edition\\Chapter 10\\Output\\logs\\Chapter10_Stata_output.log
-  log type:  text
- closed on:   8 May 2026, 16:40:20
-------------------------------------------------------------------------------------------------------------------------
+. *------------------------------------------------------------------------
+. * Close this sub-script's dedicated log
+. * (Stata_code11.do's own master log, if any, remains open.)
+. *------------------------------------------------------------------------
+. di as text _n "MTE_MPRTE.do log closed: " c(current_date) " " c(current_time)
+
+MTE_MPRTE.do log closed: 28 Jun 2026 19:41:13
+
+. capture log close mte_mprte
