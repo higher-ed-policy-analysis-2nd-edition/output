@@ -1,0 +1,1381 @@
+-----------------------------------------------------------------------------------------------
+      name:  diag
+       log:  C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/logs/mtefe_diagnostic.lo
+> g
+  log type:  text
+ opened on:  27 Oct 2026, 17:23:07
+
+. 
+. * --- 1. Versions and full help text (written into the log) -------------
+. which mtefe
+C:\Users\marvi\ado\plus\m\mtefe.ado
+*! mtefe 20190513
+
+. which mtefeplot
+C:\Users\marvi\ado\plus\m\mtefeplot.ado
+
+. findfile mtefe.sthlp
+C:\Users\marvi\ado\plus/m/mtefe.sthlp
+
+. type "`r(fn)'"
+help mtefe                                                                     (SJ18-1: st00!!)
+-----------------------------------------------------------------------------------------------
+
+Title
+
+    mtefe -- Marginal treatment effects with factor variables
+
+
+Syntax
+
+        mtefe depvar [indepvars] (depvar_t = varlist_iv) [if] [in] [weight] [, options]
+
+    options                    Description
+    -----------------------------------------------------------------------------------------
+    Model
+      polynomial(#)            specify the degree of the polynomial for the polynomial
+                                 models; default is the joint normal
+      splines(numlist)         allow for splines at knots specified by numlist in parametric
+                                 models
+      semiparametric           specify the semiparametric model
+      restricted(varlist)      control variables restricted to be the same in treated and
+                                 untreated state
+      link(string)             link function can be probit, logit, or lpm; default is
+                                 link(probit)
+
+    Estimation
+      separate                 fit the model using the separate approach rather than local
+                                 instrumental variables (LIVs)
+      mlikelihood              fit the model using maximum likelihood rather than local IVs;
+                                 only for joint normal model
+      trimsupport(#)           trim off # share of the treated and untreated sample from the
+                                 thinnest tails of support
+      fullsupport              estimate marginal treatment effect (MTE) over the full unit
+                                 interval even when using semiparametric models
+      prte(varname)            estimate policy-relevant treatment effects based on the
+                                 propensity scores in varname
+
+    Inference
+      bootreps(#)              use bootstrap with # repetitions
+      norepeat1                do not reestimate the propensity scores, mean of X, and
+                                 parameter weights for each replication
+      vce(vcetype)             standard error specification -- robust or cluster clustvar
+      level(#)                 specify confidence level
+
+    Semiparametric
+      degree(#)                specify degree of local polynomial smooth in semiparametric
+                                 models
+      ybwidth(#)               specify bandwidth of local polynomial smooth for the outcome
+                                 in semiparametric models
+      xbwidth(#)               specify bandwidth of local polynomial smooth for X variables
+                                 in the semiparametric model
+      gridpoints(#)            evaluate the local polynomial smooths of X on p at # points
+                                 rather than precise propensity scores
+      kernel(string)           kernel for use in the semiparametric models
+
+    Other
+      first                    report the first-step estimates
+      second                   report the underlying second-stage (rarely used)
+      noplot                   do not graph common support and MTE plots
+      savefirst(string)        save the first-stage estimates to disk as string.ster
+      savepropensity(newvar)   save the estimated propensity scores in a new variable newvar
+      savekp                   save the variables of the K(p) [and K0(p)] functions in the
+                                 dataset for postestimation
+      saveweights(string)      save the weights for the mean of X in in the subpopulations
+                                 for the treatment effect parameters in variables with prefix
+                                 string
+      norescale                Does not rescale the weights of the treatment effect
+                                 parameters to sum to 1 in cases with limited support.
+    -----------------------------------------------------------------------------------------
+    fweights and pweights are allowed unless bootstrapping; see weight.
+
+
+Description
+
+    mtefe calculates MTEs derived using a variety of parametric and semiparametric models and
+    three estimation methods.
+
+
+Options
+
+        +-------+
+    ----+ Model +----------------------------------------------------------------------------
+
+    polynomial(#) specifies the k(p) or k_j(p) functions to be polynomials of degree #.
+        Required for the parametric and semiparametric polynomial models.  Note that mtefe
+        specifies the degree of the MTE directly, rather than the degree of K(p) like margte,
+        so a polynomial of L+1 in margte will be equivalent to L in mtefe.
+
+    splines(numlist) allows for splines with knots at k1, k2, ... kQ as specified in numlist.
+        Specifies splines for degree 2 and above in k(p) or k_j(p).  Required for models with
+        splines. Degree of polynomial must be greater than 1.
+
+    semiparametric specifies that the models be fit using semiparametric methods --
+        semiparametric polynomial, semiparametric polynomial with splines, or semiparametric
+        using double residual regression.
+
+    restricted(varlist) specifies control variables that are included in the first stage and
+        second stage, but these are restricted to have the same effect in the treated and
+        untreated state.
+
+    link(string) specifies the first-stage model. string may be probit, logit, or lpm.  The
+        default is link(probit).
+
+        +------------+
+    ----+ Estimation +-----------------------------------------------------------------------
+
+    separate specifies that the model be fit using the separate approach or principled
+        stratification. Otherwise, estimation is done using local IVs unless
+        {cmd_mlikelihood} is specified.
+
+    mlikelihood specifies that the model be fit using maximum likelihood.  This is
+        appropriate only for the standard normal model.  The evaluator is an adapted version
+        of the maximum likelihood evaluator from Lokshin and Sajaia (2004), see movestay.
+
+    trimsupport(#) trims the sample after estimating the propensity scores to deal with
+        issues of common support. After estimating the propensity scores, this option
+        estimates the density of p separately in each sample. It then removes individuals
+        from the points of least support until a total share # of each sample has been
+        removed. Common support is calculated at the points of the propensity score
+        distribution where the two samples have overlapping support, estimation proceeds
+        excluding the individuals with estimated scores outside the range of the relevant
+        subsample and the first stage is re-estimated on the trimmed sample. This procedure
+        drops exactly # share of the total sample, but the final estmation sample will
+        include observations outside the common support in the fat tail of each subsample of
+        treated and control.
+
+    fullsupport specifies that the MTE is estimated over the full unit interval even when
+        using semiparametric models.  By default, the MTE will only be estimated at points of
+        overlapping support in the treated and untreated samples. Therefore, using
+        fullsupport relies on extrapolation in the local linear regressions, and may be
+        unstable.  This option has no effect when using parametric models. Use with caution.
+
+    prte(varname) fits the specified MTE model and calculates the PRTE for a hypothetical
+        policy change that generated the propensity score distribution in variable varname.
+
+        +-----------+
+    ----+ Inference +------------------------------------------------------------------------
+
+    bootreps(#) uses the bootstrap for inference, performing # bootstrap replications.
+        Otherwise, analytic standard errors are calculated, ignoring the estimation error
+        from the first stage. See the remark on standard errors below.
+
+    norepeat1 specifies that the first stage, treatment effect parameter weights and means of
+        X are not reestimated for each bootstrap repetition, thus ignoring the estimation
+        error from the first stage in the bootstrap. See the remark on standard errors below.
+
+    vce(vcetype) specifies standard errors -- robust or cluster clustvar. Works for both
+        analytic standard errors and bootstrapped ones.
+
+    level(#) uses a confidence level of #% for confidence intervals and MTE plots. The
+        default is level(95).
+
+        +----------------+
+    ----+ Semiparametric +-------------------------------------------------------------------
+
+    degree(#) specifies the degree of the local polynomial regressions used in the
+        semiparametric models. When using the semiparametric polynomial model, this option is
+        overruled by the degree specified in the polynomial() option plus one, so this option
+        is relevant only for the semiparametric model.  The degree of polynomial smooth is
+        always 1 for the local polynomial regressions of the covariates on p, so this affects
+        only the degree in the local polynomial regression of Y on p. The default is
+        degree(2).
+
+    ybwidth(#) specifies the bandwidth of the local polynomial smooth of Y on p in
+        semiparametric models. The default is ybwidth(0.2).
+
+    xbwidth(#) specifies the bandwidth of the local polynomial smooth of the covariates on p
+        in semiparametric models. The default is lpoly's rule-of-thumb.
+
+    gridpoints(#) is used with the fully semiparametric model only. Instead of running the
+        local polynomial regressions of covariates on p at each and every estimated
+        propensity score, this option allows for estimating it at # separate points spread
+        out between the minimum and maximum of the propensity score distribution and then
+        assigns every individual the predicted value from the closest point in this set
+        before calculating the residuals. In large samples, this may provide large
+        improvement in computation time.  Does not affect the local polynomial regressions of
+        Y on p that are always performed at the points of common support.
+
+    kernel(string) uses string as the kernel in all local polynomial regressions. string may
+        be epanechnikov, biweight, cosine, gaussian, parzen, rectangle, or triangle. The
+        default is kernel(epanechnikov).
+
+        +-------+
+    ----+ Other +----------------------------------------------------------------------------
+
+    first reports the first-stage estimates.
+
+    second reports the output from the second-stage estimating equation, which might not be
+        particularly easy to read because of temporary variables.  Use primarily for
+        investigating the log-likelihood iterations when using maximum likelihood.
+
+    noplot suppresses the drawing of common support and MTE plots.
+
+    norescale specifies that the treatment effect parameter weights are not rescaled to sum
+        to 1 in cases with limited support. When support is limited, regular non-marginal
+        treatment effect parameters (ATE, ATT, ATUT, LATE and PRTE) cannot be estimated.
+        Instead, mtefe by default rescales the weights to sum to 1 within the support,
+        creating a parameter that can be interpreted analogously to the original, but for
+        people with unobserved resistance within the support. If norescale is specified
+        instead, the weights are not rescaled.
+
+    savefirst(string) saves the first-stage estimates to disk using the filename string.ster.
+        If suboption margins is specified, mtefe instead saves the marginal effects for all
+        variables.
+
+    savepropensity(newvar) saves the predicted propensity scores from the first stage to a
+        new variable called newvar.
+
+    savekp saves the variables used in K(p) and, if separate or mlikelihood is specified,
+        K0(p) in the dataset for postestimation use.  Relevant only for parametric models.
+
+    saveweights(string) saves the estimated weights for mean of X in the relevant
+        subopulations for the treatment effect parameters in variables with the prefix
+        string. Weights are calculated for the ATT, ATUT, LATE, MPRTE1 and, if specified in
+        the option prte(), PRTE.
+
+Remarks
+
+    The model
+
+    The MTEs are derived from the generalized Roy model
+
+          Y = (1 - D)Y_0 + DY_1
+        Y_j = Xb_j + U_j for j=0,1
+          D = 1(Zg>V) for Z=X,Z_
+
+    where Y_1 is the outcome in the treated state, Y_0 is the outcome in the untreated state,
+    D is a binary treatment indicator, and 1[A] is the indicator function for event A. Zg is
+    an index that can be interpreted as a latent utility of treatment.
+
+    Transforming the treatment condition gives P(Z)>U_d, where P(Z) is the propensity score,
+    or the probability of treatment given Z, and U_d=F(V) is the percentiles of V, the
+    unobserved resistance to treatment.
+
+    Estimation of MTE requires the (standard) IV assumptions of conditional independence of
+    the errors (U_0,U_1,V) from Z_ conditional on X.  This allows us to estimate the MTE
+    within the support of P(Z) conditional on X. In practical applications, however, this
+    support is often very limited, and most applied work therefore require an additional
+    separability assumption: E(U_j | X,V) = E(U_j | V).  This last assumption implies that
+    the level of MTE, but not the slope, is a function of X and allows us to identify the MTE
+    over the unconditional support of P(Z). In many cases, even the unconditional support of
+    P(Z) can be limited, and the MTE can only be estimated for parts of the unit interval.
+    See the note on support below for how mtefe treats these cases.
+
+    The MTE measures the average treatment effect for people at a particular margin of
+    indifference, or with a particular resistance to treatment. It can be expressed as
+
+        MTE(x,u) = E(Y_1-Y_0|X=x,U_d=u) = X(b_1-b_0)+k(u)
+
+    where
+
+        k(u) = E(U_1-U_0|U_d=u)
+
+    We can trace out the distribution of the MTE over U_d, MTE(x,u), within the support of p.
+
+
+    Estimation using local IV
+
+    It can be shown that the derivative of the conditional expectation of Y with respect to p
+    identifies the MTE (Heckman and Vytlacil 2007a,b). Given the separability assumption, we
+    have
+
+        E{Y|X,P(Z)=p} = Xb_0 + X(b_1-b_0)p +K(p)
+
+    where
+
+        K(p) = pE(U_1 - U_0|U_d < p)
+
+    Thus, if we make assumptions on the K(p) function, we can estimate the conditional
+    expectation of Y and form its derivative to construct the MTE.
+
+
+    Estimation using the separate approach
+
+    When using the separate approach, we estimate the conditional expectation separately in
+    the treated and untreated sample. We apply the appropriate selection correction,
+    depending on the model, to account for the endogenous selection into treatment. Following
+    the notation of Brinch, Mogstad, and Wiswall (2017),
+
+        E(Y_j|X,D=j,p) = Xb_j + K_j(p)
+
+    where
+
+        K_1(p) = E(U_1|U_d < p)
+        K_0(p) = E(U_0|U_d >= p)
+
+    Thus, if we make assumptions on the K_j(p) functions, we can estimate the conditional
+    expectation. Then, we form the MTE as
+
+        MTE(x,u)=E(Y_1-Y_0|X = x, U_d = u) = X(b_1-b_0)+k_1(p)-k_0(p)
+
+    where
+
+        k_1(p) = K_1(p)+pK_1'(p)
+        k_0(p) = K_0(p)-(1-p)K_0'(p)
+
+    As with the local IV method, the exact specification of the K-functions depends on the
+    model.
+
+
+    Estimation using maximum likelihood
+
+    Alternatively, the joint normal MTE model can be estimated using maximum likelihood
+    because we know the full distribution of the errors.  In that case, the log-likelihood
+    function can be expressed as
+
+        l=D[ln{F(eta_1)}+ln((1/s1)f(U_1/s1))] +(1-D)[ln((1/s0)f(U_0/s0))+ln{F(-eta_0)}]
+
+    where f and F are standard normal density and cumulative density functions and
+
+        eta_j = {Zg+(Y_j-Xb_j)*rho_j/s_j}/sqrt(1-rho_j^2)
+
+    which can be maximized to find the parameters of the model. For details, see the movestay
+    command, which inspired the log-likelihood estimation in mtefe, and Lokshin and Sajaia
+    (2004).
+
+
+    A note on standard errors
+
+    Local IVs and the separate approach as implemented by mtefe are two-step methods.  In the
+    first step, the propensity scores are estimated and predicted and the treatment-effect
+    parameter weights are estimated based on these estimates. In the subsequent step, the
+    rest of the parameters of the model are estimated, and lastly, the MTE estimates
+    themselves are constructed from the estimates of b_1-b_0 and k(p).
+
+    In this setting, analytic standard errors are inappropriate because they ignore the
+    uncertainty from three sources: a) the uncertainty from the propensity score estimates by
+    simply treating p as a variable, b) the uncertainty from the estimation of the
+    treatment-effect parameter weights, and c) the uncertainty from the estimates of X, the
+    set of values for which we evaluate the MTE and the treatment effect parameters.
+
+    If we are interested in the MTE at the (unknown) mean of X in the population, it is
+    appropriate to include the uncertainty in the estimate of the mean of X in the estimates
+    of the MTEs.
+
+    For all these reasons, the most conservative way to estimate standard errors of MTE
+    models are through the bootstrap. The bootstrap in mtefe takes all the above mentioned
+    sources of uncertainty into account by reestimating the first step for each bootstrap
+    replication, unless the options norepeat1 is specified.
+
+    Nonetheless, the default standard errors reported by mtefe are calculated analytically,
+    ignoring these sources of uncertainty. Users are warned about this after estimation
+    unless bootstrap is applied with the bootreps() option. When cluster bootstrapping the
+    standard errors (using bootreps() and the vce(cluster clustvar) options together), users
+    should be wary of specifications that also include the cluster variable in one of the
+    independent variable lists. mtefe handles the most common application of this, when the
+    cluster variable is included as fixed effects in one of the independent variable lists,
+    but with other (arguable uncommon) specifications such as the cluster variable included
+    as a continuous regressor and a fixed effect, users should be careful.
+
+    When using maximum likelihood estimation of the joint normal model, all model parameters
+    are estimated in one step. This implies that the analytic standard errors are more
+    appropriate, because they now account for the uncertainty of the first-step estimates,
+    but they still do not account for the uncertainty in the estimation of the mean or the
+    estimates of the treatment-effect parameter weights.
+
+
+    A note on the support of P(Z)
+
+    Under the separability assumption, the MTE can be identified semiparametrically over the
+    support of P(Z).  If the support is limited, identification outside the common support
+    will necessarily rely on extrapolation.  By default, mtefe estimates the MTE over the
+    full unit interval if a parametric model is specified.  If a semiparametric model is
+    specified, however, mtefe estimates the MTE only at points where there are at least one
+    treated and one untreated individual, unless the option fullsupport is specified.  In
+    addition, the option trimsupport() allows the user to trim a fraction of # from the tails
+    of each sample, in practice strengthening the conditions for what constitutes support.
+    Individuals with propensity scores outside the support for the relevant sample are
+    dropped, and the first stage is reestimated when trimsupport() is specified. This option
+    trumps the fullsupport option.
+
+    In cases where the MTE is not estimated over the full unit interval, conventional
+    non-marginal treatment effect parameters (ATE, ATT, ATUT, LATE and PRTE) cannot be
+    estimated, as they depend on the MTE over the full unit interval. In these cases, the
+    user should be careful when interpreting the treatment effect estimates.  mtefe by
+    default rescales the treatment effect parameter weights to sum to 1 within the support,
+    producing a parameter that can be interpreted analogously to the original but for people
+    with unobserved resistance within the support. These parameters are identical to the
+    originals only if the weighted average over the MTE outside of the support is equal to
+    the weighted average within the support. Alternatively, if norescale is specified, mtefe
+    does not rescale the weights when producing the parameter estimates. This parameter is
+    equal to the original only if the MTE is equal to 0 outside of the support.
+
+Examples
+
+    To fix ideas, the mtefe_gendata program simulates data on log wages for people with
+    varying experience, living in different districts or labor markets, and with and without
+    college education. College education is endogenous, so we need an instrument to identify
+    causal effects.  Unfortunately, even the distance to college is not a valid instrument
+    because there is correlation across districts; rural labor markets with longer distances
+    to colleges are different than urban ones. Within districts, however, the distance to
+    college is unrelated to unobservables, so the instrument is valid conditional on fixed
+    effects.
+
+    Generate simulated data of 10,000 observations distributed in 10 districts
+        . mtefe_gendata, obs(10000) districts(10)
+
+    The parametric normal model, fit using local IV
+        . mtefe lwage exp exp2 i.district (col=distCol)
+
+    The parametric polynomial of degree 1, estimated using the separate approach
+        . mtefe lwage exp exp2 i.district (col=distCol), separate pol(1)
+
+    The polynomial model of degree 2, using a linear probability model for the propensity
+    score
+        . mtefe lwage exp exp2 i.district (col=distCol), polynomial(2) link(lpm)
+
+    The parametric normal model, fit using maximum likelihood
+        . mtefe lwage exp exp2 i.district (col=distCol), mlikelihood
+
+    The semiparametric polynomial model with 50 bootstrap replications
+        . mtefe lwage exp exp2 i.district (col=distCol), pol(1) bootreps(50)
+
+    The joint normal model where the fixed effects are restricted to be the same in the
+    treated and untreated state (note: violation of exclusion)
+        . mtefe lwage exp exp2 (col=distCol), restricted(i.district)
+
+    The semiparametric model, using a smaller evaluation grid to save computational time
+        . mtefe lwage exp exp2 i.district (col=distCol), semiparametric gridpoints(100)
+
+    Calculating the PRTE for a policy that mandates a maximum distance to college of 40
+    miles, normal model
+        . probit col distCol exp exp2 i.district
+        . rename distCol tempdistcol
+        . gen distCol=min(40,tempdistcol)
+        . predict double p_prte
+        . drop distCol
+        . rename tempdistcol distCol
+        . mtefe lwage exp exp2 i.district (col=distCol), prte(p_prte)
+        . mtefeplot, prte
+
+    The polynomial model of degree 2 with two splines at 0.25 and 0.75, fit using the local
+    IV
+        . mtefe lwage exp exp2 i.district (col=distCol), polynomial(2) splines(0.25 0.75)
+
+
+Stored results
+
+    mtefe stores the following in e():
+
+    Scalars        
+      e(N)                number of observations
+      e(IV)               regular two-stage least-squares estimate
+      e(polynomial)       degree of polynomial in polynomial models
+      e(p_U)              p-value for a test of unobserved heterogeneity -- the coefficients
+                            on k(p)
+      e(p_X)              p-value for a test of observed heterogeneity -- the b_1-b_0
+                            coefficients
+
+    Macros         
+      e(cmd)              mtefe
+      e(cmdline)          command as typed
+      e(depvar)           name of dependent variable
+      e(title)            title in estimation output
+      e(title2)           secondary title in estimation output
+      e(method)           estimation method
+      e(properties)       b V; V
+
+    Matrices       
+      e(b)                coefficient vector, including MTE and treatment parameters
+      e(V)                variance-covariance matrix of b, empty if using semiparametric
+                            methods and no bootstrap
+      e(trimminglimits)   trimming limits if using the trimsupport() option.
+      e(support)          vector of common support over p
+      e(mte)              vector of MTE estimates
+      e(mtexs_ate)        vector of x values for which the main MTE and ATE were calculated
+      e(mteatt)           MTE curve for the treated individuals
+      e(weightsatt)       estimated weights at each point of support for the ATT
+      e(mtexs_att)        vector of x values for which the ATT was calculated
+      e(mteatut)          MTE curve for the untreated individuals
+      e(weightsatut)      estimated weights at each point of support for the ATUT
+      e(mtexs_atut)       vector of x values for which the ATUT was calculated
+      e(mtelate)          MTE curve for the compliers
+      e(weightslate)      estimated weights at each point of support for the LATE
+      e(mtexs_atut)       vector of x values for which the LATE was calculated
+      e(mteprte)          MTE curve for the policy compliers if specified in prte()
+      e(weightsprte)      estimated weights at each point of support for the PRTE (if
+                            specified in prte())
+      e(mtexs_atut)       vector of x values for which the PRTE was calculated (if specified
+                            in prte())
+      e(dkdp)             estimates of k(u) at the points of support
+      e(weightsmprte1)    estimated weights at each point of support for the MPRTE1 parameter
+      e(weightsmprte2)    estimated weights at each point of support for the MPRTE2 parameter
+      e(weightsmprte3)    estimated weights at each point of support for the MPRTE3 parameter
+      e(tescales)         scales of the non-marginal treatment effect parameters in
+                            situations with limited support
+
+    Functions      
+      e(sample)           marks estimation sample
+
+    If semiparametric is specified, the following matrices are stored:
+
+    Matrices       
+      e(bandwidth)        bandwidths used in local polynomial smooths, alternatively as
+                            e(bandwidth1) and e(bandwidth0) if the separate approach is used
+      e(degree)           degree in local polynomial smooth
+
+    If separate or mlikelihood is specified, the following matrices are stored:
+
+    Matrices       
+      e(Y1)               average outcomes in the treated state
+      e(Y0)               average outcomes in the untreated state
+
+    Note: bootstrap stores its own output in e() as well.  See bootstrap.
+
+    Note: Various options store results as variables as well. These include saveweights(),
+    where the variable prefix is user specified; savepropensity, where the new variable name
+    is user specified; and savekp, where the variable names are predetermined to work with
+    postestimation predictions.
+
+
+
+
+References
+
+    Brave, S., and T. Walstrum. 2014. Estimating marginal treatment effects using parametric
+        and semiparametric methods. Stata Journal 14: 191-217.
+
+    Brinch C., M. Mogstad, and M. Wiswall. 2017. Beyond LATE with a discrete instrument.
+        Journal of Political Economy 125: 985-1039.
+
+    Heckman, J. J., and E. J. Vytlacil. 2007a. Econometric evaluation of social programs,
+        part I: Causal models, structural models and econometric policy evaluation. In
+        Handbook of Econometrics, vol. 6B, ed. J. J. Heckman and E.  E. Leamer, 4779-4874.
+        Amsterdam: Elsevier.
+
+    ------. 2007b. Econometric evaluation of social programs, part II: Using the marginal
+        treatment effect to organize alternative econometric estimators to evaluate social
+        programs, and to forecast their effects in new environments. In Handbook of
+        Econometrics, vol. 6B, ed. J. J. Heckman and E. E. Leamer, 4875-5143. Amsterdam:
+        Elsevier.
+
+    Lokshin, M. and Z. Sajaia. 2004.  Maximum likelihood estimation of endogenous switching
+        regression models.  Stata Journal 4: 282-289.
+
+
+Thanks for citing mtefe as follows
+
+    Andresen, Martin E., (2018). "MTEFE: Stata module to estimate marginal treatment
+    effects". This version VERSION_DATE.
+
+    where you can check your version date as follows:
+
+        . which mtefe
+
+         
+Author
+
+    Martin Eckhoff Andresen
+    Statistics Norway
+    Oslo, Norway
+    martin.eckhoff.andresen@gmail.com
+
+    This program is inspired by margte by Brave and Walstrum (2014), who deserve a huge
+    thanks.  The maximum likelihood evaluator is adapted from the movestay command by Lokshin
+    and Sajaia. Edwin Leuven, Katrine Løken, Magne Mogstad also deserve thanks for various
+    help and bug reports.
+
+
+Also see
+
+    Development version: net install mtefe,
+              from("https://raw.githubusercontent.com/martin-andresen/mtefe/master")
+
+    Article:  Stata Journal, volume 18, number 1: st0516
+
+       Help:  mtefeplot, locpoly3, nearmrg (required for gridpoints()), movestay, margte (if
+              installed)
+
+. findfile mtefeplot.sthlp
+C:\Users\marvi\ado\plus/m/mtefeplot.sthlp
+
+. type "`r(fn)'"
+help mtefeplot{r})}
+-----------------------------------------------------------------------------------------------
+
+Title
+
+    mtefeplot --
+                Plot MTE graphs from mtefe estimates
+
+
+Syntax
+
+        mtefeplot [namelist] , [options]
+
+    options                    Description
+    -----------------------------------------------------------------------------------------
+    cropfigure(numlist)        crops the confidence bands at the min and max specified in
+                                 numlist
+    memory                     specifies that the estimates be restored from memory rather
+                                 than disk
+    normalci                   uses normal-based confidence interval rather than
+                                 percentile-based for bootstrapped estimates.
+    folder(string)             uses estimates saved in the subfolder string
+    names(namelist)            names the plots in the legend using the names in namelist
+    graph_opts(string)          add twoway options to the graph, see twoway_options
+    legendtitle(string)        uses the title string for the legend
+    level(#)                   plots a #% confidence interval. Default: 95%
+    late                       plots the MTE for the compliers and the LATE weights
+    att                        plots the MTE for the treated and the ATT weights
+    atut                       plots the MTE for the untreated and the ATUT weights
+    prte                       plots the MTE for the policy compliers and the PRTE weights
+    mprte1                     plots the weights for the Marginal Policy Relevant Treatment
+                                 Effect 1
+    mprte2                     plots the weights for the Marginal Policy Relevant Treatment
+                                 Effect 2
+    mprte3                     plots the weights for the Marginal Policy Relevant Treatment
+                                 Effect 3
+    separate                   plots the estimated outcomes separately for the treated and
+                                 untreated state
+    trimsupport                only plots the MTE for unobserved resistance between the two
+                                 values in trimsupport
+    points                     use scatter rather than line plots for the MTE(s), useful when
+                                 support is limited.
+
+    -----------------------------------------------------------------------------------------
+
+Description
+
+    mtefeplot plots the marginal treatment effects from previously stored or saved estimates
+    from mtefe.
+
+    If namelist is empty or contains one name and neither options late, att, atut or prte is
+    specified, mtefeplot will plot a standard Marginal Treatment effects plot of the stored
+    or saved estimate. If it contains estimates of the standard errors, confidence bands are
+    included.  Graph includes a plot of the average treatment effect for reference. If
+    namelist is empty, estimates from memory is used.
+
+    If namelist is empty or contains one name, separate is specified and no treatment
+    parameter options are specified, mtefeplot will plot the outcomes in the treated and
+    untreated state separately together with the MTE curve. Average treatment effect is
+    plotted for reference.
+
+    If namelist contains more than two names, mtefeplot plots several MTE plots in the same
+    graphs with no confidence bands.
+
+    If namelist is empty or contains one name, and either late, att ,atut, prte, mprte1,
+    mprte2 or mprte3 is specified, mtefeplot plots treatment parameter graphs. These contain
+    a) the MTE for the particular treatment effect requested, b) the estimated weights over
+    the U_d distribution for the requested treatment effect parameter and c) the point
+    estimate of the treatment effect labeled at the left axis. In addition, the main MTE
+    graph and the average treatment effect is plotted for reference. If late is specified,
+    the regular 2SLS estimate is also dotted for reference.  If namelist is empty, estimates
+    from memory is used. More than two treatment effect parameters specified at the same time
+    will clutter the figure, and is not recommended.
+
+    More than two names in namelist and either treatment parameter option or the separate
+    option gives an error.
+
+
+Examples
+
+    Generate some data and estimate MTE
+        . mtefe_gendata
+        . mtefe lwage exp exp2 (col=distCol)
+        . est sto normal
+        . mtefe lwage exp exp2 (col=distCol), separate pol(2)
+        . est sto polynomial
+        . est save myfolder/polynomial
+        . mtefe lwage exp exp2 (col=distCol), semiparametric gridponts(100)
+        . est sto semipar
+
+    Standard MTE plot of the estimate in memory
+        . mtefeplot
+
+    Plots of three different saved MTE estimates in the same graph
+        . mtefeplot normal polynomial semipar, memory legendtitle("Specification")
+            names("Normal" "Polynomial" "Semiparametric")
+
+    Plot of the estimated local average treatment effect and weights
+        . mtefeplot normal, mem late
+
+    Plot of the estimated ATT and ATUT with weights
+        . mtefeplot polynomial, mem att atut
+
+    Plot of outcomes in the treated and untreated state of an estimate saved in "myfolder"
+        . mtefeplot polynomial, folder(myfolder) separate
+
+Author
+
+    Martin Eckhoff Andresen
+    University of Oslo & Statistics Norway
+    Oslo, NO
+    martin.eckhoff.andresen@gmail.com
+
+Also see
+       Main help file for mtefe
+
+. 
+. * --- 2. Stored results from a standard run ------------------------------
+. graph drop _all
+
+. mtefe ln_salary $X_controls (masters = ga_funding_adj), pol(2) bootreps(0)
+
+
+Parametric polynomial MTE model                              Obs. :      8,000
+Treatment model: Probit
+Estimation method: Local IV
+------------------------------------------------------------------------------
+   ln_salary | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+beta0        |
+      female |  -.0009025    .039783    -0.02   0.982    -.0788875    .0770826
+       black |  -.1228513   .0689701    -1.78   0.075    -.2580508    .0123481
+    hispanic |  -.1373897      .0599    -2.29   0.022    -.2548094     -.01997
+       asian |   .0657922   .0771638     0.85   0.394     -.085469    .2170533
+      age_ba |   .0293137   .0159831     1.83   0.067    -.0020173    .0606447
+    firstgen |  -.0096759   .0410848    -0.24   0.814    -.0902128    .0708611
+parent_inc~q |  -.0048008   .0198871    -0.24   0.809    -.0437847    .0341832
+ parent_grad |  -.0078239   .0482141    -0.16   0.871    -.1023362    .0866883
+        ugpa |  -.0606993   .1021779    -0.59   0.552    -.2609947    .1395961
+  stem_major |   .2142446   .0686627     3.12   0.002     .0796477    .3488415
+   bus_major |   .1713767    .060626     2.83   0.005     .0525338    .2902196
+    ed_major |  -.0989037   .0878533    -1.13   0.260    -.2711191    .0733118
+selective_~t |    .114409    .044604     2.56   0.010     .0269734    .2018445
+   public_ug |  -.0111231   .0416949    -0.27   0.790     -.092856    .0706098
+ state_unemp |   .0033764   .0163662     0.21   0.837    -.0287056    .0354585
+       metro |    .023905   .0450461     0.53   0.596    -.0643971    .1122071
+       _cons |   9.854591   .4887899    20.16   0.000     8.896435    10.81275
+-------------+----------------------------------------------------------------
+beta1-beta0  |
+      female |  -.1885558   .0919778    -2.05   0.040    -.3688564   -.0082553
+       black |    .163308   .1563474     1.04   0.296    -.1431739      .46979
+    hispanic |   .1618637   .1431976     1.13   0.258    -.1188411    .4425685
+       asian |   .0016329   .1704805     0.01   0.992    -.3325534    .3358193
+      age_ba |  -.0217712    .037104    -0.59   0.557    -.0945048    .0509623
+    firstgen |   -.044913   .0969743    -0.46   0.643    -.2350079     .145182
+parent_inc~q |   .0755703   .0463366     1.63   0.103    -.0152615    .1664021
+ parent_grad |   .0844409   .1067128     0.79   0.429    -.1247441    .2936259
+        ugpa |   .4854205    .236046     2.06   0.040     .0227085    .9481324
+  stem_major |   .1148646   .1489035     0.77   0.440    -.1770253    .4067546
+   bus_major |    .157545   .2087699     0.75   0.450    -.2516986    .5667886
+    ed_major |  -.0173756   .1898353    -0.09   0.927    -.3895025    .3547513
+selective_~t |   -.110084   .1003325    -1.10   0.273     -.306762    .0865941
+   public_ug |   .0955348   .0963737     0.99   0.322    -.0933829    .2844524
+ state_unemp |   .0005286   .0377218     0.01   0.989    -.0734161    .0744733
+       metro |   .2251094   .1076551     2.09   0.037     .0140773    .4361415
+       _cons |  -.8907029   1.146852    -0.78   0.437    -3.138834    1.357428
+-------------+----------------------------------------------------------------
+k            |
+          p1 |  -3.752249   2.422604    -1.55   0.121    -8.501187    .9966885
+          p2 |   2.032777   2.591448     0.78   0.433    -3.047141    7.112694
+-------------+----------------------------------------------------------------
+effects      |
+         ate |    .358894    .150815     2.38   0.017     .0632571    .6545309
+         att |   .8285105   .1560299     5.31   0.000      .522651     1.13437
+        atut |   .0705357   .2097314     0.34   0.737    -.3405929    .4816642
+        late |   .4050782   .0566491     7.15   0.000     .2940311    .5161253
+      mprte1 |   .4490226   .0570979     7.86   0.000     .3370959    .5609494
+      mprte2 |   .5156631   .0704754     7.32   0.000     .3775128    .6538133
+      mprte3 |    .290596   .0807097     3.60   0.000     .1323838    .4488082
+------------------------------------------------------------------------------
+Test of observable heterogeneity, p-value                               0.1619
+Test of essential heterogeneity, p-value                                0.0015
+------------------------------------------------------------------------------
+Note: Analytical standard errors ignore the facts that the propensity score,
+the mean of X and the treatment effect parameter weights are estimated objects
+when calculating standard errors. Consider using bootreps() to bootstrap the 
+standard errors.
+
+
+
+. ereturn list
+
+scalars:
+                  e(N) =  8000
+               e(df_r) =  7964
+         e(polynomial) =  2
+                 e(iv) =  .4031215427446232
+
+macros:
+            e(cmdline) : "mtefe ln_salary female black hispanic asian age_ba firstgen paren.."
+             e(title2) : "Treatment model: Probit"
+                e(p_X) : ".1619099679063364"
+                e(p_U) : ".0014958268321484"
+                e(cmd) : "mtefe"
+              e(title) : "Parametric polynomial MTE model"
+             e(method) : "Local IV"
+         e(properties) : "b V"
+             e(depvar) : "ln_salary"
+
+matrices:
+                  e(b) :  1 x 142
+                  e(V) :  142 x 142
+      e(weightsmprte3) :  99 x 1
+          e(mtemprte3) :  1 x 99
+       e(mtexs_mprte3) :  16 x 1
+      e(weightsmprte2) :  99 x 1
+          e(mtemprte2) :  1 x 99
+       e(mtexs_mprte2) :  16 x 1
+      e(weightsmprte1) :  99 x 1
+          e(mtemprte1) :  1 x 99
+       e(mtexs_mprte1) :  16 x 1
+        e(weightslate) :  99 x 1
+            e(mtelate) :  1 x 99
+         e(mtexs_late) :  16 x 1
+        e(weightsatut) :  99 x 1
+            e(mteatut) :  1 x 99
+         e(mtexs_atut) :  16 x 1
+         e(weightsatt) :  99 x 1
+             e(mteatt) :  1 x 99
+          e(mtexs_att) :  16 x 1
+          e(mtexs_ate) :  16 x 1
+                e(mte) :  1 x 99
+               e(dkdp) :  1 x 99
+            e(support) :  99 x 1
+
+functions:
+             e(sample)   
+
+. matrix list e(b)
+
+e(b)[1,142]
+           beta0:        beta0:        beta0:        beta0:        beta0:        beta0:
+          female         black      hispanic         asian        age_ba      firstgen
+y1    -.00090245    -.12285131     -.1373897     .06579216      .0293137    -.00967586
+
+           beta0:        beta0:        beta0:        beta0:        beta0:        beta0:
+    parent_inc~q   parent_grad          ugpa    stem_major     bus_major      ed_major
+y1    -.00480077    -.00782392    -.06069929     .21424463      .1713767    -.09890368
+
+           beta0:        beta0:        beta0:        beta0:        beta0:  beta1-beta0:
+    selective_~t     public_ug   state_unemp         metro         _cons        female
+y1     .11440897    -.01112309     .00337643     .02390501     9.8545907    -.18855583
+
+     beta1-beta0:  beta1-beta0:  beta1-beta0:  beta1-beta0:  beta1-beta0:  beta1-beta0:
+           black      hispanic         asian        age_ba      firstgen  parent_inc~q
+y1     .16330802     .16186373     .00163293    -.02177125    -.04491298     .07557031
+
+     beta1-beta0:  beta1-beta0:  beta1-beta0:  beta1-beta0:  beta1-beta0:  beta1-beta0:
+     parent_grad          ugpa    stem_major     bus_major      ed_major  selective_~t
+y1     .08444092     .48542047     .11486463       .157545    -.01737558    -.11008396
+
+     beta1-beta0:  beta1-beta0:  beta1-beta0:  beta1-beta0:            k:            k:
+       public_ug   state_unemp         metro         _cons            p1            p2
+y1     .09553476      .0005286     .22510943    -.89070289    -3.7522492     2.0327769
+
+         effects:      effects:      effects:      effects:      effects:      effects:
+             ate           att          atut          late        mprte1        mprte2
+y1     .35889398     .82851055     .07053566      .4050782     .44902262     .51566308
+
+         effects:          mte:          mte:          mte:          mte:          mte:
+          mprte3            u1            u2            u3            u4            u5
+y1     .29059603      1.523495     1.4865824     1.4500763     1.4139767     1.3782837
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+              u6            u7            u8            u9           u10           u11
+y1     1.3429973     1.3081174     1.2736441     1.2395773     1.2059171     1.1726634
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u12           u13           u14           u15           u16           u17
+y1     1.1398163     1.1073758     1.0753418     1.0437144     1.0124935     .98167914
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u18           u19           u20           u21           u22           u23
+y1     .95127136     .92127015     .89167548     .86248738     .83370583     .80533083
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u24           u25           u26           u27           u28           u29
+y1     .77736239      .7498005     .72264517      .6958964     .66955418     .64361852
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u30           u31           u32           u33           u34           u35
+y1     .61808941     .59296686     .56825086     .54394142     .52003853      .4965422
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u36           u37           u38           u39           u40           u41
+y1     .47345242      .4507692     .42849253     .40662242     .38515887     .36410187
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u42           u43           u44           u45           u46           u47
+y1     .34345143     .32320754      .3033702     .28393943      .2649152     .24629754
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u48           u49           u50           u51           u52           u53
+y1     .22808643     .21028187     .19288387     .17589242     .15930753      .1431292
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u54           u55           u56           u57           u58           u59
+y1     .12735742      .1119922     .09703353     .08248141     .06833586     .05459685
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u60           u61           u62           u63           u64           u65
+y1     .04126441     .02833852     .01581918      .0037064    -.00799983     -.0192995
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u66           u67           u68           u69           u70           u71
+y1    -.03019261    -.04067917    -.05075917    -.06043262    -.06969952    -.07855985
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u72           u73           u74           u75           u76           u77
+y1    -.08701364    -.09506086    -.10270154    -.10993565    -.11676321    -.12318422
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u78           u79           u80           u81           u82           u83
+y1    -.12919867    -.13480656     -.1400079    -.14480269    -.14919091    -.15317259
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u84           u85           u86           u87           u88           u89
+y1    -.15674771    -.15991627    -.16267828    -.16503373    -.16698262    -.16852496
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u90           u91           u92           u93           u94           u95
+y1    -.16966075    -.17038998    -.17071265    -.17062877    -.17013834    -.16924135
+
+             mte:          mte:          mte:          mte:
+             u96           u97           u98           u99
+y1     -.1679378     -.1662277    -.16411104    -.16158783
+
+. graph dir
+    CommonSupport  mtePlot
+
+. estimates store diag_q
+
+. 
+. * --- 3. prte(): uniform $1k GA increase ---------------------------------
+. capture drop _pz p_test
+
+. quietly probit masters ga_funding_adj $X_controls
+
+. predict double _pz, xb
+
+. gen double p_test = normal(_pz + _b[ga_funding_adj]*1)
+
+. mtefe ln_salary $X_controls (masters = ga_funding_adj), ///
+>     pol(2) bootreps(0) prte(p_test) noplot
+
+
+Parametric polynomial MTE model                              Obs. :      8,000
+Treatment model: Probit
+Estimation method: Local IV
+------------------------------------------------------------------------------
+   ln_salary | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+beta0        |
+      female |  -.0009025    .039783    -0.02   0.982    -.0788875    .0770826
+       black |  -.1228513   .0689701    -1.78   0.075    -.2580508    .0123481
+    hispanic |  -.1373897      .0599    -2.29   0.022    -.2548094     -.01997
+       asian |   .0657922   .0771638     0.85   0.394     -.085469    .2170533
+      age_ba |   .0293137   .0159831     1.83   0.067    -.0020173    .0606447
+    firstgen |  -.0096759   .0410848    -0.24   0.814    -.0902128    .0708611
+parent_inc~q |  -.0048008   .0198871    -0.24   0.809    -.0437847    .0341832
+ parent_grad |  -.0078239   .0482141    -0.16   0.871    -.1023362    .0866883
+        ugpa |  -.0606993   .1021779    -0.59   0.552    -.2609947    .1395961
+  stem_major |   .2142446   .0686627     3.12   0.002     .0796477    .3488415
+   bus_major |   .1713767    .060626     2.83   0.005     .0525338    .2902196
+    ed_major |  -.0989037   .0878533    -1.13   0.260    -.2711191    .0733118
+selective_~t |    .114409    .044604     2.56   0.010     .0269734    .2018445
+   public_ug |  -.0111231   .0416949    -0.27   0.790     -.092856    .0706098
+ state_unemp |   .0033764   .0163662     0.21   0.837    -.0287056    .0354585
+       metro |    .023905   .0450461     0.53   0.596    -.0643971    .1122071
+       _cons |   9.854591   .4887899    20.16   0.000     8.896435    10.81275
+-------------+----------------------------------------------------------------
+beta1-beta0  |
+      female |  -.1885558   .0919778    -2.05   0.040    -.3688564   -.0082553
+       black |    .163308   .1563474     1.04   0.296    -.1431739      .46979
+    hispanic |   .1618637   .1431976     1.13   0.258    -.1188411    .4425685
+       asian |   .0016329   .1704805     0.01   0.992    -.3325534    .3358193
+      age_ba |  -.0217712    .037104    -0.59   0.557    -.0945048    .0509623
+    firstgen |   -.044913   .0969743    -0.46   0.643    -.2350079     .145182
+parent_inc~q |   .0755703   .0463366     1.63   0.103    -.0152615    .1664021
+ parent_grad |   .0844409   .1067128     0.79   0.429    -.1247441    .2936259
+        ugpa |   .4854205    .236046     2.06   0.040     .0227085    .9481324
+  stem_major |   .1148646   .1489035     0.77   0.440    -.1770253    .4067546
+   bus_major |    .157545   .2087699     0.75   0.450    -.2516986    .5667886
+    ed_major |  -.0173756   .1898353    -0.09   0.927    -.3895025    .3547513
+selective_~t |   -.110084   .1003325    -1.10   0.273     -.306762    .0865941
+   public_ug |   .0955348   .0963737     0.99   0.322    -.0933829    .2844524
+ state_unemp |   .0005286   .0377218     0.01   0.989    -.0734161    .0744733
+       metro |   .2251094   .1076551     2.09   0.037     .0140773    .4361415
+       _cons |  -.8907029   1.146852    -0.78   0.437    -3.138834    1.357428
+-------------+----------------------------------------------------------------
+k            |
+          p1 |  -3.752249   2.422604    -1.55   0.121    -8.501187    .9966885
+          p2 |   2.032777   2.591448     0.78   0.433    -3.047141    7.112694
+-------------+----------------------------------------------------------------
+effects      |
+         ate |    .358894    .150815     2.38   0.017     .0632571    .6545309
+         att |   .8285105   .1560299     5.31   0.000      .522651     1.13437
+        atut |   .0705357   .2097314     0.34   0.737    -.3405929    .4816642
+        late |   .4050782   .0566491     7.15   0.000     .2940311    .5161253
+      mprte1 |   .4490226   .0570979     7.86   0.000     .3370959    .5609494
+      mprte2 |   .5156631   .0704754     7.32   0.000     .3775128    .6538133
+      mprte3 |    .290596   .0807097     3.60   0.000     .1323838    .4488082
+        prte |    .423819    .057975     7.31   0.000     .3101729    .5374652
+------------------------------------------------------------------------------
+Test of observable heterogeneity, p-value                               0.1619
+Test of essential heterogeneity, p-value                                0.0015
+------------------------------------------------------------------------------
+Note: Analytical standard errors ignore the facts that the propensity score,
+the mean of X and the treatment effect parameter weights are estimated objects
+when calculating standard errors. Consider using bootreps() to bootstrap the 
+standard errors.
+
+
+
+. matrix list e(b)
+
+e(b)[1,143]
+           beta0:        beta0:        beta0:        beta0:        beta0:        beta0:
+          female         black      hispanic         asian        age_ba      firstgen
+y1    -.00090245    -.12285131     -.1373897     .06579216      .0293137    -.00967586
+
+           beta0:        beta0:        beta0:        beta0:        beta0:        beta0:
+    parent_inc~q   parent_grad          ugpa    stem_major     bus_major      ed_major
+y1    -.00480077    -.00782392    -.06069929     .21424463      .1713767    -.09890368
+
+           beta0:        beta0:        beta0:        beta0:        beta0:  beta1-beta0:
+    selective_~t     public_ug   state_unemp         metro         _cons        female
+y1     .11440897    -.01112309     .00337643     .02390501     9.8545907    -.18855583
+
+     beta1-beta0:  beta1-beta0:  beta1-beta0:  beta1-beta0:  beta1-beta0:  beta1-beta0:
+           black      hispanic         asian        age_ba      firstgen  parent_inc~q
+y1     .16330802     .16186373     .00163293    -.02177125    -.04491298     .07557031
+
+     beta1-beta0:  beta1-beta0:  beta1-beta0:  beta1-beta0:  beta1-beta0:  beta1-beta0:
+     parent_grad          ugpa    stem_major     bus_major      ed_major  selective_~t
+y1     .08444092     .48542047     .11486463       .157545    -.01737558    -.11008396
+
+     beta1-beta0:  beta1-beta0:  beta1-beta0:  beta1-beta0:            k:            k:
+       public_ug   state_unemp         metro         _cons            p1            p2
+y1     .09553476      .0005286     .22510943    -.89070289    -3.7522492     2.0327769
+
+         effects:      effects:      effects:      effects:      effects:      effects:
+             ate           att          atut          late        mprte1        mprte2
+y1     .35889398     .82851055     .07053566      .4050782     .44902262     .51566308
+
+         effects:      effects:          mte:          mte:          mte:          mte:
+          mprte3          prte            u1            u2            u3            u4
+y1     .29059603     .42381901      1.523495     1.4865824     1.4500763     1.4139767
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+              u5            u6            u7            u8            u9           u10
+y1     1.3782837     1.3429973     1.3081174     1.2736441     1.2395773     1.2059171
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u11           u12           u13           u14           u15           u16
+y1     1.1726634     1.1398163     1.1073758     1.0753418     1.0437144     1.0124935
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u17           u18           u19           u20           u21           u22
+y1     .98167914     .95127136     .92127015     .89167548     .86248738     .83370583
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u23           u24           u25           u26           u27           u28
+y1     .80533083     .77736239      .7498005     .72264517      .6958964     .66955418
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u29           u30           u31           u32           u33           u34
+y1     .64361852     .61808941     .59296686     .56825086     .54394142     .52003853
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u35           u36           u37           u38           u39           u40
+y1      .4965422     .47345242      .4507692     .42849253     .40662242     .38515887
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u41           u42           u43           u44           u45           u46
+y1     .36410187     .34345143     .32320754      .3033702     .28393943      .2649152
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u47           u48           u49           u50           u51           u52
+y1     .24629754     .22808643     .21028187     .19288387     .17589242     .15930753
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u53           u54           u55           u56           u57           u58
+y1      .1431292     .12735742      .1119922     .09703353     .08248141     .06833586
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u59           u60           u61           u62           u63           u64
+y1     .05459685     .04126441     .02833852     .01581918      .0037064    -.00799983
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u65           u66           u67           u68           u69           u70
+y1     -.0192995    -.03019261    -.04067917    -.05075917    -.06043262    -.06969952
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u71           u72           u73           u74           u75           u76
+y1    -.07855985    -.08701364    -.09506086    -.10270154    -.10993565    -.11676321
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u77           u78           u79           u80           u81           u82
+y1    -.12318422    -.12919867    -.13480656     -.1400079    -.14480269    -.14919091
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u83           u84           u85           u86           u87           u88
+y1    -.15317259    -.15674771    -.15991627    -.16267828    -.16503373    -.16698262
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u89           u90           u91           u92           u93           u94
+y1    -.16852496    -.16966075    -.17038998    -.17071265    -.17062877    -.17013834
+
+             mte:          mte:          mte:          mte:          mte:
+             u95           u96           u97           u98           u99
+y1    -.16924135     -.1679378     -.1662277    -.16411104    -.16158783
+
+. ereturn list
+
+scalars:
+                  e(N) =  8000
+               e(df_r) =  7964
+         e(polynomial) =  2
+                 e(iv) =  .4031215427446232
+
+macros:
+            e(cmdline) : "mtefe ln_salary female black hispanic asian age_ba firstgen paren.."
+             e(title2) : "Treatment model: Probit"
+                e(p_X) : ".1619099679063364"
+                e(p_U) : ".0014958268321484"
+                e(cmd) : "mtefe"
+              e(title) : "Parametric polynomial MTE model"
+             e(method) : "Local IV"
+         e(properties) : "b V"
+             e(depvar) : "ln_salary"
+
+matrices:
+                  e(b) :  1 x 143
+                  e(V) :  143 x 143
+      e(weightsmprte3) :  99 x 1
+          e(mtemprte3) :  1 x 99
+       e(mtexs_mprte3) :  16 x 1
+      e(weightsmprte2) :  99 x 1
+          e(mtemprte2) :  1 x 99
+       e(mtexs_mprte2) :  16 x 1
+      e(weightsmprte1) :  99 x 1
+          e(mtemprte1) :  1 x 99
+       e(mtexs_mprte1) :  16 x 1
+        e(weightsprte) :  99 x 1
+            e(mteprte) :  1 x 99
+         e(mtexs_prte) :  16 x 1
+        e(weightslate) :  99 x 1
+            e(mtelate) :  1 x 99
+         e(mtexs_late) :  16 x 1
+        e(weightsatut) :  99 x 1
+            e(mteatut) :  1 x 99
+         e(mtexs_atut) :  16 x 1
+         e(weightsatt) :  99 x 1
+             e(mteatt) :  1 x 99
+          e(mtexs_att) :  16 x 1
+          e(mtexs_ate) :  16 x 1
+                e(mte) :  1 x 99
+               e(dkdp) :  1 x 99
+            e(support) :  99 x 1
+
+functions:
+             e(sample)   
+
+. estimates store diag_prte
+
+. 
+. * --- 4. mtefeplot options -----------------------------------------------
+. graph drop _all
+
+. capture noisily mtefeplot diag_q, memory
+
+. graph dir
+    mtePlot
+
+. capture noisily mtefeplot diag_q, memory late
+
+. capture noisily mtefeplot diag_prte, memory prte
+
+. graph dir
+    mtePlot
+
+. 
+. * --- 5. Subgroup run (needed for area-specific estimates) ---------------
+. capture noisily mtefe ln_salary $X_controls (masters = ga_funding_adj) ///
+>     if stem_major == 1, pol(2) bootreps(0) noplot
+
+
+Parametric polynomial MTE model                              Obs. :      1,963
+Treatment model: Probit
+Estimation method: Local IV
+------------------------------------------------------------------------------
+   ln_salary | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+beta0        |
+      female |   .0019312   .1405879     0.01   0.989    -.2737886     .277651
+       black |  -.3933544   .2686596    -1.46   0.143    -.9202474    .1335385
+    hispanic |  -.6004836    .213962    -2.81   0.005    -1.020104    -.180863
+       asian |  -.0408904   .2509153    -0.16   0.871    -.5329835    .4512026
+      age_ba |    -.02124   .0556373    -0.38   0.703    -.1303555    .0878754
+    firstgen |  -.0620004   .1467621    -0.42   0.673     -.349829    .2258283
+parent_inc~q |   .0461295   .0712596     0.65   0.517    -.0936243    .1858832
+ parent_grad |   .0656812   .1645411     0.40   0.690    -.2570155     .388378
+        ugpa |  -.6921526   .3660551    -1.89   0.059    -1.410057    .0257517
+  stem_major |   13.72225   1.780734     7.71   0.000     10.22989    17.21461
+   bus_major |          0  (omitted)
+    ed_major |          0  (omitted)
+selective_~t |   .1470692   .1559501     0.94   0.346    -.1587788    .4529173
+   public_ug |   .1095679   .1452538     0.75   0.451    -.1753027    .3944385
+ state_unemp |   .0364719   .0563963     0.65   0.518    -.0741321    .1470758
+       metro |   .0432677   .1604874     0.27   0.787     -.271479    .3580144
+       _cons |          0  (omitted)
+-------------+----------------------------------------------------------------
+beta1-beta0  |
+      female |  -.1574676   .2466942    -0.64   0.523    -.6412823    .3263471
+       black |    .525557   .4453401     1.18   0.238    -.3478406    1.398954
+    hispanic |   1.015712   .4065002     2.50   0.013     .2184866    1.812937
+       asian |   .1718185   .4206632     0.41   0.683    -.6531828    .9968198
+      age_ba |   .0595206   .0974126     0.61   0.541    -.1315241    .2505654
+    firstgen |   .0696941   .2595781     0.27   0.788    -.4393884    .5787766
+parent_inc~q |  -.0076482   .1269149    -0.06   0.952    -.2565526    .2412563
+ parent_grad |  -.0606878   .2864937    -0.21   0.832    -.6225569    .5011813
+        ugpa |   1.504706   .6392675     2.35   0.019     .2509802    2.758433
+  stem_major |          0  (omitted)
+   bus_major |          0  (omitted)
+    ed_major |          0  (omitted)
+selective_~t |  -.1381057    .271866    -0.51   0.612     -.671287    .3950757
+   public_ug |  -.0860592    .254751    -0.34   0.736    -.5856749    .4135565
+ state_unemp |  -.0527053   .0994576    -0.53   0.596    -.2477607    .1423501
+       metro |   .2733544   .2925739     0.93   0.350    -.3004392    .8471481
+       _cons |  -6.404378    3.11556    -2.06   0.040    -12.51459   -.2941662
+-------------+----------------------------------------------------------------
+k            |
+          p1 |   23.30384   11.09659     2.10   0.036     1.541293    45.06639
+          p2 |  -21.30443   10.23795    -2.08   0.038      -41.383   -1.225849
+-------------+----------------------------------------------------------------
+effects      |
+         ate |  -.9675737   .6654795    -1.45   0.146    -2.272707    .3375594
+         att |  -1.262545   .8441815    -1.50   0.135    -2.918147     .393057
+        atut |  -.6131169   .6149355    -1.00   0.319    -1.819123    .5928897
+        late |   .4042099   .1305982     3.10   0.002     .1480817     .660338
+      mprte1 |   .3185204   .1332635     2.39   0.017     .0571651    .5798757
+      mprte2 |   .2502759   .1469789     1.70   0.089    -.0379779    .5385297
+      mprte3 |   .2637293   .1674325     1.58   0.115    -.0646381    .5920967
+------------------------------------------------------------------------------
+Test of observable heterogeneity, p-value                               0.3482
+Test of essential heterogeneity, p-value                                0.1105
+------------------------------------------------------------------------------
+Note: Analytical standard errors ignore the facts that the propensity score,
+the mean of X and the treatment effect parameter weights are estimated objects
+when calculating standard errors. Consider using bootreps() to bootstrap the 
+standard errors.
+
+
+
+. matrix list e(b)
+
+e(b)[1,142]
+           beta0:        beta0:        beta0:        beta0:        beta0:        beta0:
+          female         black      hispanic         asian        age_ba      firstgen
+y1     .00193119    -.39335443    -.60048362    -.04089041    -.02124004    -.06200037
+
+           beta0:        beta0:        beta0:        beta0:        beta0:        beta0:
+    parent_inc~q   parent_grad          ugpa    stem_major     bus_major      ed_major
+y1     .04612945     .06568123    -.69215261      13.72225             0             0
+
+           beta0:        beta0:        beta0:        beta0:        beta0:  beta1-beta0:
+    selective_~t     public_ug   state_unemp         metro         _cons        female
+y1     .14706924      .1095679     .03647186     .04326768             0    -.15746759
+
+     beta1-beta0:  beta1-beta0:  beta1-beta0:  beta1-beta0:  beta1-beta0:  beta1-beta0:
+           black      hispanic         asian        age_ba      firstgen  parent_inc~q
+y1     .52555697     1.0157116     .17181849     .05952061     .06969412    -.00764815
+
+     beta1-beta0:  beta1-beta0:  beta1-beta0:  beta1-beta0:  beta1-beta0:  beta1-beta0:
+     parent_grad          ugpa    stem_major     bus_major      ed_major  selective_~t
+y1    -.06068781     1.5047064             0             0             0    -.13810566
+
+     beta1-beta0:  beta1-beta0:  beta1-beta0:  beta1-beta0:            k:            k:
+       public_ug   state_unemp         metro         _cons            p1            p2
+y1    -.08605919    -.05270528     .27335443    -6.4043784     23.303839    -21.304427
+
+         effects:      effects:      effects:      effects:      effects:      effects:
+             ate           att          atut          late        mprte1        mprte2
+y1    -.96757372     -1.262545    -.61311689     .40420986     .31852043     .25027588
+
+         effects:          mte:          mte:          mte:          mte:          mte:
+          mprte3            u1            u2            u3            u4            u5
+y1     .26372929    -5.3226173    -5.0959703    -4.8735841    -4.6554588    -4.4415944
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+              u6            u7            u8            u9           u10           u11
+y1    -4.2319908    -4.0266482    -3.8255665    -3.6287456    -3.4361856    -3.2478865
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u12           u13           u14           u15           u16           u17
+y1    -3.0638483     -2.884071    -2.7085545     -2.537299    -2.3703043    -2.2075705
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u18           u19           u20           u21           u22           u23
+y1    -2.0490976    -1.8948856    -1.7449345    -1.5992442    -1.4578149    -1.3206464
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u24           u25           u26           u27           u28           u29
+y1    -1.1877388    -1.0590921    -.93470627    -.81458134    -.69871729    -.58711413
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u30           u31           u32           u33           u34           u35
+y1    -.47977185    -.37669046    -.27786995    -.18331033    -.09301159    -.00697374
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u36           u37           u38           u39           u40           u41
+y1     .07480322      .1523193      .2255745     .29456881     .35930223     .41977477
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u42           u43           u44           u45           u46           u47
+y1     .47598642     .52793719     .57562708     .61905607     .65822419     .69313141
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u48           u49           u50           u51           u52           u53
+y1     .72377775     .75016321     .77228778     .79015147     .80375427     .81309618
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u54           u55           u56           u57           u58           u59
+y1     .81817721     .81899736     .81555662     .80785499     .79589248     .77966908
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u60           u61           u62           u63           u64           u65
+y1      .7591848     .73443963     .70543358     .67216664     .63463882     .59285011
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u66           u67           u68           u69           u70           u71
+y1     .54680052     .49649004     .44191868     .38308643     .31999329     .25263927
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u72           u73           u74           u75           u76           u77
+y1     .18102437     .10514858      .0250119    -.05938566    -.14804411    -.24096344
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u78           u79           u80           u81           u82           u83
+y1    -.33814366    -.43958476    -.54528675    -.65524962    -.76947338    -.88795802
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u84           u85           u86           u87           u88           u89
+y1    -1.0107036      -1.13771    -1.2689773    -1.4045055    -1.5442945    -1.6883445
+
+             mte:          mte:          mte:          mte:          mte:          mte:
+             u90           u91           u92           u93           u94           u95
+y1    -1.8366553     -1.989227    -2.1460597    -2.3071532    -2.4725075    -2.6421228
+
+             mte:          mte:          mte:          mte:
+             u96           u97           u98           u99
+y1     -2.815999     -2.994136    -3.1765339    -3.3631927
+
+. 
+. * --- 6. Run time of one mtefe call (for bootstrap planning) -------------
+. timer clear 1
+
+. timer on 1
+
+. quietly mtefe ln_salary $X_controls (masters = ga_funding_adj), ///
+>     pol(2) bootreps(0) noplot
+
+. timer off 1
+
+. timer list 1
+   1:      8.29 /        1 =       8.2920
+
+. 
+. drop _pz p_test
+
+. log close diag
+      name:  diag
+       log:  C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/logs/mtefe_diagnostic.lo
+> g
+  log type:  text
+ closed on:  27 Oct 2026, 17:23:48
+-----------------------------------------------------------------------------------------------

@@ -1,0 +1,402 @@
+MTE_MPRTE.R log opened: 2026-11-02 16:27:43 
+Log file: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/logs/MTE_MPRTE_R.log 
+Data directory: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Data/Stata 
+
+==============================================
+LOADING SYNTHETIC B&B DATASET
+==============================================
+Sample size: 8000 
+
+==============================================
+MASTER'S PROGRAM AREA INDICATORS
+==============================================
+
+--- Program Area Distribution (Treated Only) ---
+Total treated: 3068 
+  ma_stem: 585  ( 19.1%)
+  ma_business: 179  (  5.8%)
+  ma_education: 213  (  6.9%)
+  ma_health: 787  ( 25.7%)
+  ma_other: 1304  ( 42.5%)
+CHECK PASSED: all treated obs have exactly 1 program area
+CHECK PASSED: all untreated obs have zero program area
+
+==============================================
+SUMMARY STATISTICS
+==============================================
+
+   0    1 
+4932 3068 
+Treatment rate: 0.384 
+                  N       Mean         SD       Min          Max
+ln_salary      8000    10.7873     0.8668    7.9393      14.0927
+salary         8000 71944.4965 81791.0094 2805.3870 1319387.3750
+masters        8000     0.3835     0.4863    0.0000       1.0000
+ga_funding_adj 8000    19.0591     4.9397    7.2000      37.8135
+
+Salary by master's completion:
+  mean.salary mean.ln_salary sd.salary sd.ln_salary    n
+0    43242.99        10.4180  39390.65       0.6922 4932
+1   118083.95        11.3809 107231.57       0.7858 3068
+                   N    Mean     SD     Min     Max
+female          8000  0.5661 0.4956  0.0000  1.0000
+black           8000  0.0994 0.2992  0.0000  1.0000
+hispanic        8000  0.1192 0.3241  0.0000  1.0000
+asian           8000  0.0796 0.2707  0.0000  1.0000
+age_ba          8000 23.4965 1.2240 22.0000 29.0000
+firstgen        8000  0.3529 0.4779  0.0000  1.0000
+parent_income_q 8000  3.1921 0.9877  1.0000  5.0000
+parent_grad     8000  0.2429 0.4288  0.0000  1.0000
+ugpa            8000  2.7530 0.1915  2.1308  3.1778
+stem_major      8000  0.2454 0.4303  0.0000  1.0000
+bus_major       8000  0.1495 0.3566  0.0000  1.0000
+ed_major        8000  0.0871 0.2820  0.0000  1.0000
+selective_inst  8000  0.2938 0.4555  0.0000  1.0000
+public_ug       8000  0.6534 0.4759  0.0000  1.0000
+state_unemp     8000  6.4301 1.2080  4.0362  9.8025
+metro           8000  0.7536 0.4309  0.0000  1.0000
+
+--- Mean Log Salary by Program Area (Treated Only) ---
+  ma_stem: mean ln_salary = 11.5591  (N = 585)
+  ma_business: mean ln_salary = 11.5051  (N = 179)
+  ma_education: mean ln_salary = 11.1557  (N = 213)
+  ma_health: mean ln_salary = 11.3671  (N = 787)
+  ma_other: mean ln_salary = 11.3290  (N = 1304)
+
+==============================================
+INSTRUMENT RELEVANCE CHECK
+==============================================
+                 Estimate  Std. Error  t value      Pr(>|t|)
+ga_funding_adj 0.04185408 0.001162091 36.01617 2.386857e-263
+
+First-stage F (robust): 1297.16 
+RESULT: Strong instrument (F > 10)
+
+==============================================
+NAIVE OLS ESTIMATION
+==============================================
+OLS estimate: 0.9633 (SE = 0.0178 )
+
+==============================================
+IV/2SLS ESTIMATION (LATE)
+==============================================
+IV/LATE estimate: 0.4031 (SE = 0.0489 )
+Robust regression F(1, 7981 ) = 124.2  (p = 0.0000 )
+
+==============================================
+MTE ESTIMATION
+==============================================
+GA funding probit coefficient: 0.12489 
+
+--- 6b. Manual polynomial (illustration only) ---
+Quadratic MTE(u) = -3.8569 + 20.3839*u + -20.6281*u^2
+ATE (manual quadratic): -0.5410 
+Cubic MTE(u) = -3.2238 + 30.5783*u + -78.0684*u^2 + 60.4863*u^3
+ATE (manual cubic): 1.1641 
+ATT (manual cubic): -0.3341 
+ATU (manual cubic): 2.0840 
+Note: illustration only — compare with the main estimates in Section 6c.
+
+--- 6c. MTE estimation (R equivalent of mtefe, main estimator) ---
+
+MTE results (pol = 2), analytic SEs in parentheses:
+  ATE       0.3589  (0.1508)
+  ATT       0.8285  (0.1560)
+  ATU       0.0705  (0.2097)
+  LATE      0.4051  (0.0566)
+  MPRTE1    0.4490  (0.0571)
+  MPRTE2    0.5157  (0.0705)
+  MPRTE3    0.2906  (0.0807)
+  2SLS for comparison: 0.4031 
+  Test of essential heterogeneity, p = 0.0015 
+  MTE at u = 0.10, 0.50, 0.90:  1.2059,  0.1929, -0.1697
+Check: max |mte_poly P - phat| = 0 
+
+--- Heckman Selection Model ---
+Two-step: lambda = -0.5829  rho = -0.6657  sigma =  0.8757
+Heckman ML: lambda = -0.3761  rho = -0.4626  LR chi2 = 104.36 (p = 0.0000)
+
+==============================================
+MTE BY GRADUATE PROGRAM AREA (separate model per area)
+==============================================
+Prospective areas (ma_*_pro) found in dataset; no new draws.
+CHECK PASSED: all untreated obs have exactly 1 prospective area
+
+Area         N    Completers    ATE      ATT      ATU      LATE
+  stem        1048    585       0.4551   0.1894   0.7891   0.5190
+  business     777    179       0.0596   0.9074  -0.1956   0.6190
+  education    477    213      -0.0264   1.0945  -0.9235   0.4013
+  health      2068    787       0.0647   0.7848  -0.3713   0.3070
+  other       3630   1304       0.1921   0.8240  -0.1589   0.4490
+
+Common support of each area's propensity score:
+  stem: [0.149, 0.913]
+  business: [0.006, 0.786]
+  education: [0.058, 0.871]
+  health: [0.051, 0.927]
+  other: [0.022, 0.951]
+
+==============================================
+STATE-CLUSTERED BOOTSTRAP (G=50, R=500)
+==============================================
+First replication took  0.3 seconds. Projected total: about   3 minutes.
+   50 reps done
+   100 reps done
+   150 reps done
+   200 reps done
+   250 reps done
+   300 reps done
+   350 reps done
+   400 reps done
+   450 reps done
+   500 reps done
+Bootstrap complete: 500 of 500 reps successful
+
+--- Bootstrap SEs: Pooled Parameters (500 reps) ---
+  ATE     =  0.3589  (BS SE = 0.1386)
+  ATT     =  0.8285  (BS SE = 0.1694)
+  ATU     =  0.0705  (BS SE = 0.1965)
+  LATE    =  0.4051  (BS SE = 0.0475)
+  MPRTE1  =  0.4490  (BS SE = 0.0605)
+
+--- Bootstrap SEs: Area-Specific ATE ---
+Area          Estimate   BS SE    95% CI                  Sig
+----------------------------------------------------------------
+  other        0.1921    0.0744   [ 0.0462,  0.3379]   ***
+  stem         0.4551    0.1594   [ 0.1427,  0.7676]   ***
+  business     0.0596    0.5447   [-1.0080,  1.1272]      
+  education   -0.0264    0.2687   [-0.5530,  0.5002]      
+  health       0.0647    0.1331   [-0.1961,  0.3256]      
+
+--- Bootstrap SEs: Area-Specific ATT ---
+Area          Estimate   BS SE    95% CI                  Sig
+----------------------------------------------------------------
+  other        0.8240    0.1357   [ 0.5581,  1.0899]   ***
+  stem         0.1894    0.4508   [-0.6941,  1.0730]      
+  business     0.9074    0.2763   [ 0.3659,  1.4488]   ***
+  education    1.0945    0.6018   [-0.0851,  2.2740]      
+  health       0.7848    0.2372   [ 0.3199,  1.2496]   ***
+
+--- Bootstrap SEs: Area-Specific ATU ---
+Area          Estimate   BS SE    95% CI                  Sig
+----------------------------------------------------------------
+  other       -0.1589    0.1557   [-0.4640,  0.1462]      
+  stem         0.7891    0.3996   [ 0.0060,  1.5722]   ***
+  business    -0.1956    0.7459   [-1.6576,  1.2665]      
+  education   -0.9235    0.6574   [-2.2120,  0.3651]      
+  health      -0.3713    0.3038   [-0.9666,  0.2241]      
+  *** = 95% CI excludes zero (p < 0.05, two-tailed)
+  Note: ATU based on prospective program area assignment (seed 20260102).
+
+--- Wild Cluster Bootstrap: OLS (WCR, Webb, 9,999 draws) ---
+  p-value (wild cluster): 0.0000 
+--- Wild Cluster Bootstrap: IV (WRE, Webb, 9,999 draws) ---
+  p-value (wild cluster): 0.0000 
+
+==============================================
+RESULTS COMPARISON
+==============================================
+  Naive OLS:         0.9633 (SE = 0.0178 — likely biased)
+  IV/2SLS:           0.4031 (SE = 0.0489 — complier effect)
+  MTE LATE           0.4051 (BS SE = 0.0475)
+  MTE ATE            0.3589 (BS SE = 0.1386)
+  MTE ATT            0.8285 (BS SE = 0.1694)
+  MTE ATU            0.0705 (BS SE = 0.1965)
+  MTE MPRTE1         0.4490 (BS SE = 0.0605)
+
+  Sensitivity — linear MTE (pol = 1): ATE =  0.2572  ATT =  0.7414  ATU = -0.0400  LATE =  0.3994
+  Illustration — manual cubic (Section 6b): ATE =  1.1641  ATT = -0.3341  ATU =  2.0840
+
+  ATT > ATE > ATU: POSITIVE SELECTION on gains
+OLS BIAS:  168.4% relative to MTE-based ATE
+
+==============================================
+MTE VISUALIZATION
+==============================================
+Figure saved: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_3_mte_curve_R.png 
+Figure saved: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_5_mte_byarea_curve_R.png 
+
+==============================================
+POLICY-RELEVANT TREATMENT EFFECTS
+==============================================
+Current mean GA: $19.06k  Proposed (20% above mean): $22.87k
+
+Scenario                              Mean dP     PRTE    (SE, analytic)
+-------------------------------------------------------------------------
+  GA set to 120% of mean (Sec. 9)       0.1695    0.5027   (0.0903)
+  Uniform +$1k (Scen. 1)                0.0407    0.4238   (0.0580)
+  Low-income +$2k (Scen. 2)             0.0197    0.3073   (0.0870)
+  STEM ug +$3k (Scen. 3)                0.0295    0.2318   (0.0974)
+  Education ug +$2.5k (Scen. 4)         0.0094    0.1866   (0.1682)
+  STEM pipeline +$2.5k (Scen. 5)        0.0248    0.2423   (0.0953)
+  Business pipeline +$2.5k (Scen. 6)    0.0144    0.7203   (0.1889)
+  Education pipeline +$2.5k (Scen. 7)   0.0094    0.1866   (0.1682)
+  Health pipeline +$2.5k (Scen. 8)      0.0796    0.3345   (0.0666)
+
+  Marginal versions: MPRTE1 = 0.4490  MPRTE2 = 0.5157  MPRTE3 = 0.2906
+
+==============================================
+PRTE BY POLICY INTENSITY
+==============================================
+ ga_increase prte_int
+         0.5   0.4378
+         1.0   0.4238
+         1.5   0.4063
+         2.0   0.3903
+         2.5   0.3747
+         3.0   0.3597
+         3.5   0.3445
+         4.0   0.3296
+         4.5   0.3153
+         5.0   0.3012
+         5.5   0.2875
+         6.0   0.2740
+         6.5   0.2611
+         7.0   0.2486
+         7.5   0.2366
+         8.0   0.2250
+         8.5   0.2139
+         9.0   0.2034
+         9.5   0.1933
+        10.0   0.1837
+Figure saved: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_8_mprte_by_intensity_R.png 
+
+==============================================
+COMPARISON OF TREATMENT EFFECT PARAMETERS
+==============================================
+Parameter     MTE (pol=2)   BS SE      MTE (pol=1)
+====================================================
+ATE             0.3589     (0.1386)     0.2572
+ATT             0.8285     (0.1694)     0.7414
+ATU             0.0705     (0.1965)    -0.0400
+LATE            0.4051     (0.0475)     0.3994
+2SLS            0.4031     (0.0489)
+MPRTE1          0.4490     (0.0605)
+----------------------------------------------------
+PRTE by scenario (analytic SEs):
+  Uniform +$1k (Scen. 1)                0.4238   (0.0580)
+  Low-income +$2k (Scen. 2)             0.3073   (0.0870)
+  STEM ug +$3k (Scen. 3)                0.2318   (0.0974)
+  Education ug +$2.5k (Scen. 4)         0.1866   (0.1682)
+  STEM pipeline +$2.5k (Scen. 5)        0.2423   (0.0953)
+  Business pipeline +$2.5k (Scen. 6)    0.7203   (0.1889)
+  Education pipeline +$2.5k (Scen. 7)   0.1866   (0.1682)
+  Health pipeline +$2.5k (Scen. 8)      0.3345   (0.0666)
+Figure saved: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_6_mte_policy_regions_R.png 
+Figure saved: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_4_mte_by_propensity_R.png 
+
+==============================================
+POLICY COST-BENEFIT ANALYSIS
+==============================================
+Present value factor (30 years, 3%): 19.60 
+
+--- Scenarios 1-4: PRTE-based CBA ---
+Policy                                 PRTE   Annual Gain   PV Gain    B/C Ratio
+  Uniform +$1k (Scen. 1)               0.4238   $  24808   $   486240    9.72
+  Low-income +$2k (Scen. 2)            0.3073   $  16909   $   331417    6.63
+  STEM ug +$3k (Scen. 3)               0.2318   $  12258   $   240271    4.81
+  Education ug +$2.5k (Scen. 4)        0.1866   $   9645   $   189039    3.78
+
+--- Scenarios 5-8: Graduate Pipeline PRTE-based CBA ---
+  Base salaries: STEM=$65,000 Business=$60,000 Ed=$42,000 Health=$68,000
+  STEM pipeline +$2.5k (Scen. 5)       0.2423   $  17824   $   349366    6.99
+  Business pipeline +$2.5k (Scen. 6)   0.7203   $  63302   $  1240741   24.81
+  Education pipeline +$2.5k (Scen. 7)  0.1866   $   8619   $   168929    3.38
+  Health pipeline +$2.5k (Scen. 8)     0.3345   $  27013   $   529465   10.59
+Note: B/C > 1 suggests policy expansion is beneficial (synthetic data only).
+
+==============================================
+ANALYSIS COMPLETE
+==============================================
+  1.  Treatment rate:          0.384
+  2.  First-stage F:           1297.2
+  3.  OLS estimate (biased):    0.9633
+  4.  IV/2SLS (LATE):           0.4031
+  5.  MTE ATE                   0.3589 (BS SE = 0.1386)
+  6.  MTE ATT                   0.8285 (BS SE = 0.1694)
+  7.  MTE ATU                   0.0705 (BS SE = 0.1965)
+  8.  MTE LATE                  0.4051 (BS SE = 0.0475)
+  9.  MTE MPRTE1                0.4490 (BS SE = 0.0605)
+ 10.  Essential heterogeneity: p = 0.0015
+
+AREA-SPECIFIC ATE, ATT, AND ATU (separate model per area)
+(State-clustered bootstrap, G=50, seed 20260101; R random draws)
+
+ATE estimates:
+Area          Estimate   BS SE    95% CI                  Sig
+----------------------------------------------------------------
+  other        0.1921    0.0744   [ 0.0462,  0.3379]   ***
+  stem         0.4551    0.1594   [ 0.1427,  0.7676]   ***
+  business     0.0596    0.5447   [-1.0080,  1.1272]      
+  education   -0.0264    0.2687   [-0.5530,  0.5002]      
+  health       0.0647    0.1331   [-0.1961,  0.3256]      
+
+ATT estimates:
+Area          Estimate   BS SE    95% CI                  Sig
+----------------------------------------------------------------
+  other        0.8240    0.1357   [ 0.5581,  1.0899]   ***
+  stem         0.1894    0.4508   [-0.6941,  1.0730]      
+  business     0.9074    0.2763   [ 0.3659,  1.4488]   ***
+  education    1.0945    0.6018   [-0.0851,  2.2740]      
+  health       0.7848    0.2372   [ 0.3199,  1.2496]   ***
+
+ATU estimates:
+Area          Estimate   BS SE    95% CI                  Sig
+----------------------------------------------------------------
+  other       -0.1589    0.1557   [-0.4640,  0.1462]      
+  stem         0.7891    0.3996   [ 0.0060,  1.5722]   ***
+  business    -0.1956    0.7459   [-1.6576,  1.2665]      
+  education   -0.9235    0.6574   [-2.2120,  0.3651]      
+  health      -0.3713    0.3038   [-0.9666,  0.2241]      
+  *** = 95% CI excludes zero (p < 0.05, two-tailed)
+  Note: area groups are small (Business ~179 completers); interpret with caution.
+
+PRTE SUMMARY:
+  Uniform +$1k (Scen. 1)                0.4238
+  Low-income +$2k (Scen. 2)             0.3073
+  STEM ug +$3k (Scen. 3)                0.2318
+  Education ug +$2.5k (Scen. 4)         0.1866
+  STEM pipeline +$2.5k (Scen. 5)        0.2423
+  Business pipeline +$2.5k (Scen. 6)    0.7203
+  Education pipeline +$2.5k (Scen. 7)   0.1866
+  Health pipeline +$2.5k (Scen. 8)      0.3345
+
+Bootstrap: G=50 state clusters, 500 reps, seed 20260101
+Files saved: bb_mte_analysis_R.dta, mte_summary_by_field_R.csv,
+             mte_summary_by_program_area_R.csv, mte_bootstrap_draws_R.rds 
+Figures:
+  C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_3_mte_curve_R.png
+  C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_5_mte_byarea_curve_R.png
+  C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_8_mprte_by_intensity_R.png
+  C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_6_mte_policy_regions_R.png
+  C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_4_mte_by_propensity_R.png
+
+IMPORTANT NOTE: Synthetic data — results illustrate methods only.
+Total run time: 4.7 mins 
+
+==============================================
+END OF MTE/MPRTE ANALYSIS
+==============================================
+Warning messages:
+1: package ‘dplyr’ was built under R version 4.5.3
+2: package ‘tidyr’ was built under R version 4.5.3
+3: package ‘ivreg’ was built under R version 4.5.3
+4: In ivreg.fit(X, Y, Z, weights, offset, method, ...) :
+  some instrumental variables are collinear
+5: In ivreg.fit(X, Y, Z, weights, offset, method, ...) :
+  some instrumental variables are collinear
+6: In ivreg.fit(X, Y, Z, weights, offset, method, ...) :
+  some instrumental variables are collinear
+7: In ivreg.fit(X, Y, Z, weights, offset, method, ...) :
+  some instrumental variables are collinear
+8: In ivreg.fit(X, Y, Z, weights, offset, method, ...) :
+  some instrumental variables are collinear
+9: In ivreg.fit(X, Y, Z, weights, offset, method, ...) :
+  some instrumental variables are collinear
+10: In ivreg.fit(X, Y, Z, weights, offset, method, ...) :
+  some instrumental variables are collinear
+11: In ivreg.fit(X, Y, Z, weights, offset, method, ...) :
+  some instrumental variables are collinear
+12: In ivreg.fit(X, Y, Z, weights, offset, method, ...) :
+  some instrumental variables are collinear
+MTE_MPRTE.R log closed: 2026-11-02 16:32:24 

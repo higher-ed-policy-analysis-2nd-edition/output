@@ -1,9 +1,9 @@
--------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------
       name:  <unnamed>
-       log:  C:\\Users\\marvi\\Dropbox\\Book\\2nd Edition\\Chapter 11\\Output\\logs\\Chapter11_Stata_output.l
-> og
+       log:  C:\\Users\\marvi\\Dropbox\\Book\\2nd Edition\\Chapter 11\\Output\\logs\\Chapter11_
+> Stata_output.log
   log type:  text
- opened on:  28 Jun 2026, 19:38:37
+ opened on:   5 Nov 2026, 00:43:07
 . }
 
 . else {
@@ -20,7 +20,7 @@
 
 . 
 . di "Chapter 11 log opened: " c(current_date) " " c(current_time)
-Chapter 11 log opened: 28 Jun 2026 19:38:37
+Chapter 11 log opened:  5 Nov 2026 00:43:07
 
 . di "Graphs directory: $graphs_dir"
 Graphs directory: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs
@@ -46,7 +46,8 @@ Graphs directory: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/grap
 
 . capture ssc install moremata, replace
 
-. capture ssc install fwildclusterboot, replace
+. capture ssc install boottest, replace   // wild cluster bootstrap (boottest), used by MTE_MPR
+> TE.do
 
 . capture ssc install estout, replace   // esttab — used by CATE.do for RTF tables
 
@@ -58,7 +59,7 @@ MTE/IV packages confirmed.
 . *========================================================================
 . *
 . *    INSTRUMENTAL VARIABLES AND MARGINAL TREATMENT EFFECTS
-. *    (Sections 11.1 – 11.3)
+. *    (Sections 11.1 – 11.2)
 . *
 . *========================================================================
 . *========================================================================
@@ -77,10 +78,11 @@ MTE/IV packages confirmed.
 . *         plot (Fig. 11.2), both from the interaction IV model in (b);
 . *         these are also the source of the CATE values reported in the
 . *         chapter's Table 11.1.
-. *     (d) Comparison table (Table 11.2): OLS vs. full-sample IV/LATE vs.
-. *         separately-estimated subgroup IV models from (a). This is a
-. *         distinct table from Table 11.1 — it compares estimators rather
-. *         than reporting interaction-model subgroup CATEs.
+. *     (d) Supplementary comparison table: OLS vs. full-sample IV/LATE
+. *         vs. separately-estimated subgroup IV models from (a). It is
+. *         NOT reproduced in the chapter (Tables 11.2-11.6 in the book
+. *         are the MTE tables); the file keeps its original name,
+. *         tab11_2_cate_subgroup.rtf, so CATE.do need not change.
 . *
 . *   Script: $syntax_dir/CATE.do
 . *   Inherits: $graphs_dir, $tables_dir, log, set scheme s2mono
@@ -88,10 +90,11 @@ MTE/IV packages confirmed.
 . *             is the script's first data load; falls back to
 . *             Example_7_5_3.dta if the updated file is unavailable, per
 . *             CATE.do's own logic). Globals defined below remain in
-. *             scope for Sections 11.2-11.3.
+. *             scope for Section 11.2.
 . *   Produces: fig11_1 (CATE forest plot, by subgroup)
 . *             fig11_2 (CATE interaction plot, STEM × income)
-. *             tab11_2_cate_subgroup.rtf (Table 11.2)
+. *             tab11_2_cate_subgroup.rtf (supplementary; not a
+. *               numbered table in the chapter — see (d) above)
 . *
 . *   Placement in chapter: Section 11.1.3, immediately after the
 . *   OLS/IV/LATE comparison in Section 11.1.2 and before MTE (11.2).
@@ -117,7 +120,7 @@ MTE/IV packages confirmed.
 . * Estimate Conditional Average Treatment Effects (CATEs) for the return
 . * to master's degree completion using the same instrument (state-funded
 . * graduate assistantship funding, ga_funding_adj) and data as
-. * Sections 11.1–11.1.2.
+. * Section 11.1.
 . *
 . * A CATE conditions on observed covariates X:
 . *
@@ -153,7 +156,8 @@ MTE/IV packages confirmed.
 . *   $graphs_dir, $tables_dir, log, set scheme s2mono
 . *
 . * DATA
-. *   Example_7_5_3_updated.dta  (reloaded here for a clean workspace)
+. *   Example_7_5_3_updated.dta  (CATE.do runs first, so this is the
+. *   script's first data load for the chapter run)
 . *========================================================================
 . 
 . di _n as text "=========================================================="
@@ -168,8 +172,10 @@ MTE/IV packages confirmed.
 
 . 
 . *------------------------------------------------------------------------
-. * 0. Reload the Part B dataset for a clean workspace
-. *    (MTE_MPRTE.do may have left tempvars or reshaped data in memory)
+. * 0. Load the Part B dataset
+. *    (CATE.do runs first in Stata_code11.do, so this is the script's
+. *    first data load for the chapter run; falls back to the base file
+. *    if the updated version is unavailable)
 . *------------------------------------------------------------------------
 . 
 . capture use "Example_7_5_3_updated.dta", clear
@@ -187,8 +193,8 @@ MTE/IV packages confirmed.
 . * 1. Globals — mirror MTE_MPRTE.do exactly
 . *------------------------------------------------------------------------
 . 
-. global X_controls "female black hispanic asian age_ba firstgen parent_income_q parent_grad ugpa stem_major 
-> bus_major ed_major selective_inst public_ug state_unemp metro"
+. global X_controls "female black hispanic asian age_ba firstgen parent_income_q parent_grad ug
+> pa stem_major bus_major ed_major selective_inst public_ug state_unemp metro"
 
 . 
 . global Z "ga_funding_adj"
@@ -248,15 +254,15 @@ MTE/IV packages confirmed.
 
 . 
 . log using "$logdir/CATE_output.log", name(cate) replace text
--------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------
       name:  cate
        log:  C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/logs/CATE_output.log
   log type:  text
- opened on:  28 Jun 2026, 19:38:52
+ opened on:   5 Nov 2026, 00:43:25
 
 . 
 . di as text "CATE.do log opened: " c(current_date) " " c(current_time)
-CATE.do log opened: 28 Jun 2026 19:38:52
+CATE.do log opened:  5 Nov 2026 00:43:25
 
 . di as text "Log file: $logdir/CATE_output.log"
 Log file: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/logs/CATE_output.log
@@ -355,7 +361,8 @@ Log file: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/logs/CATE_ou
 >                    "  N = " `n_iv'
  14.     }
  15.     if _rc != 0 {
- 16.         di as text "    (Subgroup `row' skipped — insufficient obs or first-stage failure)"
+ 16.         di as text "    (Subgroup `row' skipped — insufficient obs or first-stage failure)
+> "
  17.     }
  18. }
 
@@ -630,8 +637,8 @@ file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_7.gp
 
 .     graph export "$graphs_dir/fig11_7_cate_forest.png",              ///
 >         replace width(1400)
-file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_7_cate_forest.png saved as PNG
-    format
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_7_cate_forest.png
+    saved as PNG format
 
 . 
 . restore
@@ -761,8 +768,8 @@ file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_8.gp
 
 .     graph export "$graphs_dir/fig11_8_cate_interact.png",                ///
 >         replace width(1400)
-file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_8_cate_interact.png saved as
-    PNG format
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
+    11/Output/graphs/fig11_8_cate_interact.png saved as PNG format
 
 . 
 . restore
@@ -833,8 +840,8 @@ file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_8_ca
 >          "Robust SEs in parentheses."                                   ///
 >          "CATE columns restrict the sample to the indicated subgroup."  ///
 >          "Estimates based on synthetic data (illustrative only).")
-(output written to C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/tables/tab11_2_cate_subgroup.rtf
-> )
+(output written to C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/tables/tab11_2_cat
+> e_subgroup.rtf)
 
 . 
 . di as text "  tab11_2_cate_subgroup.rtf exported."
@@ -890,7 +897,7 @@ file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_8_ca
 . *------------------------------------------------------------------------
 . di as text _n "CATE.do log closed: " c(current_date) " " c(current_time)
 
-CATE.do log closed: 28 Jun 2026 19:39:02
+CATE.do log closed:  5 Nov 2026 00:43:31
 
 . capture log close cate
 
@@ -911,31 +918,50 @@ end of do-file
 
 . 
 . *========================================================================
-. * SECTIONS 11.2–11.3: MARGINAL TREATMENT EFFECTS (external script)
-. *   OLS → IV/2SLS → MTE/MPRTE → CBA — returns to master's degree
-. *   Script: $syntax_dir/MTE_MPRTE.do
-. *   Inherits: $graphs_dir, log, set scheme s2mono
-. *   Data:     Example_7_5_3_updated.dta (or Example_7_5_3.dta fallback)
+. * SECTION 11.2: MARGINAL TREATMENT EFFECTS (external script)
+. *   OLS → IV/2SLS → MTE → PRTE/MPRTE → CBA — returns to master's degree
+. *   Script: $syntax_dir/MTE_MPRTE.do (opens its own log,
+. *           $logdir/MTE_MPRTE_output.log, which is the source of
+. *           Tables 11.2-11.6)
+. *   Inherits: $graphs_dir, $logdir, set scheme s2mono
+. *   Data:     Example_7_5_3_updated.dta
 . *
-. *   Key sections:
-. *     Sec 6    Pooled cubic polynomial MTE (ATE, ATT, ATU); mtefe; Heckman
-. *     Sec 6b   Area-specific MTE by graduate program area (fully interacted)
-. *     Sec 6b-ATU  Prospective program area assignment for untreated obs;
-. *                  area-specific ATU via counterfactual assignment
-. *                  (seed 20260102; mirrors treated assignment in Sec 1b)
-. *     Sec 6c   Cluster bootstrap (G=50, R=500): SEs for ATE, ATT, ATU
-. *                  — pooled and area-specific, with 95% CIs
-. *     Sec 9-11 PRTE and MPRTE policy simulations (Scenarios 1-8)
-. *     Sec 14   Cost-benefit analysis (B/C ratios)
+. *   Key sections (of MTE_MPRTE.do):
+. *     Sec 1-5    Data, summary statistics, first stage, OLS, IV/2SLS
+. *     Sec 6a     Probit propensity score P(Z,X)
+. *     Sec 6b     Manual polynomial MTE (teaching illustration only)
+. *     Sec 6c     Pooled MTE via mtefe, pol(2): ATE, ATT, ATU, LATE,
+. *                  MPRTE1-3; Heckman comparison           -> Table 11.2
+. *     Sec 6d     Area-specific MTE via mtefe, pol(1), one model per
+. *                  program area; non-completers assigned a prospective
+. *                  area (seed 20260102)                     -> Table 11.3
+. *     Sec 6e     State-clustered bootstrap (G=50, R=500, seed 20260101)
+. *                  for pooled and area-specific SEs; wild cluster
+. *                  bootstrap (boottest) for the IV estimate
+. *     Sec 9-10b  PRTE for Scenarios 1-8 via mtefe prte() -> Tables 11.4-11.5
+. *     Sec 11     PRTE by policy intensity
+. *     Sec 13     Policy weights and propensity-score support
+. *     Sec 14     Cost-benefit analysis (B/C ratios)     -> Table 11.6
+. *
+. *   RUN TIME: by default MTE_MPRTE.do reuses the published bootstrap
+. *   draws (mte_bootstrap_draws.dta, downloaded from the book's data
+. *   repository if not found locally): about 5-10 minutes on Stata MP,
+. *   10-15 minutes on Stata SE. To rerun the bootstrap yourself, set
+. *   use_saved_boot = 0 in Section 6e of MTE_MPRTE.do: about 7 hours
+. *   (MP, 2 cores) to 9-12 hours (SE). The published draws are valid
+. *   ONLY for the book's exact specification; if you change the data,
+. *   controls, or models, you must set use_saved_boot = 0. See the
+. *   RUN TIME and CAUTION notes at the top of MTE_MPRTE.do.
 . *
 . *   Produces: bb_mte_analysis.dta, mte_summary_by_field.csv
-. *             mte_summary_by_program_area.csv
-. *             fig11_3 (pooled MTE curve)
-. *             fig11_4 (MTE by propensity score)
+. *             mte_summary_by_program_area.csv, mte_bootstrap_draws.dta
+. *             fig11_3 (pooled MTE curve with bootstrap band)
+. *             fig11_4 (propensity-score histogram with the MTE curve)
 . *             fig11_5 (MTE curves by graduate program area)
-. *             fig11_6 (MTE curve with policy-relevant margins)
-. *             fig11_7 (MTE by propensity score decile)
-. *             fig11_8 (MPRTE by policy intensity)
+. *             fig11_6 (MTE curve with PRTE weights: uniform +$1k vs.
+. *                      low-income +$2k)
+. *             fig11_8 (PRTE by policy intensity)
+. *   (Fig. 11.7, MTE by propensity-score decile, is no longer produced.)
 . *========================================================================
 . 
 . do "$syntax_dir/MTE_MPRTE.do"
@@ -947,7 +973,52 @@ end of do-file
 . * (2nd Edition)
 . * Source: https://github.com/higher-ed-policy-analysis-2nd-edition/code/tree/main/ch11
 . * Author: Marvin A. Titus
-. * Date: May 2026
+. *------------------------------------------------------------------------
+. * RUN TIME — PLEASE READ BEFORE RUNNING
+. *   By default this script REUSES the author's published bootstrap draws
+. *   (mte_bootstrap_draws.dta, downloaded from GitHub if not found
+. *   locally) and runs in about 5-10 minutes (Stata MP) or 10-15 minutes
+. *   (Stata SE). Every estimate, standard error, and figure then matches
+. *   the book.
+. *
+. *   To run the state-clustered bootstrap yourself, set
+. *   use_saved_boot = 0 in Section 6e. Approximate run times:
+. *
+. *                                         Stata MP (2 cores)   Stata SE
+. *   Full bootstrap, area models on        about 7 hours        9-12 hours
+. *   Full bootstrap, area models off       about 1.5 hours      2-2.5 hours
+. *     (run_areas = 0)
+. *   Default (published draws)             5-10 minutes         10-15 minutes
+. *
+. *   CAUTION — WHEN THE PUBLISHED DRAWS ARE VALID:
+. *   The saved draws apply ONLY to the specification in the book: the same
+. *   data (Example_7_5_3_updated.dta), the same models (quadratic pooled
+. *   MTE, linear area MTEs), the same controls, R = 500, and seed 20260101.
+. *   If you change ANY of these (e.g., add a control, change pol(), drop
+. *   observations, or use your own data), set use_saved_boot = 0 and run the
+. *   bootstrap yourself. The script cannot detect such changes; reusing the
+. *   draws after a change gives standard errors and confidence bands that
+. *   do not belong to your estimates.
+. *
+. *   - Times are from the author's machine; yours may differ. When the
+. *     bootstrap runs, the script prints a projected total after the
+. *     first replication. Lower R in Section 6e for quick draft runs.
+. *   - Switches: run_areas (search "OPTIONAL ANALYSIS SWITCH", just
+. *     before Section 1); R and use_saved_boot (Section 6e).
+. *------------------------------------------------------------------------
+. * Date: May 2026 (revised October 2026)
+. * REVISION (Oct 2026): mtefe (Andresen 2018) is now the main estimator
+. *   for the MTE curve and for the ATE, ATT, ATU, LATE, MPRTE, and PRTE.
+. *   The earlier manual polynomial read the MTE directly from the
+. *   coefficients on masters and its interactions with phat; those
+. *   coefficients still contain selection, so they are not the MTE. The
+. *   manual model is kept in Section 6b as a teaching illustration with
+. *   the corrected conversion and Eq. 11.3 weights, and is not used later.
+. *   Area-specific estimates use a separate linear (pol(1)) mtefe model per
+. *   area; the pooled model is quadratic (pol(2)). Standard
+. *   errors come from a state-clustered bootstrap that re-estimates mtefe.
+. *   Program areas (ma_*) and prospective areas (ma_*_pro) are read from
+. *   Example_7_5_3_updated.dta when present (make_Example_7_5_3_updated.do).
 . * NOTE: Code development was assisted by Claude (Anthropic). The author
 . * provided specifications and reviewed, tested, and validated all code.
 . *========================================================================
@@ -958,7 +1029,7 @@ end of do-file
 . *   Example_7_5_3_updated.dta  (primary; contains pre-generated ma_* vars)
 . *   Example_7_5_3.dta          (fallback; ma_* generated in Section 1b)
 . *
-. * Required packages: mtefe, moremata, fwildclusterboot
+. * Required packages: mtefe, moremata, boottest
 . *
 . * Sections (Chapter 11 numbering):
 . *   1     Load dataset (Example_7_5_3_updated.dta / Example_7_5_3.dta)        [11.1]
@@ -967,18 +1038,16 @@ end of do-file
 . *   3     First stage and instrument relevance                                [11.1]
 . *   4     Naive OLS estimation                                                [11.1]
 . *   5     IV/2SLS estimation (LATE)                                          [11.1]
-. *   6     MTE estimation — pooled polynomial (quadratic and cubic)           [11.2]
-. *   6b    MTE by graduate program area (fully interacted)                    [11.2]
-. *   6c    Bootstrap infrastructure (cluster bootstrap + wild cluster)        [11.2]
-. *   7     Results comparison (ATE / ATT / ATU / LATE)                        [11.2]
-. *   8     MTE visualization                                                   [11.2.3]
-. *   9     Basic policy simulation (PRTE)                                      [11.3]
-. *   10    MPRTE — Scenarios 1–4 (original)                                    [11.3]
-. *   10b   MPRTE by graduate program area — Scenarios 5–8                      [11.3]
-. *   11    MPRTE by policy intensity                                           [11.3]
-. *   12    Comparing treatment effect parameters                               [11.3]
-. *   13    MPRTE visualization                                                 [11.3]
-. *   14    Policy cost-benefit analysis                                        [11.3]
+. *   6     MTE estimation: probit, manual illustration, mtefe (main)      [11.2]
+. *   6d    MTE by graduate program area (separate mtefe per area)         [11.2]
+. *   6e    State-clustered bootstrap (mtefe) + wild cluster bootstrap     [11.2]
+. *   7     Results comparison (ATE / ATT / ATU / LATE / MPRTE)            [11.2]
+. *   8     MTE visualization (Figs 11.3, 11.5)                            [11.2.3]
+. *   9-10b Policy-relevant treatment effects via mtefe prte(), Scen. 1-8  [11.3]
+. *   11    PRTE by policy intensity (Fig 11.8)                            [11.3]
+. *   12    Comparing treatment effect parameters                          [11.3]
+. *   13    Policy weights and propensity support (Figs 11.6, 11.4)        [11.3]
+. *   14    Policy cost-benefit analysis (PRTE-based)                      [11.3]
 . *   15    Save results                                                        [11.4]
 . *   16    Final summary                                                       [11.4]
 . *========================================================================
@@ -1003,7 +1072,8 @@ end of do-file
 .         capture mkdir "Output/graphs"
 .     }
 .     di as text "MTE_MPRTE.do (standalone): graphs_dir set to $graphs_dir"
-MTE_MPRTE.do (standalone): graphs_dir set to C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs
+MTE_MPRTE.do (standalone): graphs_dir set to C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11
+> /Output/graphs
 . }
 
 . 
@@ -1030,21 +1100,46 @@ MTE_MPRTE.do (standalone): graphs_dir set to C:/Users/marvi/Dropbox/Book/2nd Edi
 . capture log close mte_mprte
 
 . log using "$logdir/MTE_MPRTE_output.log", name(mte_mprte) replace text
--------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------
       name:  mte_mprte
-       log:  C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/logs/MTE_MPRTE_output.log
+       log:  C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/logs/MTE_MPRTE_output.lo
+> g
   log type:  text
- opened on:  28 Jun 2026, 19:39:02
+ opened on:   5 Nov 2026, 00:43:31
 
 . 
 . di as text "MTE_MPRTE.do log opened: " c(current_date) " " c(current_time)
-MTE_MPRTE.do log opened: 28 Jun 2026 19:39:02
+MTE_MPRTE.do log opened:  5 Nov 2026 00:43:31
 
 . di as text "Log file: $logdir/MTE_MPRTE_output.log"
 Log file: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/logs/MTE_MPRTE_output.log
 
 . 
 . set scheme s2mono    // Springer B&W print (harmless if already set)
+
+. 
+. *------------------------------------------------------------------------
+. * OPTIONAL ANALYSIS SWITCH
+. *   run_areas = 1 (default): run the area-specific mtefe models
+. *     (Section 6d), their bootstrap replications, Fig 11.5, and the area
+. *     tables reported in the book.
+. *   run_areas = 0: skip them.
+. *   See RUN TIME in the header for how this affects run time.
+. *------------------------------------------------------------------------
+. local run_areas = 1
+
+. 
+. *------------------------------------------------------------------------
+. * Data location: the author's Dropbox data folder; readers use the
+. * current working directory (data are downloaded from GitHub if absent).
+. *------------------------------------------------------------------------
+. if c(username) == "marvi" {
+.     cd "C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Data/Stata"
+C:\Users\marvi\Dropbox\Book\2nd Edition\Chapter 11\Data\Stata
+. }
+
+. di as text "Data directory: `c(pwd)'"
+Data directory: C:\Users\marvi\Dropbox\Book\2nd Edition\Chapter 11\Data\Stata
 
 . 
 . ********************************************************************************
@@ -1069,13 +1164,11 @@ LOADING SYNTHETIC B&B DATASET
 
 . if _rc != 0 {
 .     di as text "Attempting to download Example_7_5_3_updated.dta from GitHub..."
-Attempting to download Example_7_5_3_updated.dta from GitHub...
 .     capture copy ///
->         "https://raw.githubusercontent.com/higher-ed-policy-analysis-2nd-edition/data/main/ch10/Example_7_5
-> _3_updated.dta" ///
+>         "https://raw.githubusercontent.com/higher-ed-policy-analysis-2nd-edition/data/main/ch
+> 11/Example_7_5_3_updated.dta" ///
 >         "Example_7_5_3_updated.dta", replace
 .     if _rc != 0 di as text "Download failed — will try local file or base version."
-Download failed — will try local file or base version.
 . }
 
 . 
@@ -1083,23 +1176,20 @@ Download failed — will try local file or base version.
 
 . if _rc != 0 {
 .     di as text "Note: Example_7_5_3_updated.dta not found."
-Note: Example_7_5_3_updated.dta not found.
-.     di as text "Attempting to download Example_7_5_3.dta from GitHub (ch7 repository)..."
-Attempting to download Example_7_5_3.dta from GitHub (ch7 repository)...
+.     di as text "Attempting to download Example_7_5_3.dta from GitHub (ch11 repository)..."
 .     capture copy ///
->         "https://raw.githubusercontent.com/higher-ed-policy-analysis-2nd-edition/data/main/ch7/Example_7_5_
-> 3.dta" ///
+>         "https://raw.githubusercontent.com/higher-ed-policy-analysis-2nd-edition/data/main/ch
+> 11/Example_7_5_3.dta" ///
 >         "Example_7_5_3.dta", replace
 .     if _rc != 0 {
 .         di as error "ERROR: Download of Example_7_5_3.dta failed."
 .         di as error "Please download the file manually from:"
-.         di as error "https://github.com/higher-ed-policy-analysis-2nd-edition/data/blob/main/ch7/Example_7_
-> 5_3.dta"
+.         di as error "https://github.com/higher-ed-policy-analysis-2nd-edition/data/blob/main/
+> ch11/Example_7_5_3.dta"
 .         di as error "and place it in the working directory before running Part B."
 .         exit 601
 .     }
 .     di as text "Loading Example_7_5_3.dta; ma_* will be generated in Section 1b."
-Loading Example_7_5_3.dta; ma_* will be generated in Section 1b.
 .     use "Example_7_5_3.dta", clear
 . }
 
@@ -1111,34 +1201,34 @@ Loading Example_7_5_3.dta; ma_* will be generated in Section 1b.
 . 
 . describe
 
-Contains data from Example_7_5_3.dta
+Contains data from Example_7_5_3_updated.dta
  Observations:         8,000                  
-    Variables:            39                  3 Dec 2025 20:07
--------------------------------------------------------------------------------------------------------------
+    Variables:            49                  28 Oct 2026 10:32
+-----------------------------------------------------------------------------------------------
 Variable      Storage   Display    Value
     name         type    format    label      Variable label
--------------------------------------------------------------------------------------------------------------
-id              float   %9.0g                 
-female          float   %9.0g                 Female (1=Yes)
+-----------------------------------------------------------------------------------------------
+id              int     %9.0g                 
+female          byte    %9.0g                 Female (1=Yes)
 white           byte    %8.0g                 
 black           byte    %8.0g                 
 hispanic        byte    %8.0g                 
 asian           byte    %8.0g                 
 other_race      byte    %8.0g                 
-age_ba          float   %9.0g                 
-firstgen        float   %9.0g                 
-parent_income_q float   %9.0g                 
-parent_grad     float   %9.0g                 
+age_ba          byte    %9.0g                 
+firstgen        byte    %9.0g                 
+parent_income_q byte    %9.0g                 
+parent_grad     byte    %9.0g                 
 ugpa            float   %9.0g                 
-stem_major      float   %9.0g                 
-bus_major       float   %9.0g                 
-ed_major        float   %9.0g                 
-socsci_major    float   %9.0g                 
-selective_inst  float   %9.0g                 
-public_ug       float   %9.0g                 
+stem_major      byte    %9.0g                 
+bus_major       byte    %9.0g                 
+ed_major        byte    %9.0g                 
+socsci_major    byte    %9.0g                 
+selective_inst  byte    %9.0g                 
+public_ug       byte    %9.0g                 
 state_unemp     float   %9.0g                 
-metro           float   %9.0g                 
-state           float   %9.0g                 
+metro           byte    %9.0g                 
+state           byte    %9.0g                 
 ga_funding      float   %9.0g                 
 ga_funding_adj  float   %9.0g                 State GA Funding (field-adjusted, $1000s)
 eta_ability     float   %9.0g                 
@@ -1148,7 +1238,7 @@ ga_dev          float   %9.0g
 z_masters       float   %9.0g                 
 p_masters       float   %9.0g                 Propensity Score (true)
 u_d             float   %9.0g                 
-masters         float   %9.0g                 Completed Master's Degree (1=Yes)
+masters         byte    %9.0g                 Completed Master's Degree (1=Yes)
 ln_salary_0     float   %9.0g                 Potential log salary without master's
 te_masters      float   %9.0g                 True Individual Treatment Effect
 ln_salary_1     float   %9.0g                 
@@ -1157,7 +1247,17 @@ salary          float   %9.0g                 Annual Salary ($)
 _est_ols_model  byte    %8.0g                 esample() from estimates store
 _est_first_st~e byte    %8.0g                 esample() from estimates store
 _est_iv_model   byte    %8.0g                 esample() from estimates store
--------------------------------------------------------------------------------------------------------------
+ma_stem         byte    %9.0g                 Master's in STEM (CIPs 11 14 15 26 27 40 41)
+ma_business     byte    %9.0g                 Master's in Business/Management (CIP 52)
+ma_education    byte    %9.0g                 Master's in Education (CIP 13)
+ma_health       byte    %9.0g                 Master's in Health Professions (CIP 51)
+ma_other        byte    %9.0g                 Master's in other field
+ma_stem_pro     byte    %9.0g                 Prospective STEM master's (untreated)
+ma_business_pro byte    %9.0g                 Prospective Business master's (untreated)
+ma_education_~o byte    %9.0g                 Prospective Education master's (untreated)
+ma_health_pro   byte    %9.0g                 Prospective Health master's (untreated)
+ma_other_pro    byte    %9.0g                 Prospective Other master's (untreated)
+-----------------------------------------------------------------------------------------------
 Sorted by: state
 
 . di _n "Sample size: " _N
@@ -1211,7 +1311,6 @@ MASTER'S PROGRAM AREA INDICATORS
 .     *
 .     * All untreated obs (masters==0) receive ma_* = 0 throughout.
 .     di as text "Generating ma_* variables from undergraduate major fields..."
-Generating ma_* variables from undergraduate major fields...
 . 
 .     gen ma_stem      = 0
 .     gen ma_business  = 0
@@ -1221,23 +1320,18 @@ Generating ma_* variables from undergraduate major fields...
 . 
 .     set seed 20251130
 .     gen _rma = runiform() if masters == 1
-(4,932 missing values generated)
 .     replace _rma = . if masters == 0
-(0 real changes made)
 . 
 .     replace ma_stem      = 1 if masters==1 & stem_major==1 & _rma <= 0.55
-(585 real changes made)
 .     replace ma_business  = 1 if masters==1 & bus_major==1  & _rma <= 0.65 & ma_stem==0
-(179 real changes made)
-.     replace ma_education = 1 if masters==1 & ed_major==1   & _rma <= 0.70 & ma_stem==0 & ma_business==0
-(213 real changes made)
-.     replace ma_health    = 1 if masters==1 & socsci_major==1 & _rma <= 0.40 & ma_stem==0 & ma_business==0 &
->  ma_education==0
-(553 real changes made)
-.     replace ma_health    = 1 if masters==1 & stem_major==1   & _rma >  0.55 & _rma <= 0.75 & ma_stem==0
-(234 real changes made)
-.     replace ma_other     = 1 if masters==1 & ma_stem==0 & ma_business==0 & ma_education==0 & ma_health==0
-(1,304 real changes made)
+.     replace ma_education = 1 if masters==1 & ed_major==1   & _rma <= 0.70 & ma_stem==0 & ma_b
+> usiness==0
+.     replace ma_health    = 1 if masters==1 & socsci_major==1 & _rma <= 0.40 & ma_stem==0 & ma
+> _business==0 & ma_education==0
+.     replace ma_health    = 1 if masters==1 & stem_major==1   & _rma >  0.55 & _rma <= 0.75 & 
+> ma_stem==0
+.     replace ma_other     = 1 if masters==1 & ma_stem==0 & ma_business==0 & ma_education==0 & 
+> ma_health==0
 . 
 .     drop _rma
 . 
@@ -1248,7 +1342,6 @@ Generating ma_* variables from undergraduate major fields...
 .     label var ma_other     "Master's in other field"
 . 
 .     di as text "ma_* variables generated successfully."
-ma_* variables generated successfully.
 . }
 
 . di "ma_* variables confirmed present in dataset."
@@ -1510,8 +1603,8 @@ INSTRUMENT RELEVANCE CHECK
 ==============================================
 
 . 
-. global X_controls "female black hispanic asian age_ba firstgen parent_income_q parent_grad ugpa stem_major 
-> bus_major ed_major selective_inst public_ug state_unemp metro"
+. global X_controls "female black hispanic asian age_ba firstgen parent_income_q parent_grad ug
+> pa stem_major bus_major ed_major selective_inst public_ug state_unemp metro"
 
 . global X "$X_controls"
 
@@ -1746,20 +1839,27 @@ IV/LATE estimate: 0.4031 (SE = 0.0489)
 
 . 
 . ********************************************************************************
-. * SECTION 6: MTE ESTIMATION — POOLED POLYNOMIAL (MANUAL)
+. * SECTION 6: MTE ESTIMATION
+. *
+. * 6a  Propensity score (probit) — used for policy scenarios and figures
+. * 6b  Manual polynomial control function — TEACHING ILLUSTRATION ONLY
+. * 6c  mtefe (Andresen 2018) — MAIN ESTIMATOR for the MTE curve and for
+. *     the ATE, ATT, ATU, LATE, and MPRTE. Everything after Section 6b uses
+. *     the mtefe estimates.
 . ********************************************************************************
 . 
 . di _n "=============================================="
 
 ==============================================
 
-. di "MTE ESTIMATION — POOLED POLYNOMIAL"
-MTE ESTIMATION — POOLED POLYNOMIAL
+. di "MTE ESTIMATION"
+MTE ESTIMATION
 
 . di "=============================================="
 ==============================================
 
 . 
+. * --- 6a. Propensity score ------------------------------------------------
 . probit masters $Z $X
 
 Iteration 0:  Log likelihood = -5326.0126  
@@ -1810,9 +1910,29 @@ GA funding probit coefficient: 0.12489
 . gen phat3 = phat^3
 
 . 
-. di _n "--- Quadratic MTE ---"
+. * --- 6b. Manual polynomial control function (teaching illustration) -----
+. * The regression below includes the treatment indicator, its interactions
+. * with the propensity-score polynomial, and the polynomial itself (the
+. * control function). The coefficients on masters and its interactions
+. * (theta) are NOT the MTE: they measure the gap between completers' and
+. * non-completers' expected outcomes at a given p, which still contains
+. * selection. The MTE is recovered by the separate-approach conversion
+. *   MTE(u) = d/du[ u*theta(u) ] + gamma'(u)
+. * where gamma(p) is the control-function polynomial. For a cubic:
+. *   MTE(u) = (th0 + g1) + (2*th1 + 2*g2)u + (3*th2 + 3*g3)u^2 + 4*th3*u^3
+. * Polynomial MTEs recovered this way are sensitive to the polynomial
+. * degree and to extrapolation near u = 0 and u = 1. They are reported here
+. * to show the mechanics only; Section 6c (mtefe) provides the estimates
+. * used in the rest of the chapter.
+. 
+. di _n "--- 6b. Manual polynomial (illustration only) ---"
 
---- Quadratic MTE ---
+--- 6b. Manual polynomial (illustration only) ---
+
+. 
+. di _n "--- Quadratic specification ---"
+
+--- Quadratic specification ---
 
 . reg ln_salary masters c.masters#(c.phat c.phat2) $X phat phat2, robust
 
@@ -1853,24 +1973,24 @@ c.masters#c.phat2 |  -6.876046   .3851716   -17.85   0.000    -7.631083   -6.121
             _cons |   9.936827   .1852054    53.65   0.000     9.573776    10.29988
 -----------------------------------------------------------------------------------
 
-. local b0_quad = _b[masters]
+. local qc0 = _b[masters] + _b[phat]
 
-. local b1_quad = _b[c.masters#c.phat]
+. local qc1 = 2*_b[c.masters#c.phat] + 2*_b[phat2]
 
-. local b2_quad = _b[c.masters#c.phat2]
+. local qc2 = 3*_b[c.masters#c.phat2]
 
-. di "Quadratic MTE(u) = " %6.4f `b0_quad' " + " %6.4f `b1_quad' "*u + " %6.4f `b2_quad' "*u^2"
-Quadratic MTE(u) = -1.1710 + 8.7005*u + -6.8760*u^2
+. local ate_man_quad = `qc0' + `qc1'/2 + `qc2'/3
 
-. local ate_est_quad = `b0_quad' + `b1_quad'/2 + `b2_quad'/3
+. di "Quadratic MTE(u) = " %7.4f `qc0' " + " %7.4f `qc1' "*u + " %7.4f `qc2' "*u^2"
+Quadratic MTE(u) = -3.8569 + 20.3839*u + -20.6281*u^2
 
-. di "ATE (quadratic): " %6.4f `ate_est_quad'
-ATE (quadratic): 0.8873
+. di "ATE (manual quadratic): " %6.4f `ate_man_quad'
+ATE (manual quadratic): -0.5410
 
 . 
-. di _n "--- Cubic MTE ---"
+. di _n "--- Cubic specification ---"
 
---- Cubic MTE ---
+--- Cubic specification ---
 
 . reg ln_salary masters c.masters#(c.phat c.phat2 c.phat3) $X phat phat2 phat3, robust
 
@@ -1914,53 +2034,61 @@ c.masters#c.phat3 |   15.12161   1.344615    11.25   0.000     12.48581     17.7
             _cons |   9.782516   .1851512    52.84   0.000     9.419572    10.14546
 -----------------------------------------------------------------------------------
 
-. local b0 = _b[masters]
+. local mc0 = _b[masters] + _b[phat]
 
-. local b1 = _b[c.masters#c.phat]
+. local mc1 = 2*_b[c.masters#c.phat]  + 2*_b[phat2]
 
-. local b2 = _b[c.masters#c.phat2]
+. local mc2 = 3*_b[c.masters#c.phat2] + 3*_b[phat3]
 
-. local b3 = _b[c.masters#c.phat3]
+. local mc3 = 4*_b[c.masters#c.phat3]
 
-. di "Cubic MTE(u) = " %7.4f `b0' " + " %7.4f `b1' "*u + " %7.4f `b2' "*u^2 + " %7.4f `b3' "*u^3"
-Cubic MTE(u) = -2.5024 + 19.3056*u + -30.2517*u^2 + 15.1216*u^3
+. local ate_man_cubic = `mc0' + `mc1'/2 + `mc2'/3 + `mc3'/4
 
-. 
-. local ate_est_cubic = `b0' + `b1'/2 + `b2'/3 + `b3'/4
+. di "Cubic MTE(u) = " %7.4f `mc0' " + " %7.4f `mc1' "*u + " %7.4f `mc2' "*u^2 + " %7.4f `mc3' 
+> "*u^3"
+Cubic MTE(u) = -3.2238 + 30.5783*u + -78.0685*u^2 + 60.4864*u^3
 
-. di "Estimated ATE (cubic): " %6.4f `ate_est_cubic'
-Estimated ATE (cubic): 0.8468
-
-. 
-. gen mte_hat = `b0' + `b1'*phat + `b2'*phat2 + `b3'*phat3
+. di "ATE (manual cubic): " %6.4f `ate_man_cubic'
+ATE (manual cubic): 1.1641
 
 . 
-. qui sum mte_hat if masters == 1
+. * ATT and ATU with the Eq. 11.3 weights:
+. *   ATT = E[ integral_0^P MTE(u) du ] / E[P]
+. *   ATU = E[ integral_P^1 MTE(u) du ] / E[1 - P]
+. gen double _area0P = `mc0'*phat + `mc1'*phat^2/2 + `mc2'*phat^3/3 + `mc3'*phat^4/4
 
-. local att_est = r(mean)
+. qui sum phat
 
-. di "Estimated ATT: " %6.4f `att_est'
-Estimated ATT: 1.2162
+. local Ep = r(mean)
 
-. qui sum mte_hat if masters == 0
+. qui sum _area0P
 
-. local atu_est = r(mean)
+. local att_man = r(mean) / `Ep'
 
-. di "Estimated ATU: " %6.4f `atu_est'
-Estimated ATU: 0.5528
+. local atu_man = (`ate_man_cubic' - r(mean)) / (1 - `Ep')
+
+. drop _area0P
+
+. di "ATT (manual cubic): " %6.4f `att_man'
+ATT (manual cubic): -0.3341
+
+. di "ATU (manual cubic): " %6.4f `atu_man'
+ATU (manual cubic): 2.0840
+
+. di "Note: illustration only — compare with mtefe estimates in Section 6c."
+Note: illustration only — compare with mtefe estimates in Section 6c.
 
 . 
-. di _n "--- mtefe Package Estimation ---"
+. * --- 6c. mtefe: main estimator -------------------------------------------
+. * NOTE: bootreps(0) — standard errors come from the state-clustered
+. *   bootstrap in Section 6e, which re-estimates the full model each rep.
+. di _n "--- 6c. mtefe (main estimator) ---"
 
---- mtefe Package Estimation ---
+--- 6c. mtefe (main estimator) ---
 
-. * NOTE: bootreps(0) suppresses mtefe's internal bootstrap entirely.
-. *   The mtefe package runs bootstrap internally when bootreps() > 0,
-. *   using a user program that suffers the same stale execution-context
-. *   issue that caused persistent r(198) throughout this script. Our
-. *   Section 6c bootstrap already provides all SEs needed. mtefe is
-. *   used here for point estimates only; use Section 6c SEs for inference.
-. mtefe ln_salary $X_controls (masters = ga_funding_adj), pol(1) bootreps(0)
+. 
+. * Sensitivity: linear MTE (pol=1)
+. mtefe ln_salary $X_controls (masters = ga_funding_adj), pol(1) bootreps(0) noplot
 
 
 Parametric polynomial MTE model                              Obs. :      8,000
@@ -2031,16 +2159,18 @@ standard errors.
 
 . est store mtefe_linear
 
-. local mtefe_ate  = _b[effects:ate]
+. local ate_lin  = _b[effects:ate]
 
-. local mtefe_att  = _b[effects:att]
+. local att_lin  = _b[effects:att]
 
-. local mtefe_atu  = _b[effects:atut]
+. local atu_lin  = _b[effects:atut]
 
-. local mtefe_late = _b[effects:late]
+. local late_lin = _b[effects:late]
 
 . 
-. mtefe ln_salary $X_controls (masters = ga_funding_adj), pol(2) bootreps(0)
+. * Main specification: quadratic MTE (pol=2)
+. mtefe ln_salary $X_controls (masters = ga_funding_adj), ///
+>     pol(2) bootreps(0) noplot savepropensity(p_mtefe)
 
 
 Parametric polynomial MTE model                              Obs. :      8,000
@@ -2110,27 +2240,136 @@ standard errors.
 
 
 
-. est store mtefe_quad
+. est store mtefe_main
 
-. local mtefe_ate_q = _b[effects:ate]
+. local ate_est    = _b[effects:ate]
 
-. local mtefe_att_q = _b[effects:att]
+. local att_est    = _b[effects:att]
 
-. local mtefe_atu_q = _b[effects:atut]
+. local atu_est    = _b[effects:atut]
+
+. local late_est   = _b[effects:late]
+
+. local mprte1_est = _b[effects:mprte1]
+
+. local mprte2_est = _b[effects:mprte2]
+
+. local mprte3_est = _b[effects:mprte3]
+
+. local p_obs_het  = e(p_X)
+
+. local p_ess_het  = e(p_U)
 
 . 
-. di _n "mtefe Results (Quadratic, pol=2):"
+. * MTE curve at mean X (99 points), support grid, and k(u)
+. matrix EB_main     = e(b)
 
-mtefe Results (Quadratic, pol=2):
+. matrix MTE_pooled  = EB_main[1, "mte:"]
 
-. di "  ATE:  " %6.4f `mtefe_ate_q'
-  ATE:  0.3589
+. matrix SUP         = e(support)
 
-. di "  ATT:  " %6.4f `mtefe_att_q'
-  ATT:  0.8285
+. matrix KD          = e(dkdp)
 
-. di "  ATU:  " %6.4f `mtefe_atu_q'
-  ATU:  0.0705
+. 
+. di _n "mtefe results (pol=2):"
+
+mtefe results (pol=2):
+
+. di "  ATE:    " %7.4f `ate_est'
+  ATE:     0.3589
+
+. di "  ATT:    " %7.4f `att_est'
+  ATT:     0.8285
+
+. di "  ATU:    " %7.4f `atu_est'
+  ATU:     0.0705
+
+. di "  LATE:   " %7.4f `late_est'   "   (2SLS = " %7.4f `iv_est' ")"
+  LATE:    0.4051   (2SLS =  0.4031)
+
+. di "  MPRTE1: " %7.4f `mprte1_est'
+  MPRTE1:  0.4490
+
+. di "  MPRTE2: " %7.4f `mprte2_est'
+  MPRTE2:  0.5157
+
+. di "  MPRTE3: " %7.4f `mprte3_est'
+  MPRTE3:  0.2906
+
+. di "  Test of essential heterogeneity, p = " %6.4f `p_ess_het'
+  Test of essential heterogeneity, p = 0.0015
+
+. di "  Test of observable heterogeneity, p = " %6.4f `p_obs_het'
+  Test of observable heterogeneity, p = 0.1619
+
+. di "  MTE at u = 0.10, 0.50, 0.90: " %7.4f MTE_pooled[1,10] ", " ///
+>    %7.4f MTE_pooled[1,50] ", " %7.4f MTE_pooled[1,90]
+  MTE at u = 0.10, 0.50, 0.90:  1.2059,  0.1929, -0.1697
+
+. 
+. * Checks: mtefe's propensity score matches phat; support grid is j/100
+. gen double _pdiff = abs(p_mtefe - phat)
+
+. qui sum _pdiff
+
+. di "Check: max |p_mtefe - phat| = " %9.2e r(max)
+Check: max |p_mtefe - phat| =  2.98e-08
+
+. drop _pdiff
+
+. local maxgrid = 0
+
+. forvalues j = 1/99 {
+  2.     local maxgrid = max(`maxgrid', abs(SUP[`j',1] - `j'/100))
+  3. }
+
+. di "Check: max |support grid - j/100| = " %9.2e `maxgrid'
+Check: max |support grid - j/100| =  1.11e-16
+
+. 
+. * Individual-level MTE at each student's own X and propensity score:
+. *   MTE(x_i, p_i) = x_i(b1 - b0) + k(p_i), with k(u) from e(dkdp)
+. * x_i(b1 - b0) is built from the "beta1-beta0" equation of e(b), located
+. * by equation name so the code does not depend on column order.
+. local eqs : coleq EB_main
+
+. local nms : colnames EB_main
+
+. gen double xbd = 0
+
+. local k = 0
+
+. foreach eq of local eqs {
+  2.     local ++k
+  3.     if "`eq'" == "beta1-beta0" {
+  4.         local v : word `k' of `nms'
+  5.         if "`v'" == "_cons" qui replace xbd = xbd + EB_main[1,`k']
+  6.         else                qui replace xbd = xbd + EB_main[1,`k']*`v'
+  7.     }
+  8. }
+
+. gen int _gidx = max(1, min(99, round(phat*100)))
+
+. gen double _kp = .
+(8,000 missing values generated)
+
+. forvalues j = 1/99 {
+  2.     qui replace _kp = KD[1,`j'] if _gidx == `j'
+  3. }
+
+. gen double mte_hat = xbd + _kp
+
+. label var mte_hat "MTE at own X and propensity score (mtefe, pol=2)"
+
+. drop _gidx _kp
+
+. 
+. * Check: mean of x_i(b1-b0) + k(0.5) should equal the MTE at mean X, u=0.5
+. qui sum xbd
+
+. di "Check: mean x(b1-b0) + k(0.50) = " %7.4f (r(mean) + KD[1,50]) ///
+>    "  vs  MTE(xbar, 0.50) = " %7.4f MTE_pooled[1,50]
+Check: mean x(b1-b0) + k(0.50) =  0.1929  vs  MTE(xbar, 0.50) =  0.1929
 
 . 
 . di _n "--- Heckman Selection Model ---"
@@ -2289,367 +2528,23 @@ Heckman ML: lambda = -0.3761  rho = -0.4626  LR chi2 = 104.36 (p = 0.0000)
 
 . 
 . ********************************************************************************
-. * SECTION 6b: MTE BY GRADUATE PROGRAM AREA — FULLY INTERACTED POLYNOMIAL
+. * SECTION 6d: MTE BY GRADUATE PROGRAM AREA — SEPARATE mtefe PER AREA
 . *
-. * Identification strategy:
-. *   The same probit propensity score and cubic polynomial framework from
-. *   Section 6 is extended by allowing the MTE function to shift both in
-. *   level and slope by graduate program area. ma_other is the omitted
-. *   (base) category. The interaction model recovers area-specific MTE curves:
+. * Group a = completers in area a (ma_a==1) plus non-completers
+. * prospectively assigned to area a (ma_a_pro==1). mtefe is fitted
+. * separately within each group, so each area has its own selection model,
+. * MTE curve, and ATE / ATT / ATU / LATE.
 . *
-. *     MTE_a(u) = [b0+d0_a] + [b1+d1_a]*u + [b2+d2_a]*u^2 + [b3+d3_a]*u^3
+. * The area models use a LINEAR MTE (pol(1)); the pooled model uses a
+. * quadratic (pol(2)). With 500-2,000 students per group, the quadratic
+. * produced unstable, implausible curves (e.g., MTE below -4 at high u and
+. * a negative STEM ATE); the linear form has one fewer k(u) parameter.
 . *
-. *   where a in (STEM, Business, Education, Health) and Other is the base.
-. *   For untreated observations all ma_* = 0, so no interaction fires.
-. *
-. * Area-specific treatment parameters:
-. *   ATE_a = (b0+d0_a) + (b1+d1_a)/2 + (b2+d2_a)/3 + (b3+d3_a)/4
-. *   ATT_a = E[MTE_a(phat) | masters=1, ma_a=1]
-. *
-. * Standard errors: see Section 6c (cluster bootstrap at state level)
-. ********************************************************************************
-. 
-. di _n "=============================================="
-
-==============================================
-
-. di "MTE BY GRADUATE PROGRAM AREA"
-MTE BY GRADUATE PROGRAM AREA
-
-. di "=============================================="
-==============================================
-
-. 
-. reg ln_salary masters                                      ///
->     c.masters#c.phat c.masters#c.phat2 c.masters#c.phat3  ///
->     c.masters#c.ma_stem                                    ///
->     c.masters#c.ma_business                                ///
->     c.masters#c.ma_education                               ///
->     c.masters#c.ma_health                                  ///
->     c.masters#c.ma_stem#c.phat                             ///
->     c.masters#c.ma_business#c.phat                         ///
->     c.masters#c.ma_education#c.phat                        ///
->     c.masters#c.ma_health#c.phat                           ///
->     c.masters#c.ma_stem#c.phat2                            ///
->     c.masters#c.ma_business#c.phat2                        ///
->     c.masters#c.ma_education#c.phat2                       ///
->     c.masters#c.ma_health#c.phat2                          ///
->     c.masters#c.ma_stem#c.phat3                            ///
->     c.masters#c.ma_business#c.phat3                        ///
->     c.masters#c.ma_education#c.phat3                       ///
->     c.masters#c.ma_health#c.phat3                          ///
->     $X phat phat2 phat3, robust
-
-Linear regression                               Number of obs     =      8,000
-                                                F(39, 7960)       =     194.41
-                                                Prob > F          =     0.0000
-                                                R-squared         =     0.4403
-                                                Root MSE          =     .65009
-
---------------------------------------------------------------------------------------------------
-                                 |               Robust
-                       ln_salary | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
----------------------------------+----------------------------------------------------------------
-                         masters |  -2.929609   .1828639   -16.02   0.000     -3.28807   -2.571148
-                                 |
-                c.masters#c.phat |   22.29112   1.291782    17.26   0.000     19.75889    24.82335
-                                 |
-               c.masters#c.phat2 |  -36.50798   2.923189   -12.49   0.000     -42.2382   -30.77777
-                                 |
-               c.masters#c.phat3 |   19.04749   2.019291     9.43   0.000     15.08915    23.00583
-                                 |
-             c.masters#c.ma_stem |   1.295725   .3861642     3.36   0.001     .5387417    2.052708
-                                 |
-         c.masters#c.ma_business |   .2263024   .3467167     0.65   0.514    -.4533532    .9059579
-                                 |
-        c.masters#c.ma_education |   .8287639   .8643785     0.96   0.338    -.8656445    2.523172
-                                 |
-           c.masters#c.ma_health |   .4729176   .2924276     1.62   0.106    -.1003171    1.046152
-                                 |
-      c.masters#c.ma_stem#c.phat |  -8.819215   2.436848    -3.62   0.000    -13.59608   -4.042355
-                                 |
-  c.masters#c.ma_business#c.phat |   4.910239   3.710043     1.32   0.186    -2.362417    12.18289
-                                 |
- c.masters#c.ma_education#c.phat |    -8.5932   5.094241    -1.69   0.092    -18.57925    1.392847
-                                 |
-    c.masters#c.ma_health#c.phat |  -3.419332   2.011682    -1.70   0.089    -7.362757    .5240919
-                                 |
-     c.masters#c.ma_stem#c.phat2 |   17.96907   4.918732     3.65   0.000     8.327071    27.61108
-                                 |
- c.masters#c.ma_business#c.phat2 |   -22.9929   12.50886    -1.84   0.066    -47.51355    1.527754
-                                 |
-c.masters#c.ma_education#c.phat2 |   21.03094   9.976576     2.11   0.035     1.474235    40.58764
-                                 |
-   c.masters#c.ma_health#c.phat2 |   7.208848   4.464724     1.61   0.106    -1.543182    15.96088
-                                 |
-     c.masters#c.ma_stem#c.phat3 |  -10.96779    3.10996    -3.53   0.000    -17.06413   -4.871458
-                                 |
- c.masters#c.ma_business#c.phat3 |   23.47187   12.38505     1.90   0.058    -.8060688     47.7498
-                                 |
-c.masters#c.ma_education#c.phat3 |  -14.82897    6.21228    -2.39   0.017    -27.00666   -2.651272
-                                 |
-   c.masters#c.ma_health#c.phat3 |  -4.511133   3.046714    -1.48   0.139    -10.48349    1.461224
-                                 |
-                          female |  -.0746275   .0147421    -5.06   0.000    -.1035258   -.0457291
-                           black |  -.0502008   .0236524    -2.12   0.034    -.0965656    -.003836
-                        hispanic |  -.0522417   .0227628    -2.30   0.022    -.0968628   -.0076206
-                           asian |   .0717025   .0274456     2.61   0.009     .0179019    .1255032
-                          age_ba |   .0181505   .0058746     3.09   0.002     .0066347    .0296663
-                        firstgen |  -.0399303   .0152393    -2.62   0.009    -.0698033   -.0100573
-                 parent_income_q |   .0248927   .0074171     3.36   0.001     .0103533    .0394321
-                     parent_grad |   .0501528   .0171472     2.92   0.003     .0165398    .0837658
-                            ugpa |   .1577529   .0382356     4.13   0.000     .0828012    .2327047
-                      stem_major |   .2274249   .0213801    10.64   0.000     .1855142    .2693356
-                       bus_major |   .1452681    .024878     5.84   0.000     .0965007    .1940354
-                        ed_major |  -.0701253   .0313713    -2.24   0.025    -.1316213   -.0086293
-                  selective_inst |   .0756127    .016121     4.69   0.000     .0440114     .107214
-                       public_ug |    .011324   .0152828     0.74   0.459    -.0186343    .0412823
-                     state_unemp |   .0045637   .0060028     0.76   0.447    -.0072034    .0163308
-                           metro |   .1007032   .0168305     5.98   0.000     .0677111    .1336954
-                            phat |  -.7738585   .4274593    -1.81   0.070    -1.611791    .0640737
-                           phat2 |  -3.955244   1.056928    -3.74   0.000      -6.0271   -1.883387
-                           phat3 |   4.219915   .7589163     5.56   0.000      2.73224    5.707589
-                           _cons |   9.799941   .1853375    52.88   0.000     9.436631    10.16325
---------------------------------------------------------------------------------------------------
-
-. est store mte_byarea
-
-. 
-. * Base polynomial (Other = base category)
-. local B0 = _b[masters]
-
-. local B1 = _b[c.masters#c.phat]
-
-. local B2 = _b[c.masters#c.phat2]
-
-. local B3 = _b[c.masters#c.phat3]
-
-. 
-. * Area differential coefficients
-. local d0_stem     = _b[c.masters#c.ma_stem]
-
-. local d1_stem     = _b[c.masters#c.ma_stem#c.phat]
-
-. local d2_stem     = _b[c.masters#c.ma_stem#c.phat2]
-
-. local d3_stem     = _b[c.masters#c.ma_stem#c.phat3]
-
-. 
-. local d0_business = _b[c.masters#c.ma_business]
-
-. local d1_business = _b[c.masters#c.ma_business#c.phat]
-
-. local d2_business = _b[c.masters#c.ma_business#c.phat2]
-
-. local d3_business = _b[c.masters#c.ma_business#c.phat3]
-
-. 
-. local d0_education = _b[c.masters#c.ma_education]
-
-. local d1_education = _b[c.masters#c.ma_education#c.phat]
-
-. local d2_education = _b[c.masters#c.ma_education#c.phat2]
-
-. local d3_education = _b[c.masters#c.ma_education#c.phat3]
-
-. 
-. local d0_health   = _b[c.masters#c.ma_health]
-
-. local d1_health   = _b[c.masters#c.ma_health#c.phat]
-
-. local d2_health   = _b[c.masters#c.ma_health#c.phat2]
-
-. local d3_health   = _b[c.masters#c.ma_health#c.phat3]
-
-. 
-. * Composite area coefficients (base + differential)
-. local c0_stem     = `B0' + `d0_stem'
-
-. local c1_stem     = `B1' + `d1_stem'
-
-. local c2_stem     = `B2' + `d2_stem'
-
-. local c3_stem     = `B3' + `d3_stem'
-
-. 
-. local c0_business = `B0' + `d0_business'
-
-. local c1_business = `B1' + `d1_business'
-
-. local c2_business = `B2' + `d2_business'
-
-. local c3_business = `B3' + `d3_business'
-
-. 
-. local c0_education = `B0' + `d0_education'
-
-. local c1_education = `B1' + `d1_education'
-
-. local c2_education = `B2' + `d2_education'
-
-. local c3_education = `B3' + `d3_education'
-
-. 
-. local c0_health   = `B0' + `d0_health'
-
-. local c1_health   = `B1' + `d1_health'
-
-. local c2_health   = `B2' + `d2_health'
-
-. local c3_health   = `B3' + `d3_health'
-
-. 
-. * Area-specific MTE functions
-. di _n "--- Area-Specific MTE Functions ---"
-
---- Area-Specific MTE Functions ---
-
-. di "  Base (Other): " %7.4f `B0' " + " %7.4f `B1' "*u + " %7.4f `B2' "*u^2 + " %7.4f `B3' "*u^3"
-  Base (Other): -2.9296 + 22.2911*u + -36.5080*u^2 + 19.0475*u^3
-
-. di "  STEM:         " %7.4f `c0_stem' " + " %7.4f `c1_stem' "*u + " %7.4f `c2_stem' "*u^2 + " %7.4f `c3_ste
-> m' "*u^3"
-  STEM:         -1.6339 + 13.4719*u + -18.5389*u^2 +  8.0797*u^3
-
-. di "  Business:     " %7.4f `c0_business' " + " %7.4f `c1_business' "*u + " %7.4f `c2_business' "*u^2 + " %
-> 7.4f `c3_business' "*u^3"
-  Business:     -2.7033 + 27.2014*u + -59.5009*u^2 + 42.5194*u^3
-
-. di "  Education:    " %7.4f `c0_education' " + " %7.4f `c1_education' "*u + " %7.4f `c2_education' "*u^2 + 
-> " %7.4f `c3_education' "*u^3"
-  Education:    -2.1008 + 13.6979*u + -15.4770*u^2 +  4.2185*u^3
-
-. di "  Health:       " %7.4f `c0_health' " + " %7.4f `c1_health' "*u + " %7.4f `c2_health' "*u^2 + " %7.4f `
-> c3_health' "*u^3"
-  Health:       -2.4567 + 18.8718*u + -29.2991*u^2 + 14.5364*u^3
-
-. 
-. * Area-specific ATE (integral of MTE over [0,1])
-. local ate_other     = `B0'           + `B1'/2           + `B2'/3           + `B3'/4
-
-. local ate_stem      = `c0_stem'      + `c1_stem'/2      + `c2_stem'/3      + `c3_stem'/4
-
-. local ate_business  = `c0_business'  + `c1_business'/2  + `c2_business'/3  + `c3_business'/4
-
-. local ate_education = `c0_education' + `c1_education'/2 + `c2_education'/3 + `c3_education'/4
-
-. local ate_health    = `c0_health'    + `c1_health'/2    + `c2_health'/3    + `c3_health'/4
-
-. 
-. di _n "--- Area-Specific ATE (integral_0^1 MTE_a(u) du) ---"
-
---- Area-Specific ATE (integral_0^1 MTE_a(u) du) ---
-
-. di "  ATE (Other):     " %6.4f `ate_other'
-  ATE (Other):     0.8085
-
-. di "  ATE (STEM):      " %6.4f `ate_stem'
-  ATE (STEM):      0.9424
-
-. di "  ATE (Business):  " %6.4f `ate_business'
-  ATE (Business):  1.6936
-
-. di "  ATE (Education): " %6.4f `ate_education'
-  ATE (Education): 0.6437
-
-. di "  ATE (Health):    " %6.4f `ate_health'
-  ATE (Health):    0.8469
-
-. 
-. * Area-specific MTE_hat variables
-. gen mte_hat_other     = `B0'           + `B1'           *phat + `B2'           *phat2 + `B3'           *pha
-> t3
-
-. gen mte_hat_stem      = `c0_stem'      + `c1_stem'      *phat + `c2_stem'      *phat2 + `c3_stem'      *pha
-> t3
-
-. gen mte_hat_business  = `c0_business'  + `c1_business'  *phat + `c2_business'  *phat2 + `c3_business'  *pha
-> t3
-
-. gen mte_hat_education = `c0_education' + `c1_education' *phat + `c2_education' *phat2 + `c3_education' *pha
-> t3
-
-. gen mte_hat_health    = `c0_health'    + `c1_health'    *phat + `c2_health'    *phat2 + `c3_health'    *pha
-> t3
-
-. 
-. label var mte_hat_other     "Area-specific MTE hat: Other (base)"
-
-. label var mte_hat_stem      "Area-specific MTE hat: STEM"
-
-. label var mte_hat_business  "Area-specific MTE hat: Business"
-
-. label var mte_hat_education "Area-specific MTE hat: Education"
-
-. label var mte_hat_health    "Area-specific MTE hat: Health & Related"
-
-. 
-. * Area-specific ATT
-. qui sum mte_hat_other     if ma_other     == 1
-
-. local att_other     = r(mean)
-
-. qui sum mte_hat_stem      if ma_stem      == 1
-
-. local att_stem      = r(mean)
-
-. qui sum mte_hat_business  if ma_business  == 1
-
-. local att_business  = r(mean)
-
-. qui sum mte_hat_education if ma_education == 1
-
-. local att_education = r(mean)
-
-. qui sum mte_hat_health    if ma_health    == 1
-
-. local att_health    = r(mean)
-
-. 
-. di _n "--- Area-Specific ATT ---"
-
---- Area-Specific ATT ---
-
-. di "  ATT (Other):     " %6.4f `att_other'
-  ATT (Other):     1.1750
-
-. di "  ATT (STEM):      " %6.4f `att_stem'
-  ATT (STEM):      1.3566
-
-. di "  ATT (Business):  " %6.4f `att_business'
-  ATT (Business):  1.0977
-
-. di "  ATT (Education): " %6.4f `att_education'
-  ATT (Education): 1.2200
-
-. di "  ATT (Health):    " %6.4f `att_health'
-  ATT (Health):    1.2086
-
-. 
-. qui sum mte_hat if masters == 0
-
-. local atu_pooled_untreated = r(mean)
-
-. di _n "  ATU (pooled): " %6.4f `atu_pooled_untreated'
-
-  ATU (pooled): 0.5528
-
-. 
-. ********************************************************************************
-. * SECTION 6b-ATU: PROSPECTIVE PROGRAM AREA ASSIGNMENT FOR UNTREATED
-. *
-. * ATU_a = E[MTE_a(phat) | masters==0, prospective_area==a]
-. *
-. * Because ma_* = 0 for all untreated observations by construction,
-. * area-specific ATU requires assigning untreated individuals to the
-. * graduate program area they would most likely have entered, given their
-. * undergraduate major field and the same transition probabilities used
-. * for the treated group in Section 1b.
-. *
-. * This is a counterfactual assignment — not an observed classification.
-. * Prose must note that ATU_a estimates the return for untreated students
-. * who, had they completed a master's degree, would most likely have
-. * entered program area a given their undergraduate background.
+. * Prospective assignment of non-completers: because ma_* = 0 for all
+. * untreated observations by construction, untreated students are assigned
+. * to the area they would most likely have entered, using their
+. * undergraduate major and the same transition probabilities as Section 1b.
+. * This is a counterfactual assignment, not an observed classification.
 . *
 . * Transition probabilities (mirroring Section 1b):
 . *   STEM:      stem_major,    p <= 0.55
@@ -2657,535 +2552,773 @@ c.masters#c.ma_education#c.phat3 |  -14.82897    6.21228    -2.39   0.017    -27
 . *   Education: ed_major,      p <= 0.70 (conditional on not STEM/Bus)
 . *   Health:    socsci_major   p <= 0.40 OR stem_major p in (0.55, 0.75]
 . *   Other:     residual
+. * Seed 20260102 (distinct from treated seed 20251130).
 . *
-. * Seed 20260102 (distinct from treated seed 20251130) ensures
-. * reproducibility without cross-contaminating the treated assignment.
+. * Caution: groups are much smaller than the pooled sample (Business has
+. * about 179 completers), so area estimates are imprecise.
 . ********************************************************************************
 . 
-. di _n "=============================================="
+. if `run_areas' == 1 {
+.     di _n "=============================================="
 
 ==============================================
-
-. di "SECTION 6b-ATU: PROSPECTIVE PROGRAM AREA (UNTREATED)"
-SECTION 6b-ATU: PROSPECTIVE PROGRAM AREA (UNTREATED)
-
-. di "=============================================="
+.     di "MTE BY GRADUATE PROGRAM AREA (separate mtefe per area)"
+MTE BY GRADUATE PROGRAM AREA (separate mtefe per area)
+.     di "=============================================="
 ==============================================
-
 . 
-. * Generate prospective indicators (untreated only; treated keep ma_* = 0)
-. gen ma_stem_pro      = 0
-
-. gen ma_business_pro  = 0
-
-. gen ma_education_pro = 0
-
-. gen ma_health_pro    = 0
-
-. gen ma_other_pro     = 0
-
+.     * Use prospective areas from the dataset when present
+.     * (Example_7_5_3_updated.dta), so Stata and R share the same draws.
+.     capture confirm variable ma_stem_pro
+.     if _rc == 0 {
+.         di "Prospective areas (ma_*_pro) found in dataset; no new draws."
+Prospective areas (ma_*_pro) found in dataset; no new draws.
+.     }
+.     else {
+.         gen ma_stem_pro      = 0
+.         gen ma_business_pro  = 0
+.         gen ma_education_pro = 0
+.         gen ma_health_pro    = 0
+.         gen ma_other_pro     = 0
 . 
-. label var ma_stem_pro      "Prospective STEM master's (untreated)"
-
-. label var ma_business_pro  "Prospective Business master's (untreated)"
-
-. label var ma_education_pro "Prospective Education master's (untreated)"
-
-. label var ma_health_pro    "Prospective Health master's (untreated)"
-
-. label var ma_other_pro     "Prospective Other master's (untreated)"
-
+.         label var ma_stem_pro      "Prospective STEM master's (untreated)"
+.         label var ma_business_pro  "Prospective Business master's (untreated)"
+.         label var ma_education_pro "Prospective Education master's (untreated)"
+.         label var ma_health_pro    "Prospective Health master's (untreated)"
+.         label var ma_other_pro     "Prospective Other master's (untreated)"
 . 
-. set seed 20260102
-
-. gen _rma_u = runiform() if masters == 0
+.         set seed 20260102
+.         gen _rma_u = runiform() if masters == 0
+.         replace _rma_u = . if masters == 1
+. 
+.         replace ma_stem_pro      = 1 if masters==0 & stem_major==1   & _rma_u <= 0.55
+.         replace ma_business_pro  = 1 if masters==0 & bus_major==1    & _rma_u <= 0.65 ///
+>                                                    & ma_stem_pro==0
+.         replace ma_education_pro = 1 if masters==0 & ed_major==1     & _rma_u <= 0.70 ///
+>                                                    & ma_stem_pro==0 & ma_business_pro==0
+.         replace ma_health_pro    = 1 if masters==0 & socsci_major==1 & _rma_u <= 0.40 ///
+>                                                    & ma_stem_pro==0 & ma_business_pro==0 ///
+>                                                    & ma_education_pro==0
+.         replace ma_health_pro    = 1 if masters==0 & stem_major==1   & _rma_u >  0.55 ///
+>                                                    & _rma_u <= 0.75  & ma_stem_pro==0
+.         replace ma_other_pro     = 1 if masters==0 & ma_stem_pro==0 & ma_business_pro==0 ///
+>                                                    & ma_education_pro==0 & ma_health_pro==0
+.         drop _rma_u
+.     }
+. 
+.     gen _pro_check = ma_stem_pro + ma_business_pro + ma_education_pro ///
+>                    + ma_health_pro + ma_other_pro if masters == 0
 (3,068 missing values generated)
-
-. replace _rma_u = . if masters == 1
-(0 real changes made)
-
-. 
-. replace ma_stem_pro      = 1 if masters==0 & stem_major==1   & _rma_u <= 0.55
-(463 real changes made)
-
-. replace ma_business_pro  = 1 if masters==0 & bus_major==1    & _rma_u <= 0.65 ///
->                                            & ma_stem_pro==0
-(598 real changes made)
-
-. replace ma_education_pro = 1 if masters==0 & ed_major==1     & _rma_u <= 0.70 ///
->                                            & ma_stem_pro==0 & ma_business_pro==0
-(264 real changes made)
-
-. replace ma_health_pro    = 1 if masters==0 & socsci_major==1 & _rma_u <= 0.40 ///
->                                            & ma_stem_pro==0 & ma_business_pro==0 ///
->                                            & ma_education_pro==0
-(1,092 real changes made)
-
-. replace ma_health_pro    = 1 if masters==0 & stem_major==1   & _rma_u >  0.55 ///
->                                            & _rma_u <= 0.75  & ma_stem_pro==0
-(189 real changes made)
-
-. replace ma_other_pro     = 1 if masters==0 & ma_stem_pro==0 & ma_business_pro==0 ///
->                                            & ma_education_pro==0 & ma_health_pro==0
-(2,326 real changes made)
-
-. drop _rma_u
-
-. 
-. * Verification
-. qui count if masters == 0
-
-. local n_untreated = r(N)
-
-. di "Total untreated: " `n_untreated'
-Total untreated: 4932
-
-. foreach a in stem business education health other {
-  2.     qui count if masters==0 & ma_`a'_pro == 1
-  3.     di "  ma_`a'_pro: " r(N) "  (" %5.1f r(N)/`n_untreated'*100 "%)"
-  4. }
-  ma_stem_pro: 463  (  9.4%)
-  ma_business_pro: 598  ( 12.1%)
-  ma_education_pro: 264  (  5.4%)
-  ma_health_pro: 1281  ( 26.0%)
-  ma_other_pro: 2326  ( 47.2%)
-
-. 
-. * Check mutual exclusivity
-. gen _pro_check = ma_stem_pro + ma_business_pro + ma_education_pro ///
->                + ma_health_pro + ma_other_pro if masters == 0
-(3,068 missing values generated)
-
-. qui count if masters==0 & _pro_check != 1
-
-. if r(N) > 0 di "WARNING: " r(N) " untreated obs with != 1 prospective area flag"
-
-. else         di "CHECK PASSED: all untreated obs have exactly 1 prospective area"
+.     qui count if masters==0 & _pro_check != 1
+.     if r(N) > 0 di "WARNING: " r(N) " untreated obs with != 1 prospective area flag"
+.     else         di "CHECK PASSED: all untreated obs have exactly 1 prospective area"
 CHECK PASSED: all untreated obs have exactly 1 prospective area
+.     drop _pro_check
+. 
+.     * Area groups and area-specific mtefe
+.     foreach a in stem business education health other {
+  2.         gen byte grp_`a' = (ma_`a' == 1 | ma_`a'_pro == 1)
+  3.         label var grp_`a' "Area group `a': completers in area + prospective non-completers
+> "
+  4.     }
+. 
+.     di _n "Area      N     Completers   ATE       ATT       ATU       LATE"
 
-. drop _pro_check
+Area      N     Completers   ATE       ATT       ATU       LATE
+.     di "-------------------------------------------------------------------"
+-------------------------------------------------------------------
+.     foreach a in stem business education health other {
+  2.         qui count if grp_`a' == 1
+  3.         local n_`a' = r(N)
+  4.         qui count if grp_`a' == 1 & masters == 1
+  5.         local ntr_`a' = r(N)
+  6. 
+.         capture noisily mtefe ln_salary $X_controls (masters = ga_funding_adj) ///
+>             if grp_`a' == 1, pol(1) bootreps(0) noplot savepropensity(p_area_`a')
+  7.         if _rc == 0 {
+  8.             est store mtefe_`a'
+  9.             local ate_`a'  = _b[effects:ate]
+ 10.             local att_`a'  = _b[effects:att]
+ 11.             local atu_`a'  = _b[effects:atut]
+ 12.             local late_`a' = _b[effects:late]
+ 13.             matrix EB_`a'  = e(b)
+ 14.             matrix MTE_`a' = EB_`a'[1, "mte:"]
+ 15.             matrix SUP_`a' = e(support)
+ 16.             * Common support of the area's propensity score (treated vs untreated)
+.             qui sum p_area_`a' if grp_`a' == 1 & masters == 1
+ 17.             local lo1 = r(min)
+ 18.             local hi1 = r(max)
+ 19.             qui sum p_area_`a' if grp_`a' == 1 & masters == 0
+ 20.             local lo_`a' = max(`lo1', r(min))
+ 21.             local hi_`a' = min(`hi1', r(max))
+ 22.         }
+ 23.         else {
+ 24.             di as error "mtefe failed for area `a' (rc = " _rc ")"
+ 25.             foreach s in ate att atu late {
+ 26.                 local `s'_`a' = .
+ 27.             }
+ 28.             local lo_`a' = .
+ 29.             local hi_`a' = .
+ 30.         }
+ 31.     }
+
+
+Parametric polynomial MTE model                              Obs. :      1,048
+Treatment model: Probit
+Estimation method: Local IV
+------------------------------------------------------------------------------
+   ln_salary | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+beta0        |
+      female |   .1101547   .1936663     0.57   0.570    -.2698757    .4901851
+       black |  -.6438537   .3619984    -1.78   0.076    -1.354201    .0664938
+    hispanic |  -.6955051   .3014668    -2.31   0.021    -1.287072   -.1039383
+       asian |   .0332311   .3029395     0.11   0.913    -.5612254    .6276877
+      age_ba |  -.0572311   .0754488    -0.76   0.448    -.2052839    .0908217
+    firstgen |  -.2298666   .1989915    -1.16   0.248    -.6203467    .1606134
+parent_inc~q |    .067477   .0974815     0.69   0.489    -.1238104    .2587643
+ parent_grad |   .2783374   .2227198     1.25   0.212    -.1587044    .7153793
+        ugpa |  -.9918578   .5120106    -1.94   0.053    -1.996573    .0128579
+  stem_major |    14.3108   2.347529     6.10   0.000     9.704252    18.91734
+   bus_major |          0  (omitted)
+    ed_major |          0  (omitted)
+selective_~t |    .206462   .2146263     0.96   0.336    -.2146979     .627622
+   public_ug |   .1215692   .1956339     0.62   0.534    -.2623222    .5054605
+ state_unemp |   .0744993   .0758214     0.98   0.326    -.0742846    .2232833
+       metro |  -.0636413   .2240323    -0.28   0.776    -.5032587     .375976
+       _cons |          0  (omitted)
+-------------+----------------------------------------------------------------
+beta1-beta0  |
+      female |  -.3169765   .3322173    -0.95   0.340    -.9688848    .3349318
+       black |   .8438125   .6211025     1.36   0.175    -.3749736    2.062599
+    hispanic |    1.11705   .5283667     2.11   0.035     .0802386    2.153861
+       asian |  -.2091617   .5182095    -0.40   0.687    -1.226041     .807718
+      age_ba |   .0826415   .1299267     0.64   0.525     -.172313    .3375959
+    firstgen |   .3435852   .3414168     1.01   0.314    -.3263751    1.013546
+parent_inc~q |  -.0622488   .1672423    -0.37   0.710    -.3904275      .26593
+ parent_grad |  -.4566612   .3936392    -1.16   0.246    -1.229097     .315775
+        ugpa |   1.781032   .8691987     2.05   0.041     .0754077    3.486656
+  stem_major |          0  (omitted)
+   bus_major |          0  (omitted)
+    ed_major |          0  (omitted)
+selective_~t |  -.1588761    .364495    -0.44   0.663    -.8741228    .5563706
+   public_ug |  -.0844209   .3352208    -0.25   0.801     -.742223    .5733812
+ state_unemp |  -.0964565    .132138    -0.73   0.466    -.3557503    .1628372
+       metro |   .4451055   .4138029     1.08   0.282    -.3668978    1.257109
+       _cons |  -5.823134   4.012866    -1.45   0.147    -13.69756    2.051291
+-------------+----------------------------------------------------------------
+k            |
+          p1 |   1.459561   1.867947     0.78   0.435    -2.205902    5.125024
+-------------+----------------------------------------------------------------
+effects      |
+         ate |   .4551335   .1885786     2.41   0.016     .0850867    .8251804
+         att |   .1894209   .4847048     0.39   0.696    -.7617128    1.140555
+        atut |   .7891019   .4086066     1.93   0.054    -.0127046    1.590908
+        late |   .5189982   .1704747     3.04   0.002     .1844765    .8535198
+      mprte1 |   .5265408   .1671011     3.15   0.002     .1986391    .8544425
+      mprte2 |    .537972   .1678254     3.21   0.001     .2086491    .8672949
+      mprte3 |   .6110483   .2008045     3.04   0.002     .2170108    1.005086
+------------------------------------------------------------------------------
+Test of observable heterogeneity, p-value                               0.3036
+Test of essential heterogeneity, p-value                                0.4348
+------------------------------------------------------------------------------
+Note: Analytical standard errors ignore the facts that the propensity score,
+the mean of X and the treatment effect parameter weights are estimated objects
+when calculating standard errors. Consider using bootreps() to bootstrap the 
+standard errors.
+
+
+
+
+Parametric polynomial MTE model                              Obs. :        777
+Treatment model: Probit
+Estimation method: Local IV
+------------------------------------------------------------------------------
+   ln_salary | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+beta0        |
+      female |   .0536623   .0985825     0.54   0.586     -.139869    .2471937
+       black |  -.1127898   .1677389    -0.67   0.502    -.4420849    .2165053
+    hispanic |  -.2330945   .1555771    -1.50   0.134    -.5385143    .0723253
+       asian |  -.2682733   .2341235    -1.15   0.252    -.7278906    .1913441
+      age_ba |   .0113189   .0386892     0.29   0.770    -.0646334    .0872712
+    firstgen |   .1741967    .099768     1.75   0.081    -.0216619    .3700552
+parent_inc~q |   .0113492   .0502239     0.23   0.821    -.0872474    .1099459
+ parent_grad |  -.0034541   .1161553    -0.03   0.976    -.2314832     .224575
+        ugpa |  -.1518561   .2373044    -0.64   0.522    -.6177179    .3140057
+  stem_major |          0  (omitted)
+   bus_major |   10.54859   1.172439     9.00   0.000     8.246931    12.85026
+    ed_major |          0  (omitted)
+selective_~t |   .1260479   .1050773     1.20   0.231    -.0802336    .3323294
+   public_ug |   -.092111   .1045912    -0.88   0.379    -.2974383    .1132163
+ state_unemp |     .00677   .0401643     0.17   0.866    -.0720781     .085618
+       metro |   .1629157   .1096775     1.49   0.138    -.0523966     .378228
+       _cons |          0  (omitted)
+-------------+----------------------------------------------------------------
+beta1-beta0  |
+      female |  -.0482755   .3511032    -0.14   0.891    -.7375404    .6409894
+       black |   .4415041     .69757     0.63   0.527     -.927924    1.810932
+    hispanic |   .3961468   .4640714     0.85   0.394    -.5148906    1.307184
+       asian |   1.253537   .6563257     1.91   0.057    -.0349222    2.541997
+      age_ba |   .0840376   .1390908     0.60   0.546    -.1890172    .3570924
+    firstgen |  -.5498273   .3464035    -1.59   0.113    -1.229866    .1302114
+parent_inc~q |   .0763952   .1622378     0.47   0.638    -.2421004    .3948909
+ parent_grad |   .1280568   .3795779     0.34   0.736     -.617108    .8732217
+        ugpa |   .6107751   .8687144     0.70   0.482    -1.094633    2.316183
+  stem_major |          0  (omitted)
+   bus_major |          0  (omitted)
+    ed_major |          0  (omitted)
+selective_~t |  -.2702779   .3632415    -0.74   0.457     -.983372    .4428161
+   public_ug |   .2665056   .3579332     0.74   0.457    -.4361677    .9691788
+ state_unemp |   .0132316   .1349057     0.10   0.922    -.2516072    .2780705
+       metro |  -.4239835   .3729084    -1.14   0.256    -1.156055    .3080881
+       _cons |  -3.661924   4.232411    -0.87   0.387    -11.97074    4.646895
+-------------+----------------------------------------------------------------
+k            |
+          p1 |    -2.6252   1.733128    -1.51   0.130    -6.027574    .7771748
+-------------+----------------------------------------------------------------
+effects      |
+         ate |   .0596102   .3926826     0.15   0.879     -.711281    .8305013
+         att |   .9073542   .2545485     3.56   0.000     .4076397    1.407069
+        atut |  -.1955641   .5453548    -0.36   0.720    -1.266172     .875044
+        late |   .6189497    .170104     3.64   0.000     .2850116    .9528878
+      mprte1 |   .5873547   .1726117     3.40   0.001     .2484936    .9262158
+      mprte2 |    .761137   .2059087     3.70   0.000     .3569093    1.165365
+      mprte3 |   .3854679   .2237483     1.72   0.085    -.0537815    .8247173
+------------------------------------------------------------------------------
+Test of observable heterogeneity, p-value                               0.5942
+Test of essential heterogeneity, p-value                                0.1303
+------------------------------------------------------------------------------
+Note: Analytical standard errors ignore the facts that the propensity score,
+the mean of X and the treatment effect parameter weights are estimated objects
+when calculating standard errors. Consider using bootreps() to bootstrap the 
+standard errors.
+
+
+
+
+Parametric polynomial MTE model                              Obs. :        477
+Treatment model: Probit
+Estimation method: Local IV
+------------------------------------------------------------------------------
+   ln_salary | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+beta0        |
+      female |   .3754702    .202071     1.86   0.064    -.0216546     .772595
+       black |  -.2407802   .3684487    -0.65   0.514    -.9648827    .4833222
+    hispanic |   -.127008   .2774672    -0.46   0.647    -.6723068    .4182908
+       asian |  -.1539939   .4820699    -0.32   0.750    -1.101393    .7934052
+      age_ba |   .0784821   .0800526     0.98   0.327    -.0788432    .2358074
+    firstgen |  -.0217741   .2123424    -0.10   0.918    -.4390848    .3955367
+parent_inc~q |  -.1171776   .0977586    -1.20   0.231       -.3093    .0749448
+ parent_grad |  -.5422333   .3223049    -1.68   0.093    -1.175651    .0911839
+        ugpa |  -.0489497   .5222139    -0.09   0.925    -1.075243    .9773434
+  stem_major |          0  (omitted)
+   bus_major |          0  (omitted)
+    ed_major |   8.540318   2.501556     3.41   0.001     3.624077    13.45656
+selective_~t |   .0755647   .2216889     0.34   0.733    -.3601146    .5112439
+   public_ug |   .2238972   .2067487     1.08   0.279    -.1824206    .6302149
+ state_unemp |  -.0106478   .0860846    -0.12   0.902    -.1798276    .1585321
+       metro |   .1222445   .2270237     0.54   0.591    -.3239192    .5684082
+       _cons |          0  (omitted)
+-------------+----------------------------------------------------------------
+beta1-beta0  |
+      female |  -.9776262   .4134346    -2.36   0.018    -1.790138   -.1651143
+       black |   .8136447    .694263     1.17   0.242    -.5507719    2.178061
+    hispanic |  -.2547771   .6940681    -0.37   0.714    -1.618811    1.109256
+       asian |   .9193439    .853843     1.08   0.282    -.7586908    2.597379
+      age_ba |  -.0904278   .1677924    -0.54   0.590    -.4201857    .2393302
+    firstgen |   -.161519   .4727026    -0.34   0.733    -1.090509    .7674707
+parent_inc~q |    .198179   .1883696     1.05   0.293    -.1720188    .5683768
+ parent_grad |   1.252683     .56868     2.20   0.028     .1350713    2.370295
+        ugpa |   .5298962   1.060859     0.50   0.618    -1.554982    2.614775
+  stem_major |          0  (omitted)
+   bus_major |          0  (omitted)
+    ed_major |          0  (omitted)
+selective_~t |   .1054666   .4419147     0.24   0.811    -.7630166    .9739499
+   public_ug |  -.3496106   .4144993    -0.84   0.399    -1.164215    .4649939
+ state_unemp |   .1297127   .1645096     0.79   0.431    -.1935936    .4530191
+       metro |    -.08714   .4586614    -0.19   0.849     -.988535    .8142551
+       _cons |  -.3613554   5.195808    -0.07   0.945    -10.57254    9.849827
+-------------+----------------------------------------------------------------
+k            |
+          p1 |  -4.351709   2.309696    -1.88   0.060    -8.890894    .1874751
+-------------+----------------------------------------------------------------
+effects      |
+         ate |  -.0263972   .2476086    -0.11   0.915    -.5130158    .4602213
+         att |   1.094461   .5324296     2.06   0.040     .0480916    2.140831
+        atut |  -.9234557   .5870186    -1.57   0.116    -2.077108    .2301963
+        late |   .4013273   .2502144     1.60   0.109    -.0904125     .893067
+      mprte1 |   .1738764   .2328444     0.75   0.456    -.2837264    .6314793
+      mprte2 |   .2143609   .2355866     0.91   0.363    -.2486313     .677353
+      mprte3 |  -.2224184   .3003868    -0.74   0.459    -.8127605    .3679238
+------------------------------------------------------------------------------
+Test of observable heterogeneity, p-value                               0.2503
+Test of essential heterogeneity, p-value                                0.0602
+------------------------------------------------------------------------------
+Note: Analytical standard errors ignore the facts that the propensity score,
+the mean of X and the treatment effect parameter weights are estimated objects
+when calculating standard errors. Consider using bootreps() to bootstrap the 
+standard errors.
+
+
+
+
+Parametric polynomial MTE model                              Obs. :      2,068
+Treatment model: Probit
+Estimation method: Local IV
+------------------------------------------------------------------------------
+   ln_salary | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+beta0        |
+      female |   .0030839   .0811781     0.04   0.970    -.1561169    .1622847
+       black |  -.0289126   .1502396    -0.19   0.847    -.3235519    .2657267
+    hispanic |  -.2360886   .1287525    -1.83   0.067    -.4885889    .0164118
+       asian |   .1009946   .1526199     0.66   0.508    -.1983128    .4003021
+      age_ba |  -.0013696    .032568    -0.04   0.966    -.0652396    .0625005
+    firstgen |  -.0495847   .0844288    -0.59   0.557    -.2151604    .1159911
+parent_inc~q |   .0612878   .0392489     1.56   0.119    -.0156843    .1382599
+ parent_grad |   .0092435   .0941708     0.10   0.922    -.1754377    .1939247
+        ugpa |  -.0684063   .2095625    -0.33   0.744    -.4793854    .3425728
+  stem_major |   .2515356   .1509456     1.67   0.096    -.0444881    .5475594
+   bus_major |          0  (omitted)
+    ed_major |          0  (omitted)
+selective_~t |   .2154394   .0897663     2.40   0.016     .0393961    .3914827
+   public_ug |   .0704706   .0853645     0.83   0.409    -.0969402    .2378814
+ state_unemp |   .0156664    .033727     0.46   0.642    -.0504766    .0818093
+       metro |   .0041075   .0903198     0.05   0.964    -.1730212    .1812362
+       _cons |   10.26765    .986145    10.41   0.000     8.333692    12.20161
+-------------+----------------------------------------------------------------
+beta1-beta0  |
+      female |  -.1426126   .1917526    -0.74   0.457    -.5186643     .233439
+       black |  -.1803722   .3542556    -0.51   0.611    -.8751133    .5143689
+    hispanic |   .4291555   .2912816     1.47   0.141    -.1420853    1.000396
+       asian |  -.0998347   .3714956    -0.27   0.788    -.8283856    .6287163
+      age_ba |   .0150546   .0760022     0.20   0.843    -.1339955    .1641046
+    firstgen |  -.0241193   .2095586    -0.12   0.908    -.4350907    .3868521
+parent_inc~q |  -.0919944   .0931406    -0.99   0.323    -.2746552    .0906665
+ parent_grad |   .1380235   .2125694     0.65   0.516    -.2788525    .5548995
+        ugpa |   .6624072   .4909458     1.35   0.177     -.300401    1.625215
+  stem_major |   .0937858   .3138594     0.30   0.765    -.5217332    .7093047
+   bus_major |          0  (omitted)
+    ed_major |          0  (omitted)
+selective_~t |  -.3066571   .2084009    -1.47   0.141    -.7153583    .1020441
+   public_ug |  -.1699543   .1984817    -0.86   0.392    -.5592026     .219294
+ state_unemp |  -.0471947   .0795783    -0.59   0.553    -.2032581    .1088686
+       metro |   .2667947   .2175091     1.23   0.220    -.1597687    .6933581
+       _cons |  -1.507478   2.320374    -0.65   0.516    -6.058031    3.043074
+-------------+----------------------------------------------------------------
+k            |
+          p1 |  -2.716107   1.146506    -2.37   0.018    -4.964552   -.4676612
+-------------+----------------------------------------------------------------
+effects      |
+         ate |   .0647177   .1581758     0.41   0.682    -.2454855    .3749209
+         att |   .7847928   .2296496     3.42   0.001     .3344203    1.235165
+        atut |  -.3712574   .3259264    -1.14   0.255    -1.010441    .2679263
+        late |   .3070159   .1138911     2.70   0.007     .0836607     .530371
+      mprte1 |   .3405546   .1097037     3.10   0.002     .1254115    .5556976
+      mprte2 |   .3981763    .113153     3.52   0.000     .1762686    .6200841
+      mprte3 |   .1210207   .1421116     0.85   0.395    -.1576785    .3997199
+------------------------------------------------------------------------------
+Test of observable heterogeneity, p-value                               0.6520
+Test of essential heterogeneity, p-value                                0.0179
+------------------------------------------------------------------------------
+Note: Analytical standard errors ignore the facts that the propensity score,
+the mean of X and the treatment effect parameter weights are estimated objects
+when calculating standard errors. Consider using bootreps() to bootstrap the 
+standard errors.
+
+
+
+
+Parametric polynomial MTE model                              Obs. :      3,630
+Treatment model: Probit
+Estimation method: Local IV
+------------------------------------------------------------------------------
+   ln_salary | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+beta0        |
+      female |  -.0523511   .0570666    -0.92   0.359    -.1642371     .059535
+       black |  -.1465349   .0929677    -1.58   0.115    -.3288097    .0357399
+    hispanic |  -.0350247   .0833086    -0.42   0.674    -.1983616    .1283122
+       asian |  -.0118561   .1123507    -0.11   0.916    -.2321335    .2084214
+      age_ba |    .047714    .023117     2.06   0.039     .0023903    .0930377
+    firstgen |  -.0062559   .0592579    -0.11   0.916    -.1224384    .1099265
+parent_inc~q |  -.0487321   .0286413    -1.70   0.089    -.1048869    .0074228
+ parent_grad |  -.0521459   .0694644    -0.75   0.453    -.1883395    .0840477
+        ugpa |   .0569588   .1472353     0.39   0.699    -.2317143     .345632
+  stem_major |   .1913483   .1026768     1.86   0.062    -.0099623    .3926588
+   bus_major |   .1932414   .0894335     2.16   0.031     .0178959     .368587
+    ed_major |  -.1955609   .1398136    -1.40   0.162    -.4696829     .078561
+selective_~t |   .0569484   .0646971     0.88   0.379    -.0698984    .1837952
+   public_ug |  -.0630394   .0600666    -1.05   0.294    -.1808075    .0547286
+ state_unemp |  -.0211203   .0234692    -0.90   0.368    -.0671347     .024894
+       metro |   .0348556   .0646254     0.54   0.590    -.0918506    .1615618
+       _cons |   9.479485   .7019469    13.50   0.000     8.103231    10.85574
+-------------+----------------------------------------------------------------
+beta1-beta0  |
+      female |  -.1585196   .1387048    -1.14   0.253    -.4304675    .1134284
+       black |   .2915311   .2161226     1.35   0.177    -.1322041    .7152663
+    hispanic |  -.0803283   .2227032    -0.36   0.718    -.5169656    .3563089
+       asian |   .2411365   .2677125     0.90   0.368    -.2837471    .7660201
+      age_ba |  -.0276476   .0566331    -0.49   0.625    -.1386837    .0833886
+    firstgen |  -.0246405   .1457622    -0.17   0.866    -.3104254    .2611444
+parent_inc~q |   .2165863    .072382     2.99   0.003     .0746724    .3585002
+ parent_grad |   .1353593   .1605576     0.84   0.399    -.1794339    .4501525
+        ugpa |   .2725265   .3588319     0.76   0.448    -.4310081     .976061
+  stem_major |    .092378   .2068829     0.45   0.655    -.3132416    .4979976
+   bus_major |   .1619831   .2802103     0.58   0.563    -.3874041    .7113702
+    ed_major |   .3339803   .2846057     1.17   0.241    -.2240244     .891985
+selective_~t |   -.050953   .1503879    -0.34   0.735    -.3458071    .2439012
+   public_ug |   .2806319   .1498395     1.87   0.061     -.013147    .5744109
+ state_unemp |   .0513191   .0569802     0.90   0.368    -.0603977    .1630358
+       metro |   .2128668   .1633378     1.30   0.193    -.1073773    .5331108
+       _cons |  -1.281733   1.734202    -0.74   0.460     -4.68185    2.118385
+-------------+----------------------------------------------------------------
+k            |
+          p1 |  -2.323647   .7265621    -3.20   0.001    -3.748162   -.8991319
+-------------+----------------------------------------------------------------
+effects      |
+         ate |   .1920579   .1102967     1.74   0.082    -.0241924    .4083083
+         att |   .8240254   .1416802     5.82   0.000     .5462437    1.101807
+        atut |  -.1589116   .2048152    -0.78   0.438    -.5604773    .2426541
+        late |   .4489772   .0769455     5.84   0.000     .2981159    .5998385
+      mprte1 |    .457946   .0773815     5.92   0.000       .30623     .609662
+      mprte2 |   .5244611   .0818767     6.41   0.000     .3639316    .6849906
+      mprte3 |   .2470487   .0988309     2.50   0.012     .0532784    .4408191
+------------------------------------------------------------------------------
+Test of observable heterogeneity, p-value                               0.1740
+Test of essential heterogeneity, p-value                                0.0014
+------------------------------------------------------------------------------
+Note: Analytical standard errors ignore the facts that the propensity score,
+the mean of X and the treatment effect parameter weights are estimated objects
+when calculating standard errors. Consider using bootreps() to bootstrap the 
+standard errors.
+
 
 . 
-. * Area-specific ATU point estimates
-. di _n "--- Area-Specific ATU (prospective assignment) ---"
+.     foreach a in stem business education health other {
+  2.         di "  `a'" _col(11) %5.0f `n_`a'' "   " %5.0f `ntr_`a'' "     " ///
+>            %7.4f `ate_`a'' "   " %7.4f `att_`a'' "   " %7.4f `atu_`a'' "   " %7.4f `late_`a''
+  3.     }
+  stem     1048     585      0.4551    0.1894    0.7891    0.5190
+  business  777     179      0.0596    0.9074   -0.1956    0.6189
+  education  477     213     -0.0264    1.0945   -0.9235    0.4013
+  health   2068     787      0.0647    0.7848   -0.3713    0.3070
+  other    3630    1304      0.1921    0.8240   -0.1589    0.4490
+.     di _n "Common support of each area's propensity score:"
 
---- Area-Specific ATU (prospective assignment) ---
+Common support of each area's propensity score:
+.     foreach a in stem business education health other {
+  2.         di "  `a': [" %5.3f `lo_`a'' ", " %5.3f `hi_`a'' "]"
+  3.     }
+  stem: [0.149, 0.913]
+  business: [0.006, 0.786]
+  education: [0.058, 0.871]
+  health: [0.051, 0.927]
+  other: [0.022, 0.951]
+. }
 
-. foreach a in stem business education health other {
-  2.     qui sum mte_hat_`a' if masters==0 & ma_`a'_pro==1
-  3.     local atu_`a' = r(mean)
-  4.     di "  ATU (`a'): " %6.4f `atu_`a''
-  5. }
-  ATU (stem): 1.0820
-  ATU (business): 0.3574
-  ATU (education): 0.7348
-  ATU (health): 0.5685
-  ATU (other): 0.4836
-
-. 
-. di _n "=============================================="
-
-==============================================
-
-. di "AREA-SPECIFIC TREATMENT PARAMETER SUMMARY"
-AREA-SPECIFIC TREATMENT PARAMETER SUMMARY
-
-. di "=============================================="
-==============================================
-
-. di "Area          ATE        ATT        ATU (prospective)"
-Area          ATE        ATT        ATU (prospective)
-
-. di "----------------------------------------------------"
-----------------------------------------------------
-
-. di "  Other     " %7.4f `ate_other'     "    " %7.4f `att_other'     "    " %7.4f `atu_other'
-  Other      0.8085     1.1750     0.4836
-
-. di "  STEM      " %7.4f `ate_stem'      "    " %7.4f `att_stem'      "    " %7.4f `atu_stem'
-  STEM       0.9424     1.3566     1.0820
-
-. di "  Business  " %7.4f `ate_business'  "    " %7.4f `att_business'  "    " %7.4f `atu_business'
-  Business   1.6936     1.0977     0.3574
-
-. di "  Education " %7.4f `ate_education' "    " %7.4f `att_education' "    " %7.4f `atu_education'
-  Education  0.6437     1.2200     0.7348
-
-. di "  Health    " %7.4f `ate_health'    "    " %7.4f `att_health'    "    " %7.4f `atu_health'
-  Health     0.8469     1.2086     0.5685
+. else {
+.     di _n "Section 6d skipped (run_areas = 0). Set run_areas = 1 at the top of the script to 
+> run the area-specific models."
+. }
 
 . 
 . ********************************************************************************
-. * SECTION 6c: BOOTSTRAP INFRASTRUCTURE
+. * SECTION 6e: STATE-CLUSTERED BOOTSTRAP (mtefe re-estimated each rep)
 . *
-. * Implementation: postfile/forvalues manual bootstrap (NO program...end,
-. *   NO bootstrap command). This is the definitive fix for the persistent
-. *   r(198) error documented in the bug fix log above.
+. * Each replication resamples the 50 states with replacement and
+. * re-estimates the pooled mtefe model (probit + MTE) and the five area
+. * models. Standard errors are the standard deviations of the replicates;
+. * the MTE confidence band in Fig 11.3 uses pointwise 2.5th and 97.5th
+. * percentiles.
 . *
-. * Architecture:
-. *   - postfile/postclose stores one row of estimates per replication
+. * RUN TIME: see the table in the header. Each mtefe call takes about
+. * 8 seconds on the author's machine (Stata MP, 2 cores), largely
+. * regardless of sample size, so a replication with the pooled model plus
+. * five area models takes about 50 seconds (about 7 hours for R = 500).
+. * The projected total is printed after the first replication.
 . *
-. * -----------------------------------------------------------------------
-. * 6c-i  Manual cluster bootstrap — forvalues loop, NO continue in braces
+. * PUBLISHED DRAWS (default, use_saved_boot = 1): the script reuses the
+. * author's 500 replications in mte_bootstrap_draws.dta. If the file is
+. * not in the working directory, it is downloaded from the book's data
+. * repository; if the download fails, the full bootstrap runs instead.
+. * Set use_saved_boot = 0 to run the bootstrap yourself. Each full run
+. * overwrites mte_bootstrap_draws.dta with the new draws.
 . *
-. * DEFINITIVE FIX for persistent r(198):
-. *   Using "continue" inside a brace block ( if _rc != 0 BEGIN ... continue END )
-. *   inside a forvalues loop causes Stata to exit the if-block mid-execution.
-. *   The closing brace is never processed, leaving a stale open-brace in
-. *   Stata's internal loop state. With nostop, this accumulates across every
-. *   failed replication and reports as r(198) at EOF.
+. * CAUTION: the published draws are valid ONLY for the specification in
+. * the book (same data, models, controls, R = 500, seed 20260101). After
+. * ANY change to the data or models, set use_saved_boot = 0. See the
+. * RUN TIME note in the header.
 . *
-. *   Fix: replace all continue-in-brace patterns with a local "ok" flag.
-. *   Every iteration now falls through to restore at the bottom, so every
-. *   closing brace is always reached. No continue is used anywhere.
-. * -----------------------------------------------------------------------
+. * Implementation: postfile/forvalues loop with a local "ok" flag and NO
+. * continue statements (avoids the r(198) issue documented earlier).
+. ********************************************************************************
 . 
-. tempname bsh
+. local R              = 500
 
-. tempfile bsf
+. local boot_areas     = `run_areas'   // follows the switch at the top of the script
 
-. 
-. postfile `bsh'                ///
->     b_ate b_att b_atu          ///
->     b_ate_stem    b_att_stem   b_atu_stem  ///
->     b_ate_bus     b_att_bus    b_atu_bus   ///
->     b_ate_ed      b_att_ed     b_atu_ed    ///
->     b_ate_hlth    b_att_hlth   b_atu_hlth  ///
->     b_ate_oth     b_att_oth    b_atu_oth   ///
->     using `bsf', replace
-(file C:\Users\marvi\AppData\Local\Temp\ST_1908_000001.tmp not found)
+. local use_saved_boot = 1             // 1 = reuse published draws; 0 = run bootstrap
+
+. local bootfile       "mte_bootstrap_draws.dta"
+
+. local booturl        "https://raw.githubusercontent.com/higher-ed-policy-analysis-2nd-edition
+> /data/main/ch11/mte_bootstrap_draws.dta"
 
 . 
-. set seed 20260101
-
-. local R    = 500
-
-. local n_ok = 0
-
-. 
-. * -----------------------------------------------------------------------
-. * NOTE — RUNTIME: This loop is the slowest part of the chapter's code.
-. * It re-estimates the full polynomial-control-function MTE model once per
-. * replication (R=500), each preceded by a preserve/resample/restore cycle.
-. * Expect roughly 2 minutes on a typical machine; this single section
-. * accounts for most of MTE_MPRTE.do's total run time. No action needed —
-. * just be patient and let it finish.
-. * -----------------------------------------------------------------------
-. 
-. di _n "Running manual cluster bootstrap (G=50, R=`R' reps)..."
-
-Running manual cluster bootstrap (G=50, R=500 reps)...
-
-. di "Each dot = 10 reps completed"
-Each dot = 10 reps completed
-
-. di "NOTE: this step is the slowest part of the script — expect roughly" ///
->    " 1-2 minutes to complete."
-NOTE: this step is the slowest part of the script — expect roughly 1-2 minutes to complete.
+. if `use_saved_boot' == 1 {
+.     capture confirm file "`bootfile'"
+.     if _rc != 0 {
+.         di as text "Bootstrap draws not found locally; downloading published draws from GitHu
+> b..."
+.         capture copy "`booturl'" "`bootfile'", replace
+.         if _rc != 0 {
+.             di as error "Download of `bootfile' failed; running the full bootstrap instead."
+.             di as error "(See the RUN TIME note in the header: this takes several hours.)"
+.             local use_saved_boot = 0
+.         }
+.     }
+. }
 
 . 
-. forvalues b = 1/`R' {
-  2. 
+. * Basic consistency checks on the saved draws (they cannot detect every
+. * change to the specification; see the CAUTION note in the header)
+. if `use_saved_boot' == 1 {
 .     preserve
-  3. 
-.     local ok = 1
+.         quietly use "`bootfile'", clear
+.         quietly count
+.         local n_saved = r(N)
+.         capture confirm variable b_ate_stem m99
+.         local has_vars = (_rc == 0)
+.     restore
+.     if `n_saved' != `R' {
+.         di as error "WARNING: `bootfile' has `n_saved' replications but R = `R'."
+.     }
+.     if `run_areas' == 1 & `has_vars' == 0 {
+.         di as error "WARNING: `bootfile' lacks the area-model draws; running the full bootstr
+> ap."
+.         local use_saved_boot = 0
+.     }
+. }
+
+. 
+. if `use_saved_boot' == 0 {
+.     local mvars ""
+.     forvalues j = 1/99 {
+  2.         local mvars `mvars' m`j'
+  3.     }
+.     local avars ""
+.     foreach a in stem business education health other {
+  2.         local avars `avars' b_ate_`a' b_att_`a' b_atu_`a' b_late_`a'
+  3.     }
+. 
+.     tempname bsh
+.     postfile `bsh' rep b_ate b_att b_atu b_late b_mprte1 `avars' `mvars' ///
+>         using "`bootfile'", replace
+. 
+.     set seed 20260101
+.     local n_ok = 0
+. 
+.     di _n "Running state-clustered bootstrap (G=50, R=`R' reps)..."
+.     di "Each dot = 10 reps completed. See the projected run time below."
+. 
+.     timer clear 2
+.     timer on 2
+. 
+.     forvalues b = 1/`R' {
+  2. 
+.         preserve
+  3.         local ok = 1
   4. 
-.     capture quietly bsample, cluster(state) idcluster(newstate)
-  5.     if _rc != 0 local ok = 0
+.         capture quietly bsample, cluster(state) idcluster(newstate)
+  5.         if _rc != 0 local ok = 0
   6. 
-.     * --- Probit ---
-.     capture quietly probit masters ga_funding_adj $X_controls
-  7.     if _rc != 0 local ok = 0
-  8.     if `ok' == 1 quietly predict _pb, pr
-  9.     if `ok' == 1 quietly gen _pb2 = _pb^2
- 10.     if `ok' == 1 quietly gen _pb3 = _pb^3
- 11. 
-.     * --- Pooled cubic MTE ---
-.     if `ok' == 1 {
- 12.         capture quietly reg ln_salary masters              ///
->             c.masters#c._pb c.masters#c._pb2 c.masters#c._pb3 ///
->             $X_controls _pb _pb2 _pb3
- 13.         if _rc != 0 local ok = 0
- 14.     }
- 15. 
-.     if `ok' == 1 {
- 16.         local r0 = _b[masters]
- 17.         local r1 = _b[c.masters#c._pb]
- 18.         local r2 = _b[c.masters#c._pb2]
- 19.         local r3 = _b[c.masters#c._pb3]
- 20.         local b_ate_r = `r0' + `r1'/2 + `r2'/3 + `r3'/4
- 21.         quietly gen _mb = `r0' + `r1'*_pb + `r2'*_pb2 + `r3'*_pb3
- 22.         quietly sum _mb if masters == 1
- 23.         local b_att_r = r(mean)
- 24.         quietly sum _mb if masters == 0
- 25.         local b_atu_r = r(mean)
- 26.         drop _mb
- 27.     }
- 28. 
-.     * --- Fully interacted MTE ---
-.     if `ok' == 1 {
- 29.         capture quietly reg ln_salary masters                               ///
->             c.masters#c._pb c.masters#c._pb2 c.masters#c._pb3             ///
->             c.masters#c.ma_stem    c.masters#c.ma_business                 ///
->             c.masters#c.ma_education c.masters#c.ma_health                 ///
->             c.masters#c.ma_stem#c._pb    c.masters#c.ma_business#c._pb     ///
->             c.masters#c.ma_education#c._pb c.masters#c.ma_health#c._pb     ///
->             c.masters#c.ma_stem#c._pb2   c.masters#c.ma_business#c._pb2    ///
->             c.masters#c.ma_education#c._pb2 c.masters#c.ma_health#c._pb2   ///
->             c.masters#c.ma_stem#c._pb3   c.masters#c.ma_business#c._pb3    ///
->             c.masters#c.ma_education#c._pb3 c.masters#c.ma_health#c._pb3   ///
->             $X_controls _pb _pb2 _pb3
- 30.         if _rc != 0 local ok = 0
- 31.     }
- 32. 
-.     if `ok' == 1 {
- 33.         local BB0 = _b[masters]
- 34.         local BB1 = _b[c.masters#c._pb]
- 35.         local BB2 = _b[c.masters#c._pb2]
- 36.         local BB3 = _b[c.masters#c._pb3]
- 37. 
-.         * STEM
-.         local D0 = _b[c.masters#c.ma_stem]
- 38.         local D1 = _b[c.masters#c.ma_stem#c._pb]
- 39.         local D2 = _b[c.masters#c.ma_stem#c._pb2]
- 40.         local D3 = _b[c.masters#c.ma_stem#c._pb3]
- 41.         local C0 = `BB0' + `D0'
- 42.         local C1 = `BB1' + `D1'
- 43.         local C2 = `BB2' + `D2'
- 44.         local C3 = `BB3' + `D3'
- 45.         local b_ate_stem_r = `C0' + `C1'/2 + `C2'/3 + `C3'/4
- 46.         quietly gen _ms = `C0' + `C1'*_pb + `C2'*_pb2 + `C3'*_pb3
- 47.         quietly sum _ms if ma_stem == 1
- 48.         local b_att_stem_r = r(mean)
- 49.         quietly sum _ms if masters==0 & ma_stem_pro==1
- 50.         local b_atu_stem_r = r(mean)
- 51.         drop _ms
- 52. 
-.         * Business
-.         local D0 = _b[c.masters#c.ma_business]
- 53.         local D1 = _b[c.masters#c.ma_business#c._pb]
- 54.         local D2 = _b[c.masters#c.ma_business#c._pb2]
- 55.         local D3 = _b[c.masters#c.ma_business#c._pb3]
- 56.         local C0 = `BB0' + `D0'
- 57.         local C1 = `BB1' + `D1'
- 58.         local C2 = `BB2' + `D2'
- 59.         local C3 = `BB3' + `D3'
- 60.         local b_ate_bus_r = `C0' + `C1'/2 + `C2'/3 + `C3'/4
- 61.         quietly gen _ms = `C0' + `C1'*_pb + `C2'*_pb2 + `C3'*_pb3
- 62.         quietly sum _ms if ma_business == 1
- 63.         local b_att_bus_r = r(mean)
- 64.         quietly sum _ms if masters==0 & ma_business_pro==1
- 65.         local b_atu_bus_r = r(mean)
- 66.         drop _ms
- 67. 
-.         * Education
-.         local D0 = _b[c.masters#c.ma_education]
- 68.         local D1 = _b[c.masters#c.ma_education#c._pb]
- 69.         local D2 = _b[c.masters#c.ma_education#c._pb2]
- 70.         local D3 = _b[c.masters#c.ma_education#c._pb3]
- 71.         local C0 = `BB0' + `D0'
- 72.         local C1 = `BB1' + `D1'
- 73.         local C2 = `BB2' + `D2'
- 74.         local C3 = `BB3' + `D3'
- 75.         local b_ate_ed_r = `C0' + `C1'/2 + `C2'/3 + `C3'/4
- 76.         quietly gen _ms = `C0' + `C1'*_pb + `C2'*_pb2 + `C3'*_pb3
- 77.         quietly sum _ms if ma_education == 1
- 78.         local b_att_ed_r = r(mean)
- 79.         quietly sum _ms if masters==0 & ma_education_pro==1
- 80.         local b_atu_ed_r = r(mean)
- 81.         drop _ms
- 82. 
-.         * Health
-.         local D0 = _b[c.masters#c.ma_health]
- 83.         local D1 = _b[c.masters#c.ma_health#c._pb]
- 84.         local D2 = _b[c.masters#c.ma_health#c._pb2]
- 85.         local D3 = _b[c.masters#c.ma_health#c._pb3]
- 86.         local C0 = `BB0' + `D0'
- 87.         local C1 = `BB1' + `D1'
- 88.         local C2 = `BB2' + `D2'
- 89.         local C3 = `BB3' + `D3'
- 90.         local b_ate_hlth_r = `C0' + `C1'/2 + `C2'/3 + `C3'/4
- 91.         quietly gen _ms = `C0' + `C1'*_pb + `C2'*_pb2 + `C3'*_pb3
- 92.         quietly sum _ms if ma_health == 1
- 93.         local b_att_hlth_r = r(mean)
- 94.         quietly sum _ms if masters==0 & ma_health_pro==1
- 95.         local b_atu_hlth_r = r(mean)
- 96.         drop _ms
- 97. 
-.         * Other (base)
-.         local b_ate_oth_r = `BB0' + `BB1'/2 + `BB2'/3 + `BB3'/4
- 98.         quietly gen _mb = `BB0' + `BB1'*_pb + `BB2'*_pb2 + `BB3'*_pb3
- 99.         quietly sum _mb if ma_other == 1
-100.         local b_att_oth_r = r(mean)
-101.         quietly sum _mb if masters==0 & ma_other_pro==1
-102.         local b_atu_oth_r = r(mean)
-103.         drop _mb
-104. 
-.         post `bsh' ///
->             (`b_ate_r')      (`b_att_r')      (`b_atu_r')      ///
->             (`b_ate_stem_r')  (`b_att_stem_r') (`b_atu_stem_r') ///
->             (`b_ate_bus_r')   (`b_att_bus_r')  (`b_atu_bus_r')  ///
->             (`b_ate_ed_r')    (`b_att_ed_r')   (`b_atu_ed_r')   ///
->             (`b_ate_hlth_r')  (`b_att_hlth_r') (`b_atu_hlth_r') ///
->             (`b_ate_oth_r')   (`b_att_oth_r')  (`b_atu_oth_r')
-105. 
-.         local n_ok = `n_ok' + 1
-106.     }
-107. 
-.     * Drop temp vars and restore — always executed every iteration
-.     capture drop _pb _pb2 _pb3 _mb _ms
-108.     restore
-109. 
-.     if mod(`b', 10) == 0 di "." _continue
-110. }
-..................................................
+.         * --- Pooled model ---
+.         if `ok' == 1 {
+  7.             capture quietly mtefe ln_salary $X_controls ///
+>                 (masters = ga_funding_adj), pol(2) bootreps(0) noplot
+  8.             if _rc != 0 local ok = 0
+  9.         }
+ 10. 
+.         if `ok' == 1 {
+ 11.             local r_ate    = _b[effects:ate]
+ 12.             local r_att    = _b[effects:att]
+ 13.             local r_atu    = _b[effects:atut]
+ 14.             local r_late   = _b[effects:late]
+ 15.             local r_mprte1 = _b[effects:mprte1]
+ 16.             matrix _EBr = e(b)
+ 17.             matrix _Mr  = _EBr[1, "mte:"]
+ 18.             local mpost ""
+ 19.             forvalues j = 1/99 {
+ 20.                 local mpost `mpost' (`=_Mr[1,`j']')
+ 21.             }
+ 22. 
+.             * --- Area models ---
+.             local apost ""
+ 23.             foreach a in stem business education health other {
+ 24.                 local arc = 1
+ 25.                 if `boot_areas' == 1 {
+ 26.                     capture quietly mtefe ln_salary $X_controls ///
+>                         (masters = ga_funding_adj) if grp_`a' == 1, ///
+>                         pol(1) bootreps(0) noplot
+ 27.                     local arc = _rc
+ 28.                 }
+ 29.                 if `arc' == 0 {
+ 30.                     local apost `apost' (`=_b[effects:ate]') (`=_b[effects:att]') ///
+>                                         (`=_b[effects:atut]') (`=_b[effects:late]')
+ 31.                 }
+ 32.                 else {
+ 33.                     local apost `apost' (.) (.) (.) (.)
+ 34.                 }
+ 35.             }
+ 36. 
+.             post `bsh' (`b') (`r_ate') (`r_att') (`r_atu') (`r_late') ///
+>                 (`r_mprte1') `apost' `mpost'
+ 37.             local ++n_ok
+ 38.         }
+ 39. 
+.         restore
+ 40. 
+.         if `b' == 1 {
+ 41.             timer off 2
+ 42.             qui timer list 2
+ 43.             local secs1 = r(t2)
+ 44.             di _n "First replication took " %5.1f `secs1' " seconds." ///
+>                " Projected total: about " %5.0f (`secs1'*`R'/60) " minutes."
+ 45.         }
+ 46.         if mod(`b', 10) == 0 di "." _continue
+ 47.     }
 . 
-. postclose `bsh'
+.     postclose `bsh'
+.     di _n "Bootstrap complete: `n_ok' of `R' reps successful"
+. }
 
-. di _n "Bootstrap complete: `n_ok' of `R' reps successful"
+. else {
+.     di _n "Using saved bootstrap draws from `bootfile' (`n_saved' replications)."
 
-Bootstrap complete: 500 of 500 reps successful
+Using saved bootstrap draws from mte_bootstrap_draws.dta (500 replications).
+.     di as text "NOTE: these are the published draws for the book's specification."
+NOTE: these are the published draws for the book's specification.
+.     di as text "If you changed the data, controls, or models, set use_saved_boot = 0"
+If you changed the data, controls, or models, set use_saved_boot = 0
+.     di as text "in Section 6e and rerun; otherwise the standard errors and"
+in Section 6e and rerun; otherwise the standard errors and
+.     di as text "confidence bands below do not correspond to your estimates."
+confidence bands below do not correspond to your estimates.
+. }
 
 . 
-. * Extract SEs as standard deviations of bootstrap distribution
+. * Standard errors and MTE confidence band from the bootstrap draws
+. matrix MLO = J(1, 99, .)
+
+. matrix MHI = J(1, 99, .)
+
 . preserve
 
-.     use `bsf', clear
+.     use "`bootfile'", clear
 
-.     quietly sum b_ate
+.     qui count
 
-.     local ate_se = r(sd)
+.     local n_boot = r(N)
 
-.     quietly sum b_att
+.     foreach s in ate att atu late mprte1 {
+  2.         qui sum b_`s'
+  3.         local `s'_se = r(sd)
+  4.     }
 
-.     local att_se = r(sd)
+.     if `run_areas' == 1 {
+.         foreach a in stem business education health other {
+  2.             foreach s in ate att atu late {
+  3.                 qui sum b_`s'_`a'
+  4.                 local `s'_se_`a' = r(sd)
+  5.             }
+  6.             qui count if !missing(b_ate_`a')
+  7.             local nb_`a' = r(N)
+  8.         }
+.     }
 
-.     quietly sum b_atu
-
-.     local atu_se = r(sd)
-
-.     quietly sum b_ate_stem
-
-.     local ate_se_stem = r(sd)
-
-.     quietly sum b_att_stem
-
-.     local att_se_stem = r(sd)
-
-.     quietly sum b_atu_stem
-
-.     local atu_se_stem = r(sd)
-
-.     quietly sum b_ate_bus
-
-.     local ate_se_business = r(sd)
-
-.     quietly sum b_att_bus
-
-.     local att_se_business = r(sd)
-
-.     quietly sum b_atu_bus
-
-.     local atu_se_business = r(sd)
-
-.     quietly sum b_ate_ed
-
-.     local ate_se_education = r(sd)
-
-.     quietly sum b_att_ed
-
-.     local att_se_education = r(sd)
-
-.     quietly sum b_atu_ed
-
-.     local atu_se_education = r(sd)
-
-.     quietly sum b_ate_hlth
-
-.     local ate_se_health = r(sd)
-
-.     quietly sum b_att_hlth
-
-.     local att_se_health = r(sd)
-
-.     quietly sum b_atu_hlth
-
-.     local atu_se_health = r(sd)
-
-.     quietly sum b_ate_oth
-
-.     local ate_se_other = r(sd)
-
-.     quietly sum b_att_oth
-
-.     local att_se_other = r(sd)
-
-.     quietly sum b_atu_oth
-
-.     local atu_se_other = r(sd)
+.     forvalues j = 1/99 {
+  2.         _pctile m`j', p(2.5 97.5)
+  3.         matrix MLO[1,`j'] = r(r1)
+  4.         matrix MHI[1,`j'] = r(r2)
+  5.     }
 
 . restore
 
 . 
-. * -----------------------------------------------------------------------
-. * 6c-iv  mtefe bootstrap SEs — aliased from Section 6c-i
-. *
-. * Both the manual polynomial estimator (Section 6) and mtefe target the
-. * same parameters (ATE, ATT, ATU, LATE) from the same data. The 500-rep
-. * cluster bootstrap already run in Section 6c-i bootstraps the full
-. * probit + polynomial pipeline, so those SEs characterise sampling
-. * uncertainty for any polynomial MTE estimator on this dataset.
-. * -----------------------------------------------------------------------
-. 
-. local mtefe_ate_se   = `ate_se'
+. di _n "--- Bootstrap SEs: Pooled mtefe Parameters (`n_boot' reps) ---"
 
-. local mtefe_att_se   = `att_se'
+--- Bootstrap SEs: Pooled mtefe Parameters (500 reps) ---
 
-. local mtefe_atu_se   = `atu_se'
+. di "  ATE    = " %7.4f `ate_est'    "  (BS SE = " %6.4f `ate_se'    ")"
+  ATE    =  0.3589  (BS SE = 0.1536)
 
-. local mtefe_late_se  = `iv_se'
+. di "  ATT    = " %7.4f `att_est'    "  (BS SE = " %6.4f `att_se'    ")"
+  ATT    =  0.8285  (BS SE = 0.1785)
 
-. local mtefe_ate_q_se = `ate_se'
+. di "  ATU    = " %7.4f `atu_est'    "  (BS SE = " %6.4f `atu_se'    ")"
+  ATU    =  0.0705  (BS SE = 0.2088)
 
-. local mtefe_att_q_se = `att_se'
+. di "  LATE   = " %7.4f `late_est'   "  (BS SE = " %6.4f `late_se'   ")"
+  LATE   =  0.4051  (BS SE = 0.0482)
 
-. local mtefe_atu_q_se = `atu_se'
+. di "  MPRTE1 = " %7.4f `mprte1_est' "  (BS SE = " %6.4f `mprte1_se' ")"
+  MPRTE1 =  0.4490  (BS SE = 0.0604)
 
 . 
-. di _n "--- mtefe SEs (aliased from Section 6c-i bootstrap, pol=1) ---"
+. if `run_areas' == 1 {
+.     foreach s in ate att atu {
+  2.         di _n "--- Bootstrap SEs: Area-Specific " upper("`s'") " ---"
+  3.         di "Area          Estimate   BS SE    95% CI                  Sig   Reps"
+  4.         di "-------------------------------------------------------------------"
+  5.         foreach a in other stem business education health {
+  6.             local lo = ``s'_`a'' - 1.96 * ``s'_se_`a''
+  7.             local hi = ``s'_`a'' + 1.96 * ``s'_se_`a''
+  8.             local sig = cond(`lo' > 0, "***", cond(`hi' < 0, "***", "   "))
+  9.             di "  `a'" _col(14) %7.4f ``s'_`a'' "    " %6.4f ``s'_se_`a'' ///
+>                "   [" %7.4f `lo' ", " %7.4f `hi' "]   `sig'   " `nb_`a''
+ 10.         }
+ 11.     }
 
---- mtefe SEs (aliased from Section 6c-i bootstrap, pol=1) ---
+--- Bootstrap SEs: Area-Specific ATE ---
+Area          Estimate   BS SE    95% CI                  Sig   Reps
+-------------------------------------------------------------------
+  other       0.1921    0.0770   [ 0.0412,  0.3430]   ***   500
+  stem        0.4551    0.1645   [ 0.1327,  0.7776]   ***   500
+  business    0.0596    0.5408   [-1.0004,  1.1197]         500
+  education  -0.0264    0.3091   [-0.6322,  0.5794]         500
+  health      0.0647    0.1362   [-0.2022,  0.3316]         500
 
-. di "  ATE:  " %6.4f `mtefe_ate'  "  (BS SE = " %6.4f `mtefe_ate_se'  ")"
-  ATE:  0.2572  (BS SE = 0.0376)
+--- Bootstrap SEs: Area-Specific ATT ---
+Area          Estimate   BS SE    95% CI                  Sig   Reps
+-------------------------------------------------------------------
+  other       0.8240    0.1385   [ 0.5527,  1.0954]   ***   500
+  stem        0.1894    0.4489   [-0.6904,  1.0693]         500
+  business    0.9074    0.2971   [ 0.3251,  1.4896]   ***   500
+  education   1.0945    0.5979   [-0.0774,  2.2663]         500
+  health      0.7848    0.2493   [ 0.2962,  1.2734]   ***   500
 
-. di "  ATT:  " %6.4f `mtefe_att'  "  (BS SE = " %6.4f `mtefe_att_se'  ")"
-  ATT:  0.7414  (BS SE = 0.0382)
-
-. di "  ATU:  " %6.4f `mtefe_atu'  "  (BS SE = " %6.4f `mtefe_atu_se'  ")"
-  ATU:  -0.0400  (BS SE = 0.1082)
-
-. di "  LATE: " %6.4f `mtefe_late' "  (BS SE = " %6.4f `mtefe_late_se' ")"
-  LATE: 0.3994  (BS SE = 0.0489)
-
-. di _n "--- mtefe SEs (aliased from Section 6c-i bootstrap, pol=2) ---"
-
---- mtefe SEs (aliased from Section 6c-i bootstrap, pol=2) ---
-
-. di "  ATE:  " %6.4f `mtefe_ate_q' "  (BS SE = " %6.4f `mtefe_ate_q_se' ")"
-  ATE:  0.3589  (BS SE = 0.0376)
-
-. di "  ATT:  " %6.4f `mtefe_att_q' "  (BS SE = " %6.4f `mtefe_att_q_se' ")"
-  ATT:  0.8285  (BS SE = 0.0382)
-
-. di "  ATU:  " %6.4f `mtefe_atu_q' "  (BS SE = " %6.4f `mtefe_atu_q_se' ")"
-  ATU:  0.0705  (BS SE = 0.1082)
+--- Bootstrap SEs: Area-Specific ATU ---
+Area          Estimate   BS SE    95% CI                  Sig   Reps
+-------------------------------------------------------------------
+  other      -0.1589    0.1627   [-0.4777,  0.1599]         500
+  stem        0.7891    0.4183   [-0.0307,  1.6089]         500
+  business   -0.1956    0.7395   [-1.6449,  1.2538]         500
+  education  -0.9235    0.7223   [-2.3391,  0.4922]         500
+  health     -0.3713    0.3199   [-0.9983,  0.2558]         500
+.     di "  *** = 95% CI excludes zero (p < 0.05, two-tailed)"
+  *** = 95% CI excludes zero (p < 0.05, two-tailed)
+.     di "  Note: ATU based on prospective program area assignment (seed 20260102)."
+  Note: ATU based on prospective program area assignment (seed 20260102).
+. }
 
 . 
 . * -----------------------------------------------------------------------
-. * 6c-iii  Wild cluster bootstrap for OLS and IV stages
-. *   Webb weights, 9999 reps: runs in seconds, valid for G=50.
-. *   Requires: ssc install fwildclusterboot
+. * Wild cluster bootstrap for OLS and IV stages
+. *   Rademacher weights, 9999 reps: runs in seconds, valid for G=50.
+. *   Requires: ssc install boottest
 . * -----------------------------------------------------------------------
 . 
 . di _n "--- Wild Cluster Bootstrap: OLS ---"
@@ -3198,14 +3331,14 @@ Bootstrap complete: 500 of 500 reps successful
 
 Overriding estimator's cluster/robust settings with cluster(state)
 
-Wild bootstrap-t, null imposed, 9999 replications, Wald test, clustering by state, bootstrap clustering by st
-> ate, Rademacher weights:
+Wild bootstrap-t, null imposed, 9999 replications, Wald test, clustering by state, bootstrap cl
+> ustering by state, Rademacher weights:
   masters
 
                            t(49) =    18.4108
                         Prob>|t| =     0.0000
 
-95% confidence set for null hypothesis expression: [.8578, 1.069]
+95% confidence set for null hypothesis expression: [.8594, 1.067]
 
 . di "  p-value (wild cluster): " %6.4f r(p)
   p-value (wild cluster): 0.0000
@@ -3221,112 +3354,17 @@ Wild bootstrap-t, null imposed, 9999 replications, Wald test, clustering by stat
 
 Overriding estimator's cluster/robust settings with cluster(state)
 
-Wild bootstrap-t, null imposed, 9999 replications, Wald test, clustering by state, bootstrap clustering by st
-> ate, Rademacher weights:
+Wild bootstrap-t, null imposed, 9999 replications, Wald test, clustering by state, bootstrap cl
+> ustering by state, Rademacher weights:
   masters
 
                                z =     8.9641
                         Prob>|z| =     0.0000
 
-95% confidence set for null hypothesis expression: [.3115, .4953]
+95% confidence set for null hypothesis expression: [.3123, .4972]
 
 . di "  p-value (wild cluster): " %6.4f r(p)
   p-value (wild cluster): 0.0000
-
-. 
-. 
-. di _n "--- Bootstrap SEs: Pooled Parameters ---"
-
---- Bootstrap SEs: Pooled Parameters ---
-
-. di "  ATE = " %6.4f `ate_est_cubic' "  (Bootstrap SE = " %6.4f `ate_se' ")"
-  ATE = 0.8468  (Bootstrap SE = 0.0376)
-
-. di "  ATT = " %6.4f `att_est'       "  (Bootstrap SE = " %6.4f `att_se' ")"
-  ATT = 1.2162  (Bootstrap SE = 0.0382)
-
-. di "  ATU = " %6.4f `atu_est'       "  (Bootstrap SE = " %6.4f `atu_se' ")"
-  ATU = 0.5528  (Bootstrap SE = 0.1082)
-
-. 
-. di _n "--- Bootstrap SEs: Area-Specific ATE ---"
-
---- Bootstrap SEs: Area-Specific ATE ---
-
-. di "Area          Point Est   BS SE    95% CI"
-Area          Point Est   BS SE    95% CI
-
-. di "-----------------------------------------------"
------------------------------------------------
-
-. foreach a in other stem business education health {
-  2.     local lo = `ate_`a'' - 1.96*`ate_se_`a''
-  3.     local hi = `ate_`a'' + 1.96*`ate_se_`a''
-  4.     di "  `a'   " %7.4f `ate_`a'' "    " %6.4f `ate_se_`a'' ///
->        "   [" %6.4f `lo' ", " %6.4f `hi' "]"
-  5. }
-  other    0.8085    0.0500   [0.7105, 0.9064]
-  stem    0.9424    0.0892   [0.7676, 1.1171]
-  business    1.6936    0.6077   [0.5024, 2.8847]
-  education    0.6437    0.1910   [0.2694, 1.0181]
-  health    0.8469    0.0449   [0.7589, 0.9349]
-
-. 
-. di _n "--- Bootstrap SEs: Area-Specific ATT ---"
-
---- Bootstrap SEs: Area-Specific ATT ---
-
-. di "Area          Point Est   BS SE    95% CI                  Sig"
-Area          Point Est   BS SE    95% CI                  Sig
-
-. di "---------------------------------------------------------------"
----------------------------------------------------------------
-
-. foreach a in other stem business education health {
-  2.     local lo_att = `att_`a'' - 1.96 * `att_se_`a''
-  3.     local hi_att = `att_`a'' + 1.96 * `att_se_`a''
-  4.     local sig_att = cond(`lo_att' > 0, "***", cond(`hi_att' < 0, "***", "   "))
-  5.     di "  `a'" _col(14) %7.4f `att_`a'' "    " %6.4f `att_se_`a'' "   [" %7.4f `lo_att' ", " %7.4f `hi_a
-> tt' "]   `sig_att'"
-  6. }
-  other       1.1750    0.0519   [ 1.0732,  1.2767]   ***
-  stem        1.3566    0.0359   [ 1.2863,  1.4269]   ***
-  business    1.0977    0.0910   [ 0.9192,  1.2761]   ***
-  education   1.2200    0.0722   [ 1.0785,  1.3615]   ***
-  health      1.2086    0.0442   [ 1.1220,  1.2952]   ***
-
-. di "  *** = 95% CI excludes zero (p < 0.05, two-tailed)"
-  *** = 95% CI excludes zero (p < 0.05, two-tailed)
-
-. 
-. di _n "--- Bootstrap SEs: Area-Specific ATU (prospective assignment) ---"
-
---- Bootstrap SEs: Area-Specific ATU (prospective assignment) ---
-
-. di "Area          Point Est   BS SE    95% CI                  Sig"
-Area          Point Est   BS SE    95% CI                  Sig
-
-. di "---------------------------------------------------------------"
----------------------------------------------------------------
-
-. foreach a in other stem business education health {
-  2.     local lo_atu = `atu_`a'' - 1.96 * `atu_se_`a''
-  3.     local hi_atu = `atu_`a'' + 1.96 * `atu_se_`a''
-  4.     local sig_atu = cond(`lo_atu' > 0, "***", cond(`hi_atu' < 0, "***", "   "))
-  5.     di "  `a'" _col(14) %7.4f `atu_`a'' "    " %6.4f `atu_se_`a'' "   [" %7.4f `lo_atu' ", " %7.4f `hi_a
-> tu' "]   `sig_atu'"
-  6. }
-  other       0.4836    0.1214   [ 0.2458,  0.7215]   ***
-  stem        1.0820    0.0855   [ 0.9144,  1.2496]   ***
-  business    0.3574    0.1591   [ 0.0456,  0.6692]   ***
-  education   0.7348    0.1818   [ 0.3784,  1.0912]   ***
-  health      0.5685    0.1126   [ 0.3477,  0.7892]   ***
-
-. di "  *** = 95% CI excludes zero (p < 0.05, two-tailed)"
-  *** = 95% CI excludes zero (p < 0.05, two-tailed)
-
-. di "  Note: ATU based on prospective program area assignment (seed 20260102)."
-  Note: ATU based on prospective program area assignment (seed 20260102).
 
 . 
 . ********************************************************************************
@@ -3344,49 +3382,64 @@ RESULTS COMPARISON
 ==============================================
 
 . 
-. di "  Naive OLS:              " %6.4f `ols_est' " (SE = " %6.4f `ols_se' " — likely biased)"
-  Naive OLS:              0.9633 (SE = 0.0178 — likely biased)
+. di "  Naive OLS:                 " %7.4f `ols_est'  " (SE = " %6.4f `ols_se' " — likely biase
+> d)"
+  Naive OLS:                  0.9633 (SE = 0.0178 — likely biased)
 
-. di "  IV/LATE:                " %6.4f `iv_est'  " (SE = " %6.4f `iv_se'  " — complier effect)"
-  IV/LATE:                0.4031 (SE = 0.0489 — complier effect)
+. di "  IV/2SLS:                   " %7.4f `iv_est'   " (SE = " %6.4f `iv_se'  " — complier eff
+> ect)"
+  IV/2SLS:                    0.4031 (SE = 0.0489 — complier effect)
 
-. di "  MTE-based ATE (cubic):  " %6.4f `ate_est_cubic' " (BS SE = " %6.4f `ate_se' ")"
-  MTE-based ATE (cubic):  0.8468 (BS SE = 0.0376)
+. di "  mtefe LATE:                " %7.4f `late_est' " (BS SE = " %6.4f `late_se' ")"
+  mtefe LATE:                 0.4051 (BS SE = 0.0482)
 
-. di "  MTE-based ATT:          " %6.4f `att_est'        " (BS SE = " %6.4f `att_se' ")"
-  MTE-based ATT:          1.2162 (BS SE = 0.0382)
+. di "  mtefe ATE:                 " %7.4f `ate_est'  " (BS SE = " %6.4f `ate_se'  ")"
+  mtefe ATE:                  0.3589 (BS SE = 0.1536)
 
-. di "  MTE-based ATU:          " %6.4f `atu_est'        " (BS SE = " %6.4f `atu_se' ")"
-  MTE-based ATU:          0.5528 (BS SE = 0.1082)
+. di "  mtefe ATT:                 " %7.4f `att_est'  " (BS SE = " %6.4f `att_se'  ")"
+  mtefe ATT:                  0.8285 (BS SE = 0.1785)
 
-. di "  mtefe ATE (quad):       " %6.4f `mtefe_ate_q' "  (BS SE = " %6.4f `mtefe_ate_q_se' ")"
-  mtefe ATE (quad):       0.3589  (BS SE = 0.0376)
+. di "  mtefe ATU:                 " %7.4f `atu_est'  " (BS SE = " %6.4f `atu_se'  ")"
+  mtefe ATU:                  0.0705 (BS SE = 0.2088)
 
-. di "  mtefe ATT (quad):       " %6.4f `mtefe_att_q' "  (BS SE = " %6.4f `mtefe_att_q_se' ")"
-  mtefe ATT (quad):       0.8285  (BS SE = 0.0382)
+. di "  mtefe MPRTE1:              " %7.4f `mprte1_est' " (BS SE = " %6.4f `mprte1_se' ")"
+  mtefe MPRTE1:               0.4490 (BS SE = 0.0604)
 
-. di "  mtefe ATU (quad):       " %6.4f `mtefe_atu_q' "  (BS SE = " %6.4f `mtefe_atu_q_se' ")"
-  mtefe ATU (quad):       0.0705  (BS SE = 0.1082)
+. di _n "  Sensitivity — mtefe linear MTE (pol=1):"
+
+  Sensitivity — mtefe linear MTE (pol=1):
+
+. di "    ATE = " %7.4f `ate_lin' "  ATT = " %7.4f `att_lin' ///
+>    "  ATU = " %7.4f `atu_lin' "  LATE = " %7.4f `late_lin'
+    ATE =  0.2572  ATT =  0.7414  ATU = -0.0400  LATE =  0.3994
+
+. di _n "  Illustration — manual cubic (Section 6b, not used below):"
+
+  Illustration — manual cubic (Section 6b, not used below):
+
+. di "    ATE = " %7.4f `ate_man_cubic' "  ATT = " %7.4f `att_man' "  ATU = " %7.4f `atu_man'
+    ATE =  1.1641  ATT = -0.3341  ATU =  2.0840
 
 . 
-. if `att_est' > `ate_est_cubic' & `ate_est_cubic' > `atu_est' {
-.     di "  ATT > ATE > ATU: POSITIVE SELECTION on gains"
+. if `att_est' > `ate_est' & `ate_est' > `atu_est' {
+.     di _n "  ATT > ATE > ATU: POSITIVE SELECTION on gains"
+
   ATT > ATE > ATU: POSITIVE SELECTION on gains
 . }
 
-. else if `att_est' < `ate_est_cubic' & `ate_est_cubic' < `atu_est' {
-.     di "  ATT < ATE < ATU: NEGATIVE SELECTION on gains"
+. else if `att_est' < `ate_est' & `ate_est' < `atu_est' {
+.     di _n "  ATT < ATE < ATU: NEGATIVE (REVERSE) SELECTION on gains"
 . }
 
 . else {
-.     di "  Mixed selection pattern"
+.     di _n "  Mixed selection pattern"
 . }
 
 . 
-. local ols_bias = (`ols_est' - `ate_est_cubic') / `ate_est_cubic' * 100
+. local ols_bias = (`ols_est' - `ate_est') / `ate_est' * 100
 
-. di "OLS BIAS: " %5.1f `ols_bias' "% relative to MTE-based ATE"
-OLS BIAS:  13.7% relative to MTE-based ATE
+. di "OLS BIAS: " %6.1f `ols_bias' "% relative to mtefe ATE"
+OLS BIAS:  168.4% relative to mtefe ATE
 
 . 
 . estimates table ols_naive iv_2sls, ///
@@ -3409,6 +3462,10 @@ OLS vs. IV Estimates of Master's Degree Effect
 . 
 . ********************************************************************************
 . * SECTION 8: MTE Visualization
+. *   Fig 11.3  Pooled MTE curve (mtefe) with 95% bootstrap band
+. *   Fig 11.5  MTE curves by graduate program area (separate mtefe)
+. *   (Fig 11.7, MTE by propensity-score decile, has been removed: it
+. *    repeated Fig 11.3.)
 . ********************************************************************************
 . 
 . di _n "=============================================="
@@ -3422,188 +3479,133 @@ MTE VISUALIZATION
 ==============================================
 
 . 
+. * Fig 11.3: pooled MTE with bootstrap band
 . preserve
 
 .     clear
 
-.     set obs 100
-Number of observations (_N) was 0, now 100.
+.     set obs 99
+Number of observations (_N) was 0, now 99.
 
-.     gen u = _n/100
+.     gen u       = .
+(99 missing values generated)
 
-.     gen mte_est = `b0' + `b1'*u + `b2'*u^2 + `b3'*u^3
+.     gen mte_est = .
+(99 missing values generated)
+
+.     gen mte_lo  = .
+(99 missing values generated)
+
+.     gen mte_hi  = .
+(99 missing values generated)
+
+.     forvalues j = 1/99 {
+  2.         qui replace u       = SUP[`j',1]        in `j'
+  3.         qui replace mte_est = MTE_pooled[1,`j'] in `j'
+  4.         qui replace mte_lo  = MLO[1,`j']        in `j'
+  5.         qui replace mte_hi  = MHI[1,`j']        in `j'
+  6.     }
 
 .     label var u "Unobserved Resistance to Treatment"
 
 .     label var mte_est "Marginal Treatment Effect"
 
-.     twoway (line mte_est u, lcolor(gs0) lwidth(medthick) lpattern(solid)), ///
+.     twoway (rarea mte_lo mte_hi u, fcolor(gs13) lwidth(none)) ///
+>            (line mte_est u, lcolor(gs0) lwidth(medthick) lpattern(solid)), ///
 >            ytitle("Marginal Treatment Effect") ///
 >            xtitle("u (Unobserved Resistance to Treatment)") ///
 >            title("Estimated MTE Curve - Pooled") ///
 >            subtitle("Master's Degree Effect on Log Salary") ///
->            note("Declining MTE indicates positive selection on gains") ///
+>            note("MTE at mean X (mtefe, quadratic). Shaded: 95% state-clustered bootstrap band
+> ." ///
+>                 "Declining MTE indicates positive selection on gains.") ///
 >            yline(0, lpattern(dash) lcolor(gs8)) ///
+>            legend(order(2 "Estimated MTE" 1 "95% bootstrap band") size(small)) ///
 >            name(fig11_3, replace)
 
 .     graph save "$graphs_dir/fig11_3.gph", replace
 file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_3.gph saved
 
 .     graph export "$graphs_dir/fig11_3_mte_curve_Stata.png", replace width(1200)
-file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_3_mte_curve_Stata.png saved as
-    PNG format
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
+    11/Output/graphs/fig11_3_mte_curve_Stata.png saved as PNG format
 
 . restore
 
 . 
-. capture drop p_decile
-
-. xtile p_decile = phat, nq(10)
-
-. 
-. preserve
-
-.     collapse (mean) mte_mean=mte_hat (sd) mte_sd=mte_hat (count) n=id, by(p_decile)
-
-.     di _n "Estimated MTE by Propensity Score Decile:"
-
-Estimated MTE by Propensity Score Decile:
-
-.     list p_decile mte_mean mte_sd n
-
-     +---------------------------------------+
-     | p_decile    mte_mean     mte_sd     n |
-     |---------------------------------------|
-  1. |        1   -1.005298   .3812932   800 |
-  2. |        2   -.1518033    .180939   800 |
-  3. |        3    .3787854   .1335154   800 |
-  4. |        4    .7744567   .0954568   800 |
-  5. |        5    1.077105   .0763504   800 |
-     |---------------------------------------|
-  6. |        6    1.296819   .0503826   800 |
-  7. |        7    1.427503    .026315   800 |
-  8. |        8    1.478678   .0045256   800 |
-  9. |        9    1.439943   .0275567   800 |
- 10. |       10    1.355799   .0388067   800 |
-     +---------------------------------------+
-
-.     twoway (scatter mte_mean p_decile, msize(large) mcolor(gs0) msymbol(D)) ///
->            (line mte_mean p_decile, lcolor(gs0) lwidth(medium) lpattern(solid)), ///
->            ytitle("Mean Estimated MTE") ///
->            xtitle("Propensity Score Decile") ///
->            title("Estimated MTE by Propensity Score Decile") ///
->            subtitle("Evidence of Treatment Effect Heterogeneity") ///
->            yline(0, lpattern(dash) lcolor(gs8)) ///
->            name(fig11_7, replace)
-
-.     graph save "$graphs_dir/fig11_7.gph", replace
-file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_7.gph saved
-
-.     graph export "$graphs_dir/fig11_7_mte_by_decile_Stata.png", replace width(1200)
-file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_7_mte_by_decile_Stata.png saved
-    as PNG format
-
-. restore
-
-. 
-. * MTE curves by program area
-. * FIX: restrict each area-specific curve to that area's empirical
-. * propensity-score support (treated obs, ma_a==1). The cubic control-
-. * function polynomial is only identified where data exist; extrapolating
-. * it across the full [0,1] range previously caused curves for small-N
-. * areas (e.g., Business, N=179 treated) to diverge sharply near the
-. * boundary. Computed here, before preserve, while ma_*/phat are in scope.
-. foreach a in stem business education health {
-  2.     qui sum phat if masters==1 & ma_`a' == 1
-  3.     local lo_`a' = r(min)
-  4.     local hi_`a' = r(max)
-  5. }
-
-. qui sum phat if masters==1 & ma_other == 1
-
-. local lo_other = r(min)
-
-. local hi_other = r(max)
-
-. 
-. di _n "Empirical phat support by area (treated obs):"
-
-Empirical phat support by area (treated obs):
-
-. foreach a in stem business education health other {
-  2.     di "  `a': [" %5.3f `lo_`a'' ", " %5.3f `hi_`a'' "]"
-  3. }
-  stem: [0.046, 0.973]
-  business: [0.033, 0.684]
-  education: [0.051, 0.904]
-  health: [0.027, 0.952]
-  other: [0.028, 0.965]
-
-. 
-. preserve
-
-.     clear
-
-.     set obs 100
-Number of observations (_N) was 0, now 100.
-
-.     gen u = _n/100
-
-.     gen mte_other    = `B0'            + `B1'           *u + `B2'           *u^2 + `B3'           *u^3
-
-.     replace mte_other    = . if u < `lo_other'    | u > `hi_other'
-(6 real changes made, 6 to missing)
-
-.     gen mte_stem     = `c0_stem'       + `c1_stem'      *u + `c2_stem'      *u^2 + `c3_stem'      *u^3
-
-.     replace mte_stem     = . if u < `lo_stem'     | u > `hi_stem'
-(7 real changes made, 7 to missing)
-
-.     gen mte_business = `c0_business'   + `c1_business'  *u + `c2_business'  *u^2 + `c3_business'  *u^3
-
-.     replace mte_business = . if u < `lo_business' | u > `hi_business'
-(35 real changes made, 35 to missing)
-
-.     gen mte_educ     = `c0_education'  + `c1_education' *u + `c2_education' *u^2 + `c3_education' *u^3
-
-.     replace mte_educ     = . if u < `lo_education' | u > `hi_education'
-(15 real changes made, 15 to missing)
-
-.     gen mte_health   = `c0_health'     + `c1_health'    *u + `c2_health'    *u^2 + `c3_health'    *u^3
-
-.     replace mte_health   = . if u < `lo_health'   | u > `hi_health'
-(7 real changes made, 7 to missing)
-
-. 
-.     twoway (line mte_health   u, lcolor(gs0) lwidth(medthick) lpattern(solid))     ///
->            (line mte_stem     u, lcolor(gs0) lwidth(medthick) lpattern(dash))       ///
->            (line mte_business u, lcolor(gs0) lwidth(medthick) lpattern(longdash))   ///
->            (line mte_educ     u, lcolor(gs8) lwidth(medthick) lpattern(solid))      ///
->            (line mte_other    u, lcolor(gs8) lwidth(medthick) lpattern(dash)),      ///
->         ytitle("Marginal Treatment Effect") ///
->         xtitle("u (Unobserved Resistance to Treatment)") ///
->         title("MTE Curves by Graduate Program Area") ///
->         subtitle("Field-specific returns to master's degree") ///
->         yline(0, lpattern(shortdash) lcolor(gs10)) ///
->         note("Curves restricted to each area's empirical propensity-score support (treated obs).") ///
->         legend(order(1 "Health & Related" 2 "STEM" 3 "Business" ///
->                      4 "Education" 5 "Other (base)") ///
->                cols(3) size(small)) ///
->         name(fig11_5, replace)
-
-.     graph save "$graphs_dir/fig11_5.gph", replace
+. if `run_areas' == 1 {
+.     * Fig 11.5: area-specific MTE curves, each restricted to its common support
+.     preserve
+.         clear
+.         set obs 99
+Number of observations (_N) was 0, now 99.
+.         gen u = _n/100
+.         foreach a in stem business education health other {
+  2.             gen mte_`a' = .
+  3.             capture confirm matrix MTE_`a'
+  4.             if _rc == 0 {
+  5.                 forvalues j = 1/99 {
+  6.                     qui replace mte_`a' = MTE_`a'[1,`j'] in `j'
+  7.                 }
+  8.                 qui replace mte_`a' = . if u < `lo_`a'' | u > `hi_`a''
+  9.             }
+ 10.         }
+(99 missing values generated)
+(99 missing values generated)
+(99 missing values generated)
+(99 missing values generated)
+(99 missing values generated)
+.         rename mte_education mte_educ
+.         twoway (line mte_health   u, lcolor(gs0) lwidth(medthick) lpattern(solid))     ///
+>                (line mte_stem     u, lcolor(gs0) lwidth(medthick) lpattern(dash))       ///
+>                (line mte_business u, lcolor(gs0) lwidth(medthick) lpattern(longdash))   ///
+>                (line mte_educ     u, lcolor(gs8) lwidth(medthick) lpattern(solid))      ///
+>                (line mte_other    u, lcolor(gs8) lwidth(medthick) lpattern(dash)),      ///
+>             ytitle("Marginal Treatment Effect") ///
+>             xtitle("u (Unobserved Resistance to Treatment)") ///
+>             title("MTE Curves by Graduate Program Area") ///
+>             subtitle("Field-specific returns to master's degree") ///
+>             yline(0, lpattern(shortdash) lcolor(gs10)) ///
+>             note("Separate mtefe model per area (linear MTE), at the area's mean X." ///
+>                  "Curves restricted to each area's common propensity-score support.") ///
+>             legend(order(1 "Health & Related" 2 "STEM" 3 "Business" ///
+>                          4 "Education" 5 "Other") ///
+>                    cols(3) size(small)) ///
+>             name(fig11_5, replace)
+.         graph save "$graphs_dir/fig11_5.gph", replace
 file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_5.gph saved
-
-.     graph export "$graphs_dir/fig11_5_mte_byarea_curve_Stata.png", replace width(1200)
-file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_5_mte_byarea_curve_Stata.png
-    saved as PNG format
-
-. restore
+.         graph export "$graphs_dir/fig11_5_mte_byarea_curve_Stata.png", replace width(1200)
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
+    11/Output/graphs/fig11_5_mte_byarea_curve_Stata.png saved as PNG format
+.     restore
+. }
 
 . 
 . ********************************************************************************
-. * SECTION 9: Basic Policy Simulation (PRTE)
+. * SECTIONS 9-10b: POLICY-RELEVANT TREATMENT EFFECTS (PRTE) VIA mtefe
+. *
+. * Each scenario defines a counterfactual propensity score from the same
+. * probit used by mtefe (z_index, ga_coef). mtefe's prte() option then
+. * weights the MTE by the students whose completion the policy changes.
+. * PRTE standard errors shown are mtefe's analytic SEs (they ignore
+. * first-stage estimation error); see Section 6e for bootstrapped
+. * pooled parameters.
+. *
+. * Scenarios 5-8 target the undergraduate pipelines that feed each
+. * graduate area and use the pooled mtefe model, whose MTE varies with
+. * each student's X (including undergraduate major).
 . ********************************************************************************
+. 
+. di _n "=============================================="
+
+==============================================
+
+. di "POLICY-RELEVANT TREATMENT EFFECTS (mtefe prte)"
+POLICY-RELEVANT TREATMENT EFFECTS (mtefe prte)
+
+. di "=============================================="
+==============================================
+
 . 
 . qui sum ga_funding_adj
 
@@ -3611,369 +3613,171 @@ file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_5_mt
 
 . local ga_new = `ga_current' * 1.2
 
-. di "Current mean GA: $" %5.2f `ga_current' "k  Proposed (20% increase): $" %5.2f `ga_new' "k"
-Current mean GA: $19.06k  Proposed (20% increase): $22.87k
+. di "Current mean GA: $" %5.2f `ga_current' "k  Proposed (20% above mean): $" %5.2f `ga_new' "
+> k"
+Current mean GA: $19.06k  Proposed (20% above mean): $22.87k
 
 . 
-. gen p_new   = normal(z_index + `ga_coef'*(`ga_new' - ga_funding_adj))
+. * Section 9 scenario: every student's GA set to 120% of the current mean
+. gen double p_pol_ga20   = normal(z_index + `ga_coef'*(`ga_new' - ga_funding_adj))
 
-. gen delta_p = p_new - phat
+. * Section 10 scenarios 1-4
+. gen double p_pol_unif   = normal(z_index + `ga_coef'*1)
 
-. qui sum delta_p
+. gen byte   targeted_lowinc = (parent_income_q <= 2)
 
-. di "Average increase in Pr(Master's): " %6.4f r(mean)
-Average increase in Pr(Master's): 0.1695
+. gen double p_pol_lowinc = normal(z_index + `ga_coef'*2*targeted_lowinc)
 
-. 
-. gen complier_weight = delta_p / r(mean) if delta_p > 0
-(1,650 missing values generated)
+. gen double p_pol_stem   = normal(z_index + `ga_coef'*3*stem_major)
 
-. qui sum mte_hat [aw=complier_weight] if delta_p > 0
+. gen double p_pol_ed     = normal(z_index + `ga_coef'*2.5*ed_major)
 
-. local prte_20pct = r(mean)
+. * Section 10b scenarios 5-8 ($2.5k to each pipeline)
+. gen byte   target_health = (stem_major == 1 | socsci_major == 1)
 
-. di "Approximate PRTE (20% GA increase): " %6.4f `prte_20pct'
-Approximate PRTE (20% GA increase): 0.2705
+. gen double p_pol_pstem  = normal(z_index + `ga_coef'*2.5*stem_major)
 
-. drop p_new delta_p complier_weight
+. gen double p_pol_pbus   = normal(z_index + `ga_coef'*2.5*bus_major)
 
-. 
-. ********************************************************************************
-. * SECTION 10: MPRTE — Scenarios 1-4 (Original)
-. ********************************************************************************
-. 
-. di _n "=============================================="
+. gen double p_pol_ped    = normal(z_index + `ga_coef'*2.5*ed_major)
 
-==============================================
-
-. di "MPRTE - SCENARIOS 1-4 (ORIGINAL)"
-MPRTE - SCENARIOS 1-4 (ORIGINAL)
-
-. di "=============================================="
-==============================================
+. gen double p_pol_phlth  = normal(z_index + `ga_coef'*2.5*target_health)
 
 . 
-. * Scenario 1: Uniform $1k
-. gen p_new_unif        = normal(z_index + `ga_coef'*1)
+. local lbl_ga20   "GA set to 120% of mean (Sec. 9)"
 
-. gen delta_p_unif      = p_new_unif - phat
+. local lbl_unif   "Uniform +$1k (Scen. 1)"
 
-. gen response_unif     = normalden(invnormal(phat)) * `ga_coef'
+. local lbl_lowinc "Low-income +$2k (Scen. 2)"
 
-. gen mte_weighted_unif = mte_hat * response_unif
+. local lbl_stem   "STEM ug +$3k (Scen. 3)"
 
-. qui sum mte_weighted_unif
+. local lbl_ed     "Education ug +$2.5k (Scen. 4)"
 
-. local mprte_unif_num = r(sum)
+. local lbl_pstem  "STEM pipeline +$2.5k (Scen. 5)"
 
-. qui sum response_unif
+. local lbl_pbus   "Business pipeline +$2.5k (Scen. 6)"
 
-. local mprte_unif = `mprte_unif_num' / r(sum)
+. local lbl_ped    "Education pipeline +$2.5k (Scen. 7)"
 
-. di "MPRTE (uniform $1k): " %6.4f `mprte_unif'
-MPRTE (uniform $1k): 0.9784
-
-. qui sum mte_hat [aw=delta_p_unif] if delta_p_unif > 0
-
-. di "PRTE  (discrete $1k): " %6.4f r(mean)
-PRTE  (discrete $1k): 0.9599
-
-. drop p_new_unif delta_p_unif response_unif mte_weighted_unif
+. local lbl_phlth  "Health pipeline +$2.5k (Scen. 8)"
 
 . 
-. * Scenario 2: Targeted low-income ($2k)
-. gen targeted_lowinc     = (parent_income_q <= 2)
+. di _n "Scenario                              Mean dP     PRTE    (SE, analytic)"
 
-. gen p_new_lowinc        = normal(z_index + `ga_coef'*2*targeted_lowinc)
+Scenario                              Mean dP     PRTE    (SE, analytic)
 
-. gen delta_p_lowinc      = p_new_lowinc - phat
+. di "-------------------------------------------------------------------------"
+-------------------------------------------------------------------------
 
-. gen response_lowinc     = normalden(invnormal(phat)) * `ga_coef' * 2 * targeted_lowinc
+. foreach s in ga20 unif lowinc stem ed pstem pbus ped phlth {
+  2.     gen double _dp = p_pol_`s' - phat
+  3.     qui sum _dp
+  4.     local dp_`s' = r(mean)
+  5.     drop _dp
+  6.     quietly mtefe ln_salary $X_controls (masters = ga_funding_adj), ///
+>         pol(2) bootreps(0) noplot prte(p_pol_`s')
+  7.     local prte_`s'    = _b[effects:prte]
+  8.     local prte_se_`s' = _se[effects:prte]
+  9.     matrix W_`s' = e(weightsprte)
+ 10.     di "  `lbl_`s''" _col(39) %7.4f `dp_`s'' "   " %7.4f `prte_`s'' "   (" %6.4f `prte_se_
+> `s'' ")"
+ 11. }
+  GA set to 120% of mean (Sec. 9)      0.1695    0.5028   (0.0903)
+  Uniform +$1k (Scen. 1)               0.0407    0.4238   (0.0580)
+  Low-income +$2k (Scen. 2)            0.0197    0.3073   (0.0870)
+  STEM ug +$3k (Scen. 3)               0.0295    0.2318   (0.0974)
+  Education ug +$2.5k (Scen. 4)        0.0094    0.1867   (0.1682)
+  STEM pipeline +$2.5k (Scen. 5)       0.0248    0.2423   (0.0953)
+  Business pipeline +$2.5k (Scen. 6)   0.0144    0.7203   (0.1889)
+  Education pipeline +$2.5k (Scen. 7)  0.0094    0.1867   (0.1682)
+  Health pipeline +$2.5k (Scen. 8)     0.0796    0.3345   (0.0666)
 
-. gen mte_weighted_lowinc = mte_hat * response_lowinc
+. di _n "  Marginal versions (pooled mtefe): MPRTE1 = " %6.4f `mprte1_est' ///
+>    "  MPRTE2 = " %6.4f `mprte2_est' "  MPRTE3 = " %6.4f `mprte3_est'
 
-. qui sum mte_weighted_lowinc if targeted_lowinc == 1
-
-. local mprte_lowinc_num = r(sum)
-
-. qui sum response_lowinc if targeted_lowinc == 1
-
-. local mprte_lowinc = `mprte_lowinc_num' / r(sum)
-
-. di "MPRTE (targeted low-income): " %6.4f `mprte_lowinc'
-MPRTE (targeted low-income): 0.9336
-
-. drop targeted_lowinc p_new_lowinc delta_p_lowinc response_lowinc mte_weighted_lowinc
-
-. 
-. * Scenario 3: STEM GA ($3k)
-. gen p_new_stem        = normal(z_index + `ga_coef'*3*stem_major)
-
-. gen delta_p_stem      = p_new_stem - phat
-
-. gen response_stem     = normalden(invnormal(phat)) * `ga_coef' * 3 * stem_major
-
-. gen mte_weighted_stem = mte_hat * response_stem
-
-. qui sum mte_weighted_stem if stem_major == 1
-
-. local mprte_stem_num = r(sum)
-
-. qui sum response_stem if stem_major == 1
-
-. local mprte_stem = `mprte_stem_num' / r(sum)
-
-. di "MPRTE (STEM enhancement): " %6.4f `mprte_stem'
-MPRTE (STEM enhancement): 1.2367
-
-. drop p_new_stem delta_p_stem response_stem mte_weighted_stem
-
-. 
-. * Scenario 4: Education ($2.5k)
-. gen p_new_ed        = normal(z_index + `ga_coef'*2.5*ed_major)
-
-. gen delta_p_ed      = p_new_ed - phat
-
-. gen response_ed     = normalden(invnormal(phat)) * `ga_coef' * 2.5 * ed_major
-
-. gen mte_weighted_ed = mte_hat * response_ed
-
-. qui sum mte_weighted_ed if ed_major == 1
-
-. local mprte_ed_num = r(sum)
-
-. qui sum response_ed if ed_major == 1
-
-. local mprte_ed = `mprte_ed_num' / r(sum)
-
-. di "MPRTE (education major support): " %6.4f `mprte_ed'
-MPRTE (education major support): 1.1615
-
-. drop p_new_ed delta_p_ed response_ed mte_weighted_ed
+  Marginal versions (pooled mtefe): MPRTE1 = 0.4490  MPRTE2 = 0.5157  MPRTE3 = 0.2906
 
 . 
 . ********************************************************************************
-. * SECTION 10b: MPRTE BY GRADUATE PROGRAM AREA — Scenarios 5-8
-. *
-. * These scenarios use the area-specific MTE function MTE_a(phat) from
-. * Section 6b rather than the pooled mte_hat. Each scenario targets a
-. * $2,500 GA increase at the undergraduate pipeline that feeds most
-. * strongly into the graduate field of interest.
-. *
-. * MPRTE_a = sum_i (MTE_a(phat_i) * h_a(X_i)) / sum_i h_a(X_i)
-. * where h_a(X_i) = normalden(invnormal(phat_i)) * ga_coef * amount * pipeline_a(X_i)
-. *
-. * Pipeline definitions (from transition probability table, Section 1b):
-. *   STEM:      pipeline = stem_major   (55% enter STEM grad programs)
-. *   Business:  pipeline = bus_major    (65% enter Business grad programs)
-. *   Education: pipeline = ed_major     (70% enter Education grad programs)
-. *   Health:    pipeline = stem_major OR socsci_major (draws from both)
+. * SECTION 11: PRTE BY POLICY INTENSITY (uniform GA increase)
 . ********************************************************************************
 . 
 . di _n "=============================================="
 
 ==============================================
 
-. di "MPRTE BY GRADUATE PROGRAM AREA (Scenarios 5-8)"
-MPRTE BY GRADUATE PROGRAM AREA (Scenarios 5-8)
+. di "PRTE BY POLICY INTENSITY"
+PRTE BY POLICY INTENSITY
 
 . di "=============================================="
 ==============================================
 
 . 
-. * Scenario 5: STEM graduate pipeline
-. gen p_new_s5   = normal(z_index + `ga_coef'*2.5*stem_major)
+. matrix INT = J(20, 2, .)
 
-. gen delta_p_s5 = p_new_s5 - phat
-
-. gen response_s5  = normalden(invnormal(phat)) * `ga_coef' * 2.5 * stem_major
-
-. gen mteA_wt_s5   = mte_hat_stem * response_s5
-
-. qui sum mteA_wt_s5 if stem_major == 1
-
-. local mprte_ma_stem_num = r(sum)
-
-. qui sum response_s5 if stem_major == 1
-
-. local mprte_ma_stem = `mprte_ma_stem_num' / r(sum)
-
-. qui sum mte_hat_stem [aw=delta_p_s5] if delta_p_s5 > 0 & stem_major == 1
-
-. local prte_ma_stem = r(mean)
-
-. di "MPRTE (STEM grad pipeline, $2.5k): " %6.4f `mprte_ma_stem'
-MPRTE (STEM grad pipeline, $2.5k): 1.2773
-
-. di "PRTE  (STEM grad pipeline, $2.5k): " %6.4f `prte_ma_stem'
-PRTE  (STEM grad pipeline, $2.5k): 1.2530
-
-. qui sum phat if stem_major == 1
-
-. di "Mean phat for STEM undergrads:     " %6.4f r(mean)
-Mean phat for STEM undergrads:     0.5424
-
-. drop p_new_s5 delta_p_s5 response_s5 mteA_wt_s5
-
-. 
-. * Scenario 6: Business graduate pipeline
-. gen p_new_s6   = normal(z_index + `ga_coef'*2.5*bus_major)
-
-. gen delta_p_s6 = p_new_s6 - phat
-
-. gen response_s6  = normalden(invnormal(phat)) * `ga_coef' * 2.5 * bus_major
-
-. gen mteA_wt_s6   = mte_hat_business * response_s6
-
-. qui sum mteA_wt_s6 if bus_major == 1
-
-. local mprte_ma_bus_num = r(sum)
-
-. qui sum response_s6 if bus_major == 1
-
-. local mprte_ma_bus = `mprte_ma_bus_num' / r(sum)
-
-. qui sum mte_hat_business [aw=delta_p_s6] if delta_p_s6 > 0 & bus_major == 1
-
-. local prte_ma_bus = r(mean)
-
-. di "MPRTE (Business grad pipeline, $2.5k): " %6.4f `mprte_ma_bus'
-MPRTE (Business grad pipeline, $2.5k): 0.8192
-
-. di "PRTE  (Business grad pipeline, $2.5k): " %6.4f `prte_ma_bus'
-PRTE  (Business grad pipeline, $2.5k): 0.7746
-
-. drop p_new_s6 delta_p_s6 response_s6 mteA_wt_s6
-
-. 
-. * Scenario 7: Education graduate pipeline
-. gen p_new_s7   = normal(z_index + `ga_coef'*2.5*ed_major)
-
-. gen delta_p_s7 = p_new_s7 - phat
-
-. gen response_s7  = normalden(invnormal(phat)) * `ga_coef' * 2.5 * ed_major
-
-. gen mteA_wt_s7   = mte_hat_education * response_s7
-
-. qui sum mteA_wt_s7 if ed_major == 1
-
-. local mprte_ma_ed_num = r(sum)
-
-. qui sum response_s7 if ed_major == 1
-
-. local mprte_ma_ed = `mprte_ma_ed_num' / r(sum)
-
-. qui sum mte_hat_education [aw=delta_p_s7] if delta_p_s7 > 0 & ed_major == 1
-
-. local prte_ma_ed = r(mean)
-
-. di "MPRTE (Education grad pipeline, $2.5k): " %6.4f `mprte_ma_ed'
-MPRTE (Education grad pipeline, $2.5k): 1.0317
-
-. di "PRTE  (Education grad pipeline, $2.5k): " %6.4f `prte_ma_ed'
-PRTE  (Education grad pipeline, $2.5k): 0.9988
-
-. drop p_new_s7 delta_p_s7 response_s7 mteA_wt_s7
-
-. 
-. * Scenario 8: Health & Related pipeline (STEM + SocSci undergrads)
-. gen target_health = (stem_major == 1 | socsci_major == 1)
-
-. gen p_new_s8      = normal(z_index + `ga_coef'*2.5*target_health)
-
-. gen delta_p_s8    = p_new_s8 - phat
-
-. gen response_s8   = normalden(invnormal(phat)) * `ga_coef' * 2.5 * target_health
-
-. gen mteA_wt_s8    = mte_hat_health * response_s8
-
-. qui sum mteA_wt_s8 if target_health == 1
-
-. local mprte_ma_hlth_num = r(sum)
-
-. qui sum response_s8 if target_health == 1
-
-. local mprte_ma_hlth = `mprte_ma_hlth_num' / r(sum)
-
-. qui sum mte_hat_health [aw=delta_p_s8] if delta_p_s8 > 0 & target_health == 1
-
-. local prte_ma_hlth = r(mean)
-
-. di "MPRTE (Health & Related pipeline, $2.5k): " %6.4f `mprte_ma_hlth'
-MPRTE (Health & Related pipeline, $2.5k): 1.0186
-
-. di "PRTE  (Health & Related pipeline, $2.5k): " %6.4f `prte_ma_hlth'
-PRTE  (Health & Related pipeline, $2.5k): 0.9745
-
-. drop target_health p_new_s8 delta_p_s8 response_s8 mteA_wt_s8
-
-. 
-. ********************************************************************************
-. * SECTION 11: MPRTE BY POLICY INTENSITY
-. ********************************************************************************
-. 
-. * Save phat mean BEFORE preserve/clear so it is available inside the block
-. qui sum phat
-
-. local p_baseline = r(mean)
+. forvalues i = 1/20 {
+  2.     local inc = `i' * 0.5
+  3.     capture drop _p_int
+  4.     gen double _p_int = normal(z_index + `ga_coef'*`inc')
+  5.     quietly mtefe ln_salary $X_controls (masters = ga_funding_adj), ///
+>         pol(2) bootreps(0) noplot prte(_p_int)
+  6.     matrix INT[`i',1] = `inc'
+  7.     matrix INT[`i',2] = _b[effects:prte]
+  8.     drop _p_int
+  9. }
 
 . 
 . preserve
 
 .     clear
 
-.     set obs 20
+.     svmat double INT, names(col)
+number of observations will be reset to 20
+Press any key to continue, or Break to abort
 Number of observations (_N) was 0, now 20.
 
-.     gen ga_increase  = _n * 0.5
+.     rename c1 ga_increase
 
-.     gen p_margin     = `p_baseline' + ga_increase * 0.015
+.     rename c2 prte_int
 
-.     gen mprte_approx = `b0' + `b1'*p_margin + `b2'*p_margin^2 + `b3'*p_margin^3
+.     list ga_increase prte_int, noobs clean
 
-.     list ga_increase p_margin mprte_approx
+    ga_inc~e    prte_int  
+          .5   .43779682  
+           1   .42381901  
+         1.5   .40626353  
+           2   .39032378  
+         2.5   .37474872  
+           3   .35972056  
+         3.5   .34445861  
+           4   .32962546  
+         4.5   .31527189  
+           5   .30121952  
+         5.5   .28747138  
+           6   .27404663  
+         6.5   .26114242  
+           7   .24857295  
+         7.5   .23656967  
+           8   .22504852  
+         8.5   .21394903  
+           9   .20336913  
+         9.5   .19326294  
+          10   .18371707  
 
-     +--------------------------------+
-     | ga_inc~e   p_margin   mprte_~x |
-     |--------------------------------|
-  1. |       .5   .3878992   1.316915 |
-  2. |        1   .3953992   1.336176 |
-  3. |      1.5   .4028992   1.354051 |
-  4. |        2   .4103993    1.37058 |
-  5. |      2.5   .4178993   1.385799 |
-     |--------------------------------|
-  6. |        3   .4253992   1.399748 |
-  7. |      3.5   .4328992   1.412465 |
-  8. |        4   .4403993   1.423988 |
-  9. |      4.5   .4478993   1.434355 |
- 10. |        5   .4553992   1.443604 |
-     |--------------------------------|
- 11. |      5.5   .4628992   1.451775 |
- 12. |        6   .4703993   1.458905 |
- 13. |      6.5   .4778993   1.465032 |
- 14. |        7   .4853992   1.470194 |
- 15. |      7.5   .4928992   1.474431 |
-     |--------------------------------|
- 16. |        8   .5003992   1.477779 |
- 17. |      8.5   .5078992   1.480279 |
- 18. |        9   .5153992   1.481967 |
- 19. |      9.5   .5228993   1.482882 |
- 20. |       10   .5303993   1.483062 |
-     +--------------------------------+
-
-.     twoway (line mprte_approx ga_increase, lcolor(gs0) lwidth(medthick) lpattern(solid)), ///
->         ytitle("MPRTE") xtitle("GA Funding Increase ($1000s)") ///
->         title("MPRTE by Policy Intensity") ///
->         subtitle("Marginal returns to GA funding expansion") ///
->         yline(0, lpattern(dash) lcolor(gs8)) ///
+.     twoway (line prte_int ga_increase, lcolor(gs0) lwidth(medthick) lpattern(solid)), ///
+>         ytitle("PRTE") xtitle("GA Funding Increase ($1000s)") ///
+>         title("PRTE by Policy Intensity") ///
+>         subtitle("Average return for students induced by a uniform GA increase") ///
+>         yline(0, lpattern(dash) lcolor(gs8)) yscale(range(0)) ///
 >         name(fig11_8, replace)
 
 .     graph save "$graphs_dir/fig11_8.gph", replace
 file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_8.gph saved
 
 .     graph export "$graphs_dir/fig11_8_mprte_by_intensity_Stata.png", replace width(1200)
-file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_8_mprte_by_intensity_Stata.png
-    saved as PNG format
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
+    11/Output/graphs/fig11_8_mprte_by_intensity_Stata.png saved as PNG format
 
 . restore
 
@@ -3993,227 +3797,154 @@ COMPARISON OF TREATMENT EFFECT PARAMETERS
 ==============================================
 
 . 
-. di "Parameter     Manual(cubic)  BS SE(manual)  mtefe(quad)  BS SE(mtefe)"
-Parameter     Manual(cubic)  BS SE(manual)  mtefe(quad)  BS SE(mtefe)
+. di "Parameter     mtefe (pol=2)   BS SE     mtefe (pol=1)"
+Parameter     mtefe (pol=2)   BS SE     mtefe (pol=1)
 
-. di "======================================================================="
-=======================================================================
+. di "======================================================"
+======================================================
 
-. di "ATE           " %6.4f `ate_est_cubic' " (" %6.4f `ate_se' ")    " %6.4f `mtefe_ate_q' "  (" %6.4f `mtef
-> e_ate_q_se' ")"
-ATE           0.8468 (0.0376)    0.3589  (0.0376)
+. di "ATE           " %7.4f `ate_est'  "      (" %6.4f `ate_se'  ")   " %7.4f `ate_lin'
+ATE            0.3589      (0.1536)    0.2572
 
-. di "ATT           " %6.4f `att_est'       " (" %6.4f `att_se' ")    " %6.4f `mtefe_att_q' "  (" %6.4f `mtef
-> e_att_q_se' ")"
-ATT           1.2162 (0.0382)    0.8285  (0.0382)
+. di "ATT           " %7.4f `att_est'  "      (" %6.4f `att_se'  ")   " %7.4f `att_lin'
+ATT            0.8285      (0.1785)    0.7414
 
-. di "ATU           " %6.4f `atu_est'       " (" %6.4f `atu_se' ")    " %6.4f `mtefe_atu_q' "  (" %6.4f `mtef
-> e_atu_q_se' ")"
-ATU           0.5528 (0.1082)    0.0705  (0.1082)
+. di "ATU           " %7.4f `atu_est'  "      (" %6.4f `atu_se'  ")   " %7.4f `atu_lin'
+ATU            0.0705      (0.2088)   -0.0400
 
-. di "LATE (IV)     " %6.4f `iv_est'        " (" %6.4f `iv_se' ")    " %6.4f `mtefe_late' "  (" %6.4f `mtefe_
-> late_se' ")"
-LATE (IV)     0.4031 (0.0489)    0.3994  (0.0489)
+. di "LATE          " %7.4f `late_est' "      (" %6.4f `late_se' ")   " %7.4f `late_lin'
+LATE           0.4051      (0.0482)    0.3994
 
-. di "---------------------------------------------------------"
----------------------------------------------------------
+. di "2SLS          " %7.4f `iv_est'   "      (" %6.4f `iv_se'   ")"
+2SLS           0.4031      (0.0489)
 
-. di "MPRTE (uniform)                   " %6.4f `mprte_unif'
-MPRTE (uniform)                   0.9784
+. di "MPRTE1        " %7.4f `mprte1_est' "      (" %6.4f `mprte1_se' ")"
+MPRTE1         0.4490      (0.0604)
 
-. di "MPRTE (low-income)                " %6.4f `mprte_lowinc'
-MPRTE (low-income)                0.9336
+. di "------------------------------------------------------"
+------------------------------------------------------
 
-. di "MPRTE (STEM ug -> any grad)       " %6.4f `mprte_stem'
-MPRTE (STEM ug -> any grad)       1.2367
+. di "PRTE by scenario (analytic SEs):"
+PRTE by scenario (analytic SEs):
 
-. di "MPRTE (Ed ug -> any grad)         " %6.4f `mprte_ed'
-MPRTE (Ed ug -> any grad)         1.1615
-
-. 
-. di _n "AREA-SPECIFIC PARAMETERS WITH 95% CONFIDENCE INTERVALS:"
-
-AREA-SPECIFIC PARAMETERS WITH 95% CONFIDENCE INTERVALS:
-
-. di "(Cluster bootstrap, G=50 states, R=500 reps)"
-(Cluster bootstrap, G=50 states, R=500 reps)
-
-. di "ATE estimates:"
-ATE estimates:
-
-. di "Area          Estimate   (BS SE)    95% CI                  Sig"
-Area          Estimate   (BS SE)    95% CI                  Sig
-
-. di "------------------------------------------------------------------"
-------------------------------------------------------------------
-
-. foreach a in other stem business education health {
-  2.     local lo_ate = `ate_`a'' - 1.96 * `ate_se_`a''
-  3.     local hi_ate = `ate_`a'' + 1.96 * `ate_se_`a''
-  4.     local sig_ate = cond(`lo_ate' > 0, "***", cond(`hi_ate' < 0, "***", "   "))
-  5.     di "  `a'" _col(14) %6.4f `ate_`a'' "   (" %6.4f `ate_se_`a'' ")   [" %7.4f `lo_ate' ", " %7.4f `hi_
-> ate' "]   `sig_ate'"
-  6. }
-  other      0.8085   (0.0500)   [ 0.7105,  0.9064]   ***
-  stem       0.9424   (0.0892)   [ 0.7676,  1.1171]   ***
-  business   1.6936   (0.6077)   [ 0.5024,  2.8847]   ***
-  education  0.6437   (0.1910)   [ 0.2694,  1.0181]   ***
-  health     0.8469   (0.0449)   [ 0.7589,  0.9349]   ***
-
-. di _n "ATT estimates:"
-
-ATT estimates:
-
-. di "Area          Estimate   (BS SE)    95% CI                  Sig"
-Area          Estimate   (BS SE)    95% CI                  Sig
-
-. di "------------------------------------------------------------------"
-------------------------------------------------------------------
-
-. foreach a in other stem business education health {
-  2.     local lo_att = `att_`a'' - 1.96 * `att_se_`a''
-  3.     local hi_att = `att_`a'' + 1.96 * `att_se_`a''
-  4.     local sig_att = cond(`lo_att' > 0, "***", cond(`hi_att' < 0, "***", "   "))
-  5.     di "  `a'" _col(14) %6.4f `att_`a'' "   (" %6.4f `att_se_`a'' ")   [" %7.4f `lo_att' ", " %7.4f `hi_
-> att' "]   `sig_att'"
-  6. }
-  other      1.1750   (0.0519)   [ 1.0732,  1.2767]   ***
-  stem       1.3566   (0.0359)   [ 1.2863,  1.4269]   ***
-  business   1.0977   (0.0910)   [ 0.9192,  1.2761]   ***
-  education  1.2200   (0.0722)   [ 1.0785,  1.3615]   ***
-  health     1.2086   (0.0442)   [ 1.1220,  1.2952]   ***
-
-. di _n "ATU estimates (prospective program area assignment):"
-
-ATU estimates (prospective program area assignment):
-
-. di "Area          Estimate   (BS SE)    95% CI                  Sig"
-Area          Estimate   (BS SE)    95% CI                  Sig
-
-. di "------------------------------------------------------------------"
-------------------------------------------------------------------
-
-. foreach a in other stem business education health {
-  2.     local lo_atu = `atu_`a'' - 1.96 * `atu_se_`a''
-  3.     local hi_atu = `atu_`a'' + 1.96 * `atu_se_`a''
-  4.     local sig_atu = cond(`lo_atu' > 0, "***", cond(`hi_atu' < 0, "***", "   "))
-  5.     di "  `a'" _col(14) %6.4f `atu_`a'' "   (" %6.4f `atu_se_`a'' ")   [" %7.4f `lo_atu' ", " %7.4f `hi_
-> atu' "]   `sig_atu'"
-  6. }
-  other      0.4836   (0.1214)   [ 0.2458,  0.7215]   ***
-  stem       1.0820   (0.0855)   [ 0.9144,  1.2496]   ***
-  business   0.3574   (0.1591)   [ 0.0456,  0.6692]   ***
-  education  0.7348   (0.1818)   [ 0.3784,  1.0912]   ***
-  health     0.5685   (0.1126)   [ 0.3477,  0.7892]   ***
-
-. di "  *** = 95% CI excludes zero (p < 0.05, two-tailed)"
-  *** = 95% CI excludes zero (p < 0.05, two-tailed)
-
-. 
-. di _n "MPRTE BY GRADUATE PIPELINE (Scenarios 5-8):"
-
-MPRTE BY GRADUATE PIPELINE (Scenarios 5-8):
-
-. di "  STEM grad pipeline:         " %6.4f `mprte_ma_stem'
-  STEM grad pipeline:         1.2773
-
-. di "  Business grad pipeline:     " %6.4f `mprte_ma_bus'
-  Business grad pipeline:     0.8192
-
-. di "  Education grad pipeline:    " %6.4f `mprte_ma_ed'
-  Education grad pipeline:    1.0317
-
-. di "  Health & Related pipeline:  " %6.4f `mprte_ma_hlth'
-  Health & Related pipeline:  1.0186
+. foreach s in unif lowinc stem ed pstem pbus ped phlth {
+  2.     di "  `lbl_`s''" _col(39) %7.4f `prte_`s'' "   (" %6.4f `prte_se_`s'' ")"
+  3. }
+  Uniform +$1k (Scen. 1)               0.4238   (0.0580)
+  Low-income +$2k (Scen. 2)            0.3073   (0.0870)
+  STEM ug +$3k (Scen. 3)               0.2318   (0.0974)
+  Education ug +$2.5k (Scen. 4)        0.1867   (0.1682)
+  STEM pipeline +$2.5k (Scen. 5)       0.2423   (0.0953)
+  Business pipeline +$2.5k (Scen. 6)   0.7203   (0.1889)
+  Education pipeline +$2.5k (Scen. 7)  0.1867   (0.1682)
+  Health pipeline +$2.5k (Scen. 8)     0.3345   (0.0666)
 
 . 
 . ********************************************************************************
-. * SECTION 13: MPRTE VISUALIZATION
+. * SECTION 13: POLICY WEIGHTS AND PROPENSITY-SCORE SUPPORT
+. *   Fig 11.6  MTE curve with PRTE weights for two policies
+. *   Fig 11.4  Propensity-score distribution with the MTE curve
 . ********************************************************************************
 . 
-. * Fig: MTE Curve with Policy-Relevant Regions
-. tempfile mte_grid
-
-. tempname mte_mem
-
-. 
-. qui save `mte_mem', replace emptyok
-
-. 
-. clear
-
-. set obs 100
-Number of observations (_N) was 0, now 100.
-
-. gen u         = _n / 100
-
-. gen mte       = `b0' + `b1'*u + `b2'*u^2 + `b3'*u^3
-
-. gen region_lo = (u >= 0.10 & u <= 0.25)
-
-. gen region_un = (u >= 0.25 & u <= 0.40)
-
-. gen zero_line = 0
-
-. qui save `mte_grid', replace
-
-. 
-. twoway (rarea zero_line mte u if region_lo == 1, fcolor(gs5)  lwidth(none)) ///
->        (rarea zero_line mte u if region_un == 1, fcolor(gs11) lwidth(none)) ///
->        (line  mte u, lcolor(gs0) lwidth(medthick) lpattern(solid)),         ///
->     yline(0, lpattern(dash) lcolor(gs8)) ///
->     ytitle("Marginal Treatment Effect") ///
->     xtitle("u (Unobserved Resistance to Treatment)") ///
->     title("MTE Curve with Policy-Relevant Regions") ///
->     legend(order(3 "Estimated MTE" 1 "Low-income margin" ///
->                  2 "Uniform policy margin") cols(2) size(small)) ///
->     name(fig11_6, replace)
-
-. 
-. graph save   "$graphs_dir/fig11_6.gph", replace
-file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_6.gph saved
-
-. graph export "$graphs_dir/fig11_6_mte_policy_regions_Stata.png", replace width(1200)
-file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_6_mte_policy_regions_Stata.png
-    saved as PNG format
-
-. 
-. qui use `mte_mem', clear
-
-. 
+. * Fig 11.6: MTE with policy weights (uniform +$1k vs low-income +$2k)
 . preserve
 
-.     gen p_bin = floor(phat * 20) / 20
+.     clear
 
-.     bysort p_bin: egen mean_mte = mean(mte_hat)
+.     set obs 99
+Number of observations (_N) was 0, now 99.
 
-.     bysort p_bin: gen n_bin = _N
+.     gen u      = .
+(99 missing values generated)
 
-.     collapse (mean) mean_mte (first) n_bin, by(p_bin)
+.     gen mte    = .
+(99 missing values generated)
 
-.     twoway (bar n_bin p_bin,      barwidth(0.04) fcolor(gs12) lcolor(gs8) yaxis(2)) ///
->            (scatter mean_mte p_bin, mcolor(gs0) msize(medium) msymbol(D)  yaxis(1)) ///
->            (line mean_mte p_bin,    lcolor(gs0) lwidth(medium) lpattern(solid) yaxis(1)), ///
+.     gen w_unif = .
+(99 missing values generated)
+
+.     gen w_low  = .
+(99 missing values generated)
+
+.     forvalues j = 1/99 {
+  2.         qui replace u      = SUP[`j',1]        in `j'
+  3.         qui replace mte    = MTE_pooled[1,`j'] in `j'
+  4.         qui replace w_unif = W_unif[`j',1]     in `j'
+  5.         qui replace w_low  = W_lowinc[`j',1]   in `j'
+  6.     }
+
+.     twoway (area w_unif u, yaxis(2) fcolor(gs13) lcolor(gs10))        ///
+>            (line w_low  u, yaxis(2) lcolor(gs6) lwidth(medthick) lpattern(dash)) ///
+>            (line mte    u, yaxis(1) lcolor(gs0) lwidth(medthick) lpattern(solid)), ///
+>         yline(0, lpattern(shortdash) lcolor(gs8) axis(1)) ///
+>         ytitle("Marginal Treatment Effect", axis(1)) ///
+>         ytitle("Policy weight", axis(2)) ///
+>         xtitle("u (Unobserved Resistance to Treatment)") ///
+>         title("MTE Curve and Policy-Relevant Weights") ///
+>         note("Weights show where each policy's induced completers lie on the resistance scale
+> .") ///
+>         legend(order(3 "Estimated MTE" 1 "Uniform +$1k weights" ///
+>                      2 "Low-income +$2k weights") cols(2) size(small)) ///
+>         name(fig11_6, replace)
+
+.     graph save   "$graphs_dir/fig11_6.gph", replace
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_6.gph saved
+
+.     graph export "$graphs_dir/fig11_6_mte_policy_regions_Stata.png", replace width(1200)
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
+    11/Output/graphs/fig11_6_mte_policy_regions_Stata.png saved as PNG format
+
+. restore
+
+. 
+. * Fig 11.4: propensity-score histogram with the MTE curve
+. preserve
+
+.     gen p_bin = floor(phat * 20) / 20 + 0.025
+
+.     collapse (count) n_bin = id, by(p_bin)
+
+.     local N0 = _N
+
+.     set obs `=`N0' + 99'
+Number of observations (_N) was 20, now 119.
+
+.     gen u   = .
+(119 missing values generated)
+
+.     gen mte = .
+(119 missing values generated)
+
+.     forvalues j = 1/99 {
+  2.         local r = `N0' + `j'
+  3.         qui replace u   = SUP[`j',1]        in `r'
+  4.         qui replace mte = MTE_pooled[1,`j'] in `r'
+  5.     }
+
+.     twoway (bar n_bin p_bin, barwidth(0.045) fcolor(gs12) lcolor(gs8) yaxis(2)) ///
+>            (line mte u, lcolor(gs0) lwidth(medthick) lpattern(solid) yaxis(1)), ///
 >         yline(0, lpattern(dash) lcolor(gs8) axis(1)) ///
->         ytitle("Estimated MTE", axis(1)) ///
->         ytitle("Frequency", axis(2)) ///
->         xtitle("Propensity Score") ///
->         title("MTE by Propensity Score") ///
->         legend(order(2 "Mean MTE" 1 "Obs. count")) ///
+>         ytitle("Marginal Treatment Effect", axis(1)) ///
+>         ytitle("Number of students", axis(2)) ///
+>         xtitle("Propensity score / u") ///
+>         title("MTE and the Distribution of Propensity Scores") ///
+>         note("Bars: students by propensity score. Line: MTE at mean X (mtefe)." ///
+>              "Where bars are short, the curve relies on the polynomial form.") ///
+>         legend(order(2 "Estimated MTE" 1 "Students (count)") size(small)) ///
 >         name(fig11_4, replace)
 
 .     graph save "$graphs_dir/fig11_4.gph", replace
 file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_4.gph saved
 
 .     graph export "$graphs_dir/fig11_4_mte_by_propensity_Stata.png", replace width(1200)
-file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_4_mte_by_propensity_Stata.png
-    saved as PNG format
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
+    11/Output/graphs/fig11_4_mte_by_propensity_Stata.png saved as PNG format
 
 . restore
 
 . 
 . ********************************************************************************
-. * SECTION 14: POLICY COST-BENEFIT ANALYSIS
+. * SECTION 14: POLICY COST-BENEFIT ANALYSIS (PRTE-based)
 . ********************************************************************************
 . 
 . local cost_per_degree = 50000
@@ -4230,107 +3961,61 @@ file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_4_mt
 Present value factor (30 years, 3%):  19.60
 
 . 
-. di _n "--- Scenarios 1-4: Original MPRTE-based CBA ---"
+. di _n "--- Scenarios 1-4: PRTE-based CBA ---"
 
---- Scenarios 1-4: Original MPRTE-based CBA ---
+--- Scenarios 1-4: PRTE-based CBA ---
 
-. di "Policy               MPRTE    Annual Gain   PV Gain    B/C Ratio"
-Policy               MPRTE    Annual Gain   PV Gain    B/C Ratio
+. di "Policy                              PRTE    Annual Gain   PV Gain    B/C Ratio"
+Policy                              PRTE    Annual Gain   PV Gain    B/C Ratio
 
-. di "=================================================================="
-==================================================================
+. di "================================================================================"
+================================================================================
 
-. foreach scen in unif lowinc stem ed {
-  2.     if "`scen'" == "unif"   local mprte_val = `mprte_unif'
-  3.     if "`scen'" == "lowinc" local mprte_val = `mprte_lowinc'
-  4.     if "`scen'" == "stem"   local mprte_val = `mprte_stem'
-  5.     if "`scen'" == "ed"     local mprte_val = `mprte_ed'
-  6.     local annual_gain = `base_salary' * (exp(`mprte_val') - 1)
-  7.     local pv_gain     = `annual_gain' * `pv_factor'
-  8.     local bc_ratio    = `pv_gain' / `cost_per_degree'
-  9.     if "`scen'" == "unif"   di "Uniform             " %6.4f `mprte_val' "   $" %6.0f `annual_gain' "    
-> $" %8.0f `pv_gain' "   " %5.2f `bc_ratio'
- 10.     if "`scen'" == "lowinc" di "Low-income          " %6.4f `mprte_val' "   $" %6.0f `annual_gain' "    
-> $" %8.0f `pv_gain' "   " %5.2f `bc_ratio'
- 11.     if "`scen'" == "stem"   di "STEM ug             " %6.4f `mprte_val' "   $" %6.0f `annual_gain' "    
-> $" %8.0f `pv_gain' "   " %5.2f `bc_ratio'
- 12.     if "`scen'" == "ed"     di "Education ug        " %6.4f `mprte_val' "   $" %6.0f `annual_gain' "    
-> $" %8.0f `pv_gain' "   " %5.2f `bc_ratio'
- 13. }
-Uniform             0.9784   $ 78024    $ 1529307   30.59
-Low-income          0.9336   $ 72548    $ 1421967   28.44
-STEM ug             1.2367   $114875    $ 2251605   45.03
-Education ug        1.1615   $103148    $ 2021749   40.43
+. foreach s in unif lowinc stem ed {
+  2.     local ag  = `base_salary' * (exp(`prte_`s'') - 1)
+  3.     local pvg = `ag' * `pv_factor'
+  4.     di "  `lbl_`s''" _col(37) %6.4f `prte_`s'' "   $" %7.0f `ag' "   $" %9.0f `pvg' "   " 
+> %5.2f `pvg'/`cost_per_degree'
+  5. }
+  Uniform +$1k (Scen. 1)            0.4238   $  24806   $   486207    9.72
+  Low-income +$2k (Scen. 2)         0.3073   $  16909   $   331418    6.63
+  STEM ug +$3k (Scen. 3)            0.2318   $  12258   $   240271    4.81
+  Education ug +$2.5k (Scen. 4)     0.1867   $   9645   $   189040    3.78
 
 . 
-. di _n "--- Scenarios 5-8: Graduate Program Area MPRTE-based CBA ---"
+. di _n "--- Scenarios 5-8: Graduate Pipeline PRTE-based CBA ---"
 
---- Scenarios 5-8: Graduate Program Area MPRTE-based CBA ---
+--- Scenarios 5-8: Graduate Pipeline PRTE-based CBA ---
 
-. local base_stem  = 65000
+. local base_pstem = 65000
 
-. local base_bus   = 60000
+. local base_pbus  = 60000
 
-. local base_ed    = 42000
+. local base_ped   = 42000
 
-. local base_hlth  = 68000
+. local base_phlth = 68000
 
-. di "  Base salaries: STEM=$" %6.0f `base_stem' " Business=$" %6.0f `base_bus' " Ed=$" %6.0f `base_ed' " Hea
-> lth=$" %6.0f `base_hlth'
+. di "  Base salaries: STEM=$" %6.0f `base_pstem' " Business=$" %6.0f `base_pbus' ///
+>    " Ed=$" %6.0f `base_ped' " Health=$" %6.0f `base_phlth'
   Base salaries: STEM=$ 65000 Business=$ 60000 Ed=$ 42000 Health=$ 68000
 
-. 
-. di _n "Pipeline            MPRTE    Annual Gain   PV Gain    B/C Ratio"
+. di "Pipeline                            PRTE    Annual Gain   PV Gain    B/C Ratio"
+Pipeline                            PRTE    Annual Gain   PV Gain    B/C Ratio
 
-Pipeline            MPRTE    Annual Gain   PV Gain    B/C Ratio
+. di "================================================================================"
+================================================================================
 
-. di "=================================================================="
-==================================================================
+. foreach s in pstem pbus ped phlth {
+  2.     local ag  = `base_`s'' * (exp(`prte_`s'') - 1)
+  3.     local pvg = `ag' * `pv_factor'
+  4.     di "  `lbl_`s''" _col(37) %6.4f `prte_`s'' "   $" %7.0f `ag' "   $" %9.0f `pvg' "   " 
+> %5.2f `pvg'/`cost_per_degree'
+  5. }
+  STEM pipeline +$2.5k (Scen. 5)    0.2423   $  17824   $   349367    6.99
+  Business pipeline +$2.5k (Scen. 6)0.7203   $  63302   $  1240746   24.81
+  Education pipeline +$2.5k (Scen. 7)0.1867   $   8619   $   168929    3.38
+  Health pipeline +$2.5k (Scen. 8)  0.3345   $  27013   $   529466   10.59
 
-. local mv = `mprte_ma_stem'
-
-. local ag = `base_stem' * (exp(`mv') - 1)
-
-. local pvg = `ag' * `pv_factor'
-
-. di "STEM pipeline       " %6.4f `mv' "   $" %6.0f `ag' "    $" %8.0f `pvg' "   " %5.2f `pvg'/`cost_per_degr
-> ee'
-STEM pipeline       1.2773   $168144    $ 3295703   65.91
-
-. 
-. local mv = `mprte_ma_bus'
-
-. local ag = `base_bus' * (exp(`mv') - 1)
-
-. local pvg = `ag' * `pv_factor'
-
-. di "Business pipeline   " %6.4f `mv' "   $" %6.0f `ag' "    $" %8.0f `pvg' "   " %5.2f `pvg'/`cost_per_degr
-> ee'
-Business pipeline   0.8192   $ 76123    $ 1492052   29.84
-
-. 
-. local mv = `mprte_ma_ed'
-
-. local ag = `base_ed' * (exp(`mv') - 1)
-
-. local pvg = `ag' * `pv_factor'
-
-. di "Education pipeline  " %6.4f `mv' "   $" %6.0f `ag' "    $" %8.0f `pvg' "   " %5.2f `pvg'/`cost_per_degr
-> ee'
-Education pipeline  1.0317   $ 75843    $ 1486562   29.73
-
-. 
-. local mv = `mprte_ma_hlth'
-
-. local ag = `base_hlth' * (exp(`mv') - 1)
-
-. local pvg = `ag' * `pv_factor'
-
-. di "Health pipeline     " %6.4f `mv' "   $" %6.0f `ag' "    $" %8.0f `pvg' "   " %5.2f `pvg'/`cost_per_degr
-> ee'
-Health pipeline     1.0186   $120315    $ 2358236   47.16
-
-. 
 . di "Note: B/C > 1 suggests policy expansion is beneficial (synthetic data only)."
 Note: B/C > 1 suggests policy expansion is beneficial (synthetic data only).
 
@@ -4339,9 +4024,10 @@ Note: B/C > 1 suggests policy expansion is beneficial (synthetic data only).
 . * SECTION 15: Save Results
 . ********************************************************************************
 . 
-. label var phat    "Estimated propensity score"
+. drop p_pol_* targeted_lowinc target_health
 
-. label var mte_hat "Estimated MTE (pooled cubic)"
+. 
+. label var phat    "Estimated propensity score"
 
 . label var z_index "Probit linear index"
 
@@ -4354,8 +4040,6 @@ file bb_mte_analysis.dta saved
 
 .     collapse (mean) masters ln_salary phat mte_hat ///
 >              ma_stem ma_business ma_education ma_health ma_other ///
->              mte_hat_stem mte_hat_business mte_hat_education     ///
->              mte_hat_health mte_hat_other                        ///
 >              (sd) sd_mte=mte_hat (count) n=id, by(stem_major ed_major)
 
 .     export delimited "mte_summary_by_field.csv", replace
@@ -4370,9 +4054,7 @@ file mte_summary_by_field.csv saved
 (4,932 observations deleted)
 
 .     collapse (mean) ln_salary salary phat mte_hat ///
->              mte_hat_stem mte_hat_business mte_hat_education ///
->              mte_hat_health mte_hat_other                    ///
->              (count) n=id,                                   ///
+>              (count) n=id,                        ///
 >              by(ma_stem ma_business ma_education ma_health ma_other)
 
 .     export delimited "mte_summary_by_program_area.csv", replace
@@ -4395,162 +4077,119 @@ ANALYSIS COMPLETE
 . di "=============================================="
 ==============================================
 
-. di "  1.  Treatment rate:                  " %5.3f `treat_rate'
-  1.  Treatment rate:                  0.384
+. di "  1.  Treatment rate:          " %5.3f `treat_rate'
+  1.  Treatment rate:          0.384
 
-. di "  2.  OLS estimate (biased):           " %6.4f `ols_est'
-  2.  OLS estimate (biased):           0.9633
+. di "  2.  First-stage F:           " %6.1f `first_stage_F'
+  2.  First-stage F:           1297.2
 
-. di "  3.  IV/LATE estimate:                " %6.4f `iv_est'
-  3.  IV/LATE estimate:                0.4031
+. di "  3.  OLS estimate (biased):   " %7.4f `ols_est'
+  3.  OLS estimate (biased):    0.9633
 
-. di "  4.  MTE-based ATE (cubic):           " %6.4f `ate_est_cubic' " (BS SE = " %6.4f `ate_se' ")"
-  4.  MTE-based ATE (cubic):           0.8468 (BS SE = 0.0376)
+. di "  4.  IV/2SLS (LATE):          " %7.4f `iv_est'
+  4.  IV/2SLS (LATE):           0.4031
 
-. di "  5.  MTE-based ATT:                   " %6.4f `att_est'       " (BS SE = " %6.4f `att_se' ")"
-  5.  MTE-based ATT:                   1.2162 (BS SE = 0.0382)
+. di "  5.  mtefe ATE:               " %7.4f `ate_est'  " (BS SE = " %6.4f `ate_se'  ")"
+  5.  mtefe ATE:                0.3589 (BS SE = 0.1536)
 
-. di "  6.  MTE-based ATU:                   " %6.4f `atu_est'       " (BS SE = " %6.4f `atu_se' ")"
-  6.  MTE-based ATU:                   0.5528 (BS SE = 0.1082)
+. di "  6.  mtefe ATT:               " %7.4f `att_est'  " (BS SE = " %6.4f `att_se'  ")"
+  6.  mtefe ATT:                0.8285 (BS SE = 0.1785)
 
-. di "  7.  mtefe ATE (quad):                " %6.4f `mtefe_ate_q' "  (BS SE = " %6.4f `mtefe_ate_q_se' ")"
-  7.  mtefe ATE (quad):                0.3589  (BS SE = 0.0376)
+. di "  7.  mtefe ATU:               " %7.4f `atu_est'  " (BS SE = " %6.4f `atu_se'  ")"
+  7.  mtefe ATU:                0.0705 (BS SE = 0.2088)
 
-. di "  8.  First-stage F:                   " %6.1f `first_stage_F'
-  8.  First-stage F:                   1297.2
+. di "  8.  mtefe LATE:              " %7.4f `late_est' " (BS SE = " %6.4f `late_se' ")"
+  8.  mtefe LATE:               0.4051 (BS SE = 0.0482)
+
+. di "  9.  mtefe MPRTE1:            " %7.4f `mprte1_est' " (BS SE = " %6.4f `mprte1_se' ")"
+  9.  mtefe MPRTE1:             0.4490 (BS SE = 0.0604)
+
+. di " 10.  Essential heterogeneity: p = " %6.4f `p_ess_het'
+ 10.  Essential heterogeneity: p = 0.0015
 
 . 
-. di _n "AREA-SPECIFIC ATE, ATT, AND ATU WITH 95% CONFIDENCE INTERVALS"
+. if `run_areas' == 1 {
+.     di _n "AREA-SPECIFIC ATE, ATT, AND ATU (separate mtefe per area)"
 
-AREA-SPECIFIC ATE, ATT, AND ATU WITH 95% CONFIDENCE INTERVALS
-
-. di "(Cluster bootstrap, G=50 states, R=500 reps, seed 20260101)"
-(Cluster bootstrap, G=50 states, R=500 reps, seed 20260101)
-
-. di "ATU based on prospective program area assignment (seed 20260102)"
+AREA-SPECIFIC ATE, ATT, AND ATU (separate mtefe per area)
+.     di "(State-clustered bootstrap, G=50, seed 20260101)"
+(State-clustered bootstrap, G=50, seed 20260101)
+.     di "ATU based on prospective program area assignment (seed 20260102)"
 ATU based on prospective program area assignment (seed 20260102)
-
-. di "=================================================================="
+.     di "=================================================================="
 ==================================================================
+.     foreach s in ate att atu {
+  2.         di _n upper("`s'") " estimates:"
+  3.         di "Area          Estimate   (BS SE)    95% CI                  Sig"
+  4.         di "------------------------------------------------------------------"
+  5.         foreach a in other stem business education health {
+  6.             local lo = ``s'_`a'' - 1.96 * ``s'_se_`a''
+  7.             local hi = ``s'_`a'' + 1.96 * ``s'_se_`a''
+  8.             local sig = cond(`lo' > 0, "***", cond(`hi' < 0, "***", "   "))
+  9.             di "  `a'" _col(14) %7.4f ``s'_`a'' "   (" %6.4f ``s'_se_`a'' ")   [" ///
+>                %7.4f `lo' ", " %7.4f `hi' "]   `sig'"
+ 10.         }
+ 11.     }
 
-. di "ATE estimates:"
 ATE estimates:
-
-. di "Area          Estimate   (BS SE)    95% CI                  Sig"
 Area          Estimate   (BS SE)    95% CI                  Sig
-
-. di "------------------------------------------------------------------"
 ------------------------------------------------------------------
-
-. foreach a in other stem business education health {
-  2.     local lo_ate = `ate_`a'' - 1.96 * `ate_se_`a''
-  3.     local hi_ate = `ate_`a'' + 1.96 * `ate_se_`a''
-  4.     local sig_ate = cond(`lo_ate' > 0, "***", cond(`hi_ate' < 0, "***", "   "))
-  5.     di "  `a'" _col(14) %6.4f `ate_`a'' "   (" %6.4f `ate_se_`a'' ")   [" %7.4f `lo_ate' ", " %7.4f `hi_
-> ate' "]   `sig_ate'"
-  6. }
-  other      0.8085   (0.0500)   [ 0.7105,  0.9064]   ***
-  stem       0.9424   (0.0892)   [ 0.7676,  1.1171]   ***
-  business   1.6936   (0.6077)   [ 0.5024,  2.8847]   ***
-  education  0.6437   (0.1910)   [ 0.2694,  1.0181]   ***
-  health     0.8469   (0.0449)   [ 0.7589,  0.9349]   ***
-
-. di _n "ATT estimates:"
+  other       0.1921   (0.0770)   [ 0.0412,  0.3430]   ***
+  stem        0.4551   (0.1645)   [ 0.1327,  0.7776]   ***
+  business    0.0596   (0.5408)   [-1.0004,  1.1197]      
+  education  -0.0264   (0.3091)   [-0.6322,  0.5794]      
+  health      0.0647   (0.1362)   [-0.2022,  0.3316]      
 
 ATT estimates:
-
-. di "Area          Estimate   (BS SE)    95% CI                  Sig"
 Area          Estimate   (BS SE)    95% CI                  Sig
-
-. di "------------------------------------------------------------------"
 ------------------------------------------------------------------
+  other       0.8240   (0.1385)   [ 0.5527,  1.0954]   ***
+  stem        0.1894   (0.4489)   [-0.6904,  1.0693]      
+  business    0.9074   (0.2971)   [ 0.3251,  1.4896]   ***
+  education   1.0945   (0.5979)   [-0.0774,  2.2663]      
+  health      0.7848   (0.2493)   [ 0.2962,  1.2734]   ***
 
-. foreach a in other stem business education health {
-  2.     local lo_att = `att_`a'' - 1.96 * `att_se_`a''
-  3.     local hi_att = `att_`a'' + 1.96 * `att_se_`a''
-  4.     local sig_att = cond(`lo_att' > 0, "***", cond(`hi_att' < 0, "***", "   "))
-  5.     di "  `a'" _col(14) %6.4f `att_`a'' "   (" %6.4f `att_se_`a'' ")   [" %7.4f `lo_att' ", " %7.4f `hi_
-> att' "]   `sig_att'"
-  6. }
-  other      1.1750   (0.0519)   [ 1.0732,  1.2767]   ***
-  stem       1.3566   (0.0359)   [ 1.2863,  1.4269]   ***
-  business   1.0977   (0.0910)   [ 0.9192,  1.2761]   ***
-  education  1.2200   (0.0722)   [ 1.0785,  1.3615]   ***
-  health     1.2086   (0.0442)   [ 1.1220,  1.2952]   ***
-
-. di _n "ATU estimates (prospective program area assignment):"
-
-ATU estimates (prospective program area assignment):
-
-. di "Area          Estimate   (BS SE)    95% CI                  Sig"
+ATU estimates:
 Area          Estimate   (BS SE)    95% CI                  Sig
-
-. di "------------------------------------------------------------------"
 ------------------------------------------------------------------
-
-. foreach a in other stem business education health {
-  2.     local lo_atu = `atu_`a'' - 1.96 * `atu_se_`a''
-  3.     local hi_atu = `atu_`a'' + 1.96 * `atu_se_`a''
-  4.     local sig_atu = cond(`lo_atu' > 0, "***", cond(`hi_atu' < 0, "***", "   "))
-  5.     di "  `a'" _col(14) %6.4f `atu_`a'' "   (" %6.4f `atu_se_`a'' ")   [" %7.4f `lo_atu' ", " %7.4f `hi_
-> atu' "]   `sig_atu'"
-  6. }
-  other      0.4836   (0.1214)   [ 0.2458,  0.7215]   ***
-  stem       1.0820   (0.0855)   [ 0.9144,  1.2496]   ***
-  business   0.3574   (0.1591)   [ 0.0456,  0.6692]   ***
-  education  0.7348   (0.1818)   [ 0.3784,  1.0912]   ***
-  health     0.5685   (0.1126)   [ 0.3477,  0.7892]   ***
-
-. di "  *** = 95% CI excludes zero (p < 0.05, two-tailed)"
+  other      -0.1589   (0.1627)   [-0.4777,  0.1599]      
+  stem        0.7891   (0.4183)   [-0.0307,  1.6089]      
+  business   -0.1956   (0.7395)   [-1.6449,  1.2538]      
+  education  -0.9235   (0.7223)   [-2.3391,  0.4922]      
+  health     -0.3713   (0.3199)   [-0.9983,  0.2558]      
+.     di "  *** = 95% CI excludes zero (p < 0.05, two-tailed)"
   *** = 95% CI excludes zero (p < 0.05, two-tailed)
-
-. di "  Note: Business ATE CI is wide — interpret point estimate with caution."
-  Note: Business ATE CI is wide — interpret point estimate with caution.
-
-. 
-. di _n "MPRTE SUMMARY - Original Scenarios:"
-
-MPRTE SUMMARY - Original Scenarios:
-
-. di "  Uniform policy:         " %6.4f `mprte_unif'
-  Uniform policy:         0.9784
-
-. di "  Low-income targeted:    " %6.4f `mprte_lowinc'
-  Low-income targeted:    0.9336
-
-. di "  STEM ug pipeline:       " %6.4f `mprte_stem'
-  STEM ug pipeline:       1.2367
-
-. di "  Education ug pipeline:  " %6.4f `mprte_ed'
-  Education ug pipeline:  1.1615
+.     di "  Note: area groups are small (Business ~179 completers); interpret with caution."
+  Note: area groups are small (Business ~179 completers); interpret with caution.
+. }
 
 . 
-. di _n "MPRTE SUMMARY - Graduate Program Area Pipelines (Scenarios 5-8):"
+. di _n "PRTE SUMMARY (mtefe prte):"
 
-MPRTE SUMMARY - Graduate Program Area Pipelines (Scenarios 5-8):
+PRTE SUMMARY (mtefe prte):
 
-. di "  STEM grad pipeline:     " %6.4f `mprte_ma_stem'
-  STEM grad pipeline:     1.2773
-
-. di "  Business grad pipeline: " %6.4f `mprte_ma_bus'
-  Business grad pipeline: 0.8192
-
-. di "  Education pipeline:     " %6.4f `mprte_ma_ed'
-  Education pipeline:     1.0317
-
-. di "  Health & Related:       " %6.4f `mprte_ma_hlth'
-  Health & Related:       1.0186
+. foreach s in unif lowinc stem ed pstem pbus ped phlth {
+  2.     di "  `lbl_`s''" _col(39) %7.4f `prte_`s''
+  3. }
+  Uniform +$1k (Scen. 1)               0.4238
+  Low-income +$2k (Scen. 2)            0.3073
+  STEM ug +$3k (Scen. 3)               0.2318
+  Education ug +$2.5k (Scen. 4)        0.1867
+  STEM pipeline +$2.5k (Scen. 5)       0.2423
+  Business pipeline +$2.5k (Scen. 6)   0.7203
+  Education pipeline +$2.5k (Scen. 7)  0.1867
+  Health pipeline +$2.5k (Scen. 8)     0.3345
 
 . 
-. di _n "Bootstrap: G=50 state clusters, R=500 reps, seed(20260101)"
+. di _n "Bootstrap: G=50 state clusters, `n_boot' reps, seed(20260101)"
 
-Bootstrap: G=50 state clusters, R=500 reps, seed(20260101)
+Bootstrap: G=50 state clusters, 500 reps, seed(20260101)
 
 . di "Files saved: bb_mte_analysis.dta, mte_summary_by_field.csv,"
 Files saved: bb_mte_analysis.dta, mte_summary_by_field.csv,
 
-. di "             mte_summary_by_program_area.csv"
-             mte_summary_by_program_area.csv
+. di "             mte_summary_by_program_area.csv, `bootfile'"
+             mte_summary_by_program_area.csv, mte_bootstrap_draws.dta
 
 . 
 . di _n "IMPORTANT NOTE: Synthetic data — results illustrate methods only."
@@ -4575,8 +4214,6 @@ END OF MTE/MPRTE ANALYSIS
 
 . capture graph display fig11_6
 
-. capture graph display fig11_7
-
 . capture graph display fig11_8
 
 . 
@@ -4586,7 +4223,7 @@ END OF MTE/MPRTE ANALYSIS
 . *------------------------------------------------------------------------
 . di as text _n "MTE_MPRTE.do log closed: " c(current_date) " " c(current_time)
 
-MTE_MPRTE.do log closed: 28 Jun 2026 19:41:13
+MTE_MPRTE.do log closed:  5 Nov 2026 00:50:42
 
 . capture log close mte_mprte
 
@@ -4600,7 +4237,7 @@ end of do-file
 . 
 . *------------------------------------------------------------------------
 . * Display MTE/MPRTE figures in the Stata graph window
-. * MTE_MPRTE.do already calls graph display for fig11_3 – fig11_8
+. * MTE_MPRTE.do already displays and saves (.gph and .png) each figure
 . * at its own end. The block below provides a single consolidated recall.
 . *------------------------------------------------------------------------
 . capture graph display fig11_3
@@ -4611,13 +4248,13 @@ end of do-file
 
 . capture graph display fig11_6
 
-. capture graph display fig11_7
-
 . capture graph display fig11_8
 
 . 
 . *========================================================================
 . * Close log and exit
+. * (Each sub-script saves its figures as .gph and .png. Reload a figure
+. *  after Stata closes with:  graph use "$graphs_dir/fig11_3.gph")
 . *========================================================================
 . 
 . clear all
@@ -4625,8 +4262,8 @@ end of do-file
 . 
 . log close
       name:  <unnamed>
-       log:  C:\\Users\\marvi\\Dropbox\\Book\\2nd Edition\\Chapter 11\\Output\\logs\\Chapter11_Stata_output.l
-> og
+       log:  C:\\Users\\marvi\\Dropbox\\Book\\2nd Edition\\Chapter 11\\Output\\logs\\Chapter11_
+> Stata_output.log
   log type:  text
- closed on:  28 Jun 2026, 19:41:15
--------------------------------------------------------------------------------------------------------------
+ closed on:   5 Nov 2026, 00:50:44
+-----------------------------------------------------------------------------------------------
