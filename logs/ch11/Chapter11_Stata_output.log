@@ -3,7 +3,7 @@
        log:  C:\\Users\\marvi\\Dropbox\\Book\\2nd Edition\\Chapter 11\\Output\\logs\\Chapter11_
 > Stata_output.log
   log type:  text
- opened on:   5 Nov 2026, 00:43:07
+ opened on:   6 Nov 2026, 13:51:52
 . }
 
 . else {
@@ -20,7 +20,7 @@
 
 . 
 . di "Chapter 11 log opened: " c(current_date) " " c(current_time)
-Chapter 11 log opened:  5 Nov 2026 00:43:07
+Chapter 11 log opened:  6 Nov 2026 13:51:52
 
 . di "Graphs directory: $graphs_dir"
 Graphs directory: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs
@@ -110,7 +110,9 @@ MTE/IV packages confirmed.
 . * Sub-script called by Stata_code11.do
 . * Higher Education Policy Analysis Using Quantitative Techniques (2nd ed.)
 . * Author: Marvin A. Titus
-. * Date: June 2026
+. * Date: June 2026 (revised November 2026: lincom SEs for the implied
+. *       CATEs in Table 11.1; figure names fig11_1/fig11_2; supplementary-
+. *       table title; GitHub data download)
 . * NOTE: Code development was assisted by Claude (Anthropic). The author
 . * provided specifications and reviewed, tested, and validated all code.
 . *========================================================================
@@ -148,9 +150,15 @@ MTE/IV packages confirmed.
 . *
 . * OUTPUTS
 . * -------
-. *   fig11_7_cate_forest.png   — forest plot of CATE by subgroup
-. *   fig11_8_cate_interact.png — interaction IV coefficient plot
-. *   tab11_2_cate_subgroup.rtf — comparison table (OLS / LATE / CATE)
+. *   fig11_1_cate_forest.png   — forest plot of CATE by subgroup
+. *   fig11_2_cate_interact.png — interaction IV coefficient plot
+. *   (both supplementary; not printed in the chapter, whose Figs. 11.1
+. *    and 11.2 come from MTE_MPRTE.do)
+. *   tab11_2_cate_subgroup.rtf — supplementary comparison table
+. *                               (OLS / LATE / CATE); not a numbered table
+. *                               in the chapter (the "tab11_2" prefix is a
+. *                               holdover from an earlier draft)
+. *   Table 11.1 (chapter) — implied CATEs with lincom SEs, Strategy (b)
 . *
 . * INHERITS (from Stata_code11.do)
 . *   $graphs_dir, $tables_dir, log, set scheme s2mono
@@ -177,6 +185,30 @@ MTE/IV packages confirmed.
 . *    first data load for the chapter run; falls back to the base file
 . *    if the updated version is unavailable)
 . *------------------------------------------------------------------------
+. 
+. * Data location: the author's Dropbox data folder; readers use the
+. * current working directory (the data are downloaded from GitHub if
+. * absent), mirroring MTE_MPRTE.do.
+. if c(username) == "marvi" {
+.     cd "C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Data/Stata"
+C:\Users\marvi\Dropbox\Book\2nd Edition\Chapter 11\Data\Stata
+. }
+
+. di as text "Data directory: `c(pwd)'"
+Data directory: C:\Users\marvi\Dropbox\Book\2nd Edition\Chapter 11\Data\Stata
+
+. 
+. capture confirm file "Example_7_5_3_updated.dta"
+
+. if _rc != 0 {
+.     di as text "Attempting to download Example_7_5_3_updated.dta from GitHub..."
+.     capture copy ///
+>         "https://raw.githubusercontent.com/higher-ed-policy-analysis-2nd-edition/data/main/ch
+> 11/Example_7_5_3_updated.dta" ///
+>         "Example_7_5_3_updated.dta", replace
+.     if _rc != 0 di as text "Download failed; trying the base dataset."
+. }
+
 . 
 . capture use "Example_7_5_3_updated.dta", clear
 
@@ -258,11 +290,11 @@ MTE/IV packages confirmed.
       name:  cate
        log:  C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/logs/CATE_output.log
   log type:  text
- opened on:   5 Nov 2026, 00:43:25
+ opened on:   6 Nov 2026, 13:52:07
 
 . 
 . di as text "CATE.do log opened: " c(current_date) " " c(current_time)
-CATE.do log opened:  5 Nov 2026 00:43:25
+CATE.do log opened:  6 Nov 2026 13:52:07
 
 . di as text "Log file: $logdir/CATE_output.log"
 Log file: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/logs/CATE_output.log
@@ -554,12 +586,75 @@ Implied CATEs (log-points):
   STEM, Low-income:        0.2589
 
 . 
+. * Standard errors and p-values for the implied CATEs (Table 11.1).
+. * lincom combines the base coefficient and the interaction term(s) and
+. * uses the full robust covariance matrix of the interaction IV model.
+. * (The figure below uses a cruder, conservative SE that ignores the
+. * covariances; Table 11.1 reports these lincom results.)
+. di _n as text "Implied CATEs with standard errors (lincom; Table 11.1):"
+
+Implied CATEs with standard errors (lincom; Table 11.1):
+
+. di    as text "  STEM, higher parental income:"
+  STEM, higher parental income:
+
+. lincom _b[masters] + _b[D_x_stem_major]
+
+ ( 1)  masters + D_x_stem_major = 0
+
+------------------------------------------------------------------------------
+   ln_salary | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+         (1) |   .3571857   .1151999     3.10   0.002     .1313981    .5829733
+------------------------------------------------------------------------------
+
+. di    as text "  Non-STEM, low parental income:"
+  Non-STEM, low parental income:
+
+. lincom _b[masters] + _b[D_x_lowinc]
+
+ ( 1)  masters + D_x_lowinc = 0
+
+------------------------------------------------------------------------------
+   ln_salary | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+         (1) |   .3250275   .1441106     2.26   0.024     .0425759    .6074791
+------------------------------------------------------------------------------
+
+. di    as text "  STEM, low parental income:"
+  STEM, low parental income:
+
+. lincom _b[masters] + _b[D_x_stem_major] + _b[D_x_lowinc]
+
+ ( 1)  masters + D_x_stem_major + D_x_lowinc = 0
+
+------------------------------------------------------------------------------
+   ln_salary | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+         (1) |   .2589053   .1712587     1.51   0.131    -.0767556    .5945661
+------------------------------------------------------------------------------
+
+. di    as text "  First-generation:"
+  First-generation:
+
+. lincom _b[masters] + _b[D_x_firstgen]
+
+ ( 1)  masters + D_x_firstgen = 0
+
+------------------------------------------------------------------------------
+   ln_salary | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+         (1) |   .4250104   .0735295     5.78   0.000     .2808953    .5691255
+------------------------------------------------------------------------------
+
+. 
 . *========================================================================
 . * STRATEGY (c): Visualization
 . *========================================================================
 . 
 . *------------------------------------------------------------------------
-. * Fig 11.7: Forest plot of subgroup CATEs from Strategy (a)
+. * Fig. 11.1 (supplementary, script name fig11_1): forest plot of
+. * subgroup CATEs from Strategy (a)
 . *------------------------------------------------------------------------
 . 
 . di _n as text "--- Producing CATE forest plot ---"
@@ -629,27 +724,28 @@ Implied CATEs (log-points):
 >              "Full-sample LATE (black) shown as benchmark."         ///
 >              "Estimates based on synthetic data (illustrative).")   ///
 >         legend(off) scheme(s2mono)                                  ///
->         name(fig11_7, replace)
+>         name(fig11_1, replace)
 
 . 
-.     graph save "$graphs_dir/fig11_7.gph", replace
-file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_7.gph saved
+.     graph save "$graphs_dir/fig11_1.gph", replace
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_1.gph saved
 
-.     graph export "$graphs_dir/fig11_7_cate_forest.png",              ///
+.     graph export "$graphs_dir/fig11_1_cate_forest.png",              ///
 >         replace width(1400)
-file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_7_cate_forest.png
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_1_cate_forest.png
     saved as PNG format
 
 . 
 . restore
 
 . 
-. di as text "  fig11_7_cate_forest exported."
-  fig11_7_cate_forest exported.
+. di as text "  fig11_1_cate_forest exported."
+  fig11_1_cate_forest exported.
 
 . 
 . *------------------------------------------------------------------------
-. * Fig 11.8: Interaction IV — STEM × income 2×2 coefficient plot
+. * Fig. 11.2 (supplementary, script name fig11_2): interaction IV —
+. * STEM × income 2×2 coefficient plot
 . *------------------------------------------------------------------------
 . 
 . di _n as text "--- Producing CATE interaction coefficient plot ---"
@@ -760,23 +856,23 @@ file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_7_ca
 >              "Estimates based on synthetic data (illustrative).")       ///
 >         legend(order(2 "Non-STEM" 3 "STEM") rows(1))                    ///
 >         scheme(s2mono)                                                  ///
->         name(fig11_8, replace)
+>         name(fig11_2, replace)
 
 . 
-.     graph save "$graphs_dir/fig11_8.gph", replace
-file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_8.gph saved
+.     graph save "$graphs_dir/fig11_2.gph", replace
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_2.gph saved
 
-.     graph export "$graphs_dir/fig11_8_cate_interact.png",                ///
+.     graph export "$graphs_dir/fig11_2_cate_interact.png",                ///
 >         replace width(1400)
 file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
-    11/Output/graphs/fig11_8_cate_interact.png saved as PNG format
+    11/Output/graphs/fig11_2_cate_interact.png saved as PNG format
 
 . 
 . restore
 
 . 
-. di as text "  fig11_8_cate_interact exported."
-  fig11_8_cate_interact exported.
+. di as text "  fig11_2_cate_interact exported."
+  fig11_2_cate_interact exported.
 
 . 
 . *========================================================================
@@ -834,7 +930,7 @@ file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
 >     stats(N r2, labels("N" "R-squared") fmt(0 3))                       ///
 >     mlabels("OLS" "IV/LATE" "CATE: STEM" "CATE: First-gen"             ///
 >             "CATE: Low-income")                                         ///
->     title("Table 11.2. OLS, LATE, and Conditional Average Treatment Effects") ///
+>     title("Supplementary table. OLS, LATE, and Conditional Average Treatment Effects") ///
 >     note("Outcome: log annual salary."                                  ///
 >          "Instrument: state-funded GA amount (ga_funding_adj)."         ///
 >          "Robust SEs in parentheses."                                   ///
@@ -863,9 +959,9 @@ file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
 . * Display figures
 . *========================================================================
 . 
-. capture graph display fig11_7
+. capture graph display fig11_1
 
-. capture graph display fig11_8
+. capture graph display fig11_2
 
 . 
 . di _n as text "=========================================================="
@@ -878,11 +974,11 @@ file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
 . di      as text " Outputs:"
  Outputs:
 
-. di      as text "   $graphs_dir/fig11_7_cate_forest.png"
-   C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_7_cate_forest.png
+. di      as text "   $graphs_dir/fig11_1_cate_forest.png"
+   C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_1_cate_forest.png
 
-. di      as text "   $graphs_dir/fig11_8_cate_interact.png"
-   C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_8_cate_interact.png
+. di      as text "   $graphs_dir/fig11_2_cate_interact.png"
+   C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/graphs/fig11_2_cate_interact.png
 
 . di      as text "   $tables_dir/tab11_2_cate_subgroup.rtf"
    C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/tables/tab11_2_cate_subgroup.rtf
@@ -897,7 +993,7 @@ file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
 . *------------------------------------------------------------------------
 . di as text _n "CATE.do log closed: " c(current_date) " " c(current_time)
 
-CATE.do log closed:  5 Nov 2026 00:43:31
+CATE.do log closed:  6 Nov 2026 13:52:12
 
 . capture log close cate
 
@@ -1105,11 +1201,11 @@ MTE_MPRTE.do (standalone): graphs_dir set to C:/Users/marvi/Dropbox/Book/2nd Edi
        log:  C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/logs/MTE_MPRTE_output.lo
 > g
   log type:  text
- opened on:   5 Nov 2026, 00:43:31
+ opened on:   6 Nov 2026, 13:52:13
 
 . 
 . di as text "MTE_MPRTE.do log opened: " c(current_date) " " c(current_time)
-MTE_MPRTE.do log opened:  5 Nov 2026 00:43:31
+MTE_MPRTE.do log opened:  6 Nov 2026 13:52:13
 
 . di as text "Log file: $logdir/MTE_MPRTE_output.log"
 Log file: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/logs/MTE_MPRTE_output.log
@@ -3338,7 +3434,7 @@ Wild bootstrap-t, null imposed, 9999 replications, Wald test, clustering by stat
                            t(49) =    18.4108
                         Prob>|t| =     0.0000
 
-95% confidence set for null hypothesis expression: [.8594, 1.067]
+95% confidence set for null hypothesis expression: [.8598, 1.068]
 
 . di "  p-value (wild cluster): " %6.4f r(p)
   p-value (wild cluster): 0.0000
@@ -3361,7 +3457,7 @@ Wild bootstrap-t, null imposed, 9999 replications, Wald test, clustering by stat
                                z =     8.9641
                         Prob>|z| =     0.0000
 
-95% confidence set for null hypothesis expression: [.3123, .4972]
+95% confidence set for null hypothesis expression: [.3116, .4968]
 
 . di "  p-value (wild cluster): " %6.4f r(p)
   p-value (wild cluster): 0.0000
@@ -4223,7 +4319,7 @@ END OF MTE/MPRTE ANALYSIS
 . *------------------------------------------------------------------------
 . di as text _n "MTE_MPRTE.do log closed: " c(current_date) " " c(current_time)
 
-MTE_MPRTE.do log closed:  5 Nov 2026 00:50:42
+MTE_MPRTE.do log closed:  6 Nov 2026 13:58:51
 
 . capture log close mte_mprte
 
@@ -4265,5 +4361,5 @@ end of do-file
        log:  C:\\Users\\marvi\\Dropbox\\Book\\2nd Edition\\Chapter 11\\Output\\logs\\Chapter11_
 > Stata_output.log
   log type:  text
- closed on:   5 Nov 2026, 00:50:44
+ closed on:   6 Nov 2026, 13:58:52
 -----------------------------------------------------------------------------------------------

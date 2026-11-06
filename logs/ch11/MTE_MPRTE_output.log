@@ -3,11 +3,11 @@
        log:  C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/logs/MTE_MPRTE_output.lo
 > g
   log type:  text
- opened on:   5 Nov 2026, 00:43:31
+ opened on:   6 Nov 2026, 13:52:13
 
 . 
 . di as text "MTE_MPRTE.do log opened: " c(current_date) " " c(current_time)
-MTE_MPRTE.do log opened:  5 Nov 2026 00:43:31
+MTE_MPRTE.do log opened:  6 Nov 2026 13:52:13
 
 . di as text "Log file: $logdir/MTE_MPRTE_output.log"
 Log file: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/logs/MTE_MPRTE_output.log
@@ -2236,7 +2236,7 @@ Wild bootstrap-t, null imposed, 9999 replications, Wald test, clustering by stat
                            t(49) =    18.4108
                         Prob>|t| =     0.0000
 
-95% confidence set for null hypothesis expression: [.8594, 1.067]
+95% confidence set for null hypothesis expression: [.8598, 1.068]
 
 . di "  p-value (wild cluster): " %6.4f r(p)
   p-value (wild cluster): 0.0000
@@ -2259,7 +2259,7 @@ Wild bootstrap-t, null imposed, 9999 replications, Wald test, clustering by stat
                                z =     8.9641
                         Prob>|z| =     0.0000
 
-95% confidence set for null hypothesis expression: [.3123, .4972]
+95% confidence set for null hypothesis expression: [.3116, .4968]
 
 . di "  p-value (wild cluster): " %6.4f r(p)
   p-value (wild cluster): 0.0000
@@ -3121,6 +3121,6 @@ END OF MTE/MPRTE ANALYSIS
 . *------------------------------------------------------------------------
 . di as text _n "MTE_MPRTE.do log closed: " c(current_date) " " c(current_time)
 
-MTE_MPRTE.do log closed:  5 Nov 2026 00:50:42
+MTE_MPRTE.do log closed:  6 Nov 2026 13:58:51
 
 . capture log close mte_mprte

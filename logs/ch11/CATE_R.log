@@ -1,4 +1,4 @@
-CATE.R log opened: 2026-11-06 13:39:30 
+CATE.R log opened: 2026-11-06 14:01:16 
 Log file: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/logs/CATE_R.log 
 
 --- Strategy (a): Subgroup IV/2SLS ---
@@ -26,19 +26,6 @@ Log file: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/logs/CATE_R.
 
   Subgroup 8 : Higher parental income 
     b = 0.4127  SE = 0.0500  N = 7674
-Warning messages:
-1: In ivreg.fit(X, Y, Z, weights, offset, method, ...) :
-  some instrumental variables are collinear
-2: In ivreg.fit(X, Y, Z, weights, offset, method, ...) :
-  some instrumental variables are collinear
-3: In ivreg.fit(X, Y, Z, weights, offset, method, ...) :
-  some instrumental variables are collinear
-4: In ivreg.fit(X, Y, Z, weights, offset, method, ...) :
-  some instrumental variables are collinear
-5: In ivreg.fit(X, Y, Z, weights, offset, method, ...) :
-  some instrumental variables are collinear
-6: In ivreg.fit(X, Y, Z, weights, offset, method, ...) :
-  some instrumental variables are collinear
 
 Subgroup CATE matrix:
                    b     se    lo95   hi95    N
@@ -131,15 +118,6 @@ First-generation                0.4250 0.0736 5.7725 0.0000  0.2807 0.5693
   fig11_2_cate_interact_R exported.
 
 --- Producing CATE comparison table ---
-Warning message:
-In ivreg.fit(X, Y, Z, weights, offset, method, ...) :
-  some instrumental variables are collinear
-Warning message:
-In ivreg.fit(X, Y, Z, weights, offset, method, ...) :
-  some instrumental variables are collinear
-Warning message:
-In ivreg.fit(X, Y, Z, weights, offset, method, ...) :
-  some instrumental variables are collinear
 
 Supplementary table. OLS, LATE, and Conditional Average Treatment Effects
  Statistic       OLS   IV/LATE CATE: STEM CATE: First-gen CATE: Low-income
@@ -157,4 +135,4 @@ Supplementary table. OLS, LATE, and Conditional Average Treatment Effects
    C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/tables/tab11_2_cate_subgroup.rtf 
 ==========================================================
 
-CATE.R log closed: 2026-11-06 13:39:33 
+CATE.R log closed: 2026-11-06 14:01:19 

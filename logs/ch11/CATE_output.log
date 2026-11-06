@@ -2,11 +2,11 @@
       name:  cate
        log:  C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/logs/CATE_output.log
   log type:  text
- opened on:   6 Nov 2026, 13:38:26
+ opened on:   6 Nov 2026, 13:52:07
 
 . 
 . di as text "CATE.do log opened: " c(current_date) " " c(current_time)
-CATE.do log opened:  6 Nov 2026 13:38:26
+CATE.do log opened:  6 Nov 2026 13:52:07
 
 . di as text "Log file: $logdir/CATE_output.log"
 Log file: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 11/Output/logs/CATE_output.log
@@ -705,6 +705,6 @@ file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
 . *------------------------------------------------------------------------
 . di as text _n "CATE.do log closed: " c(current_date) " " c(current_time)
 
-CATE.do log closed:  6 Nov 2026 13:38:31
+CATE.do log closed:  6 Nov 2026 13:52:12
 
 . capture log close cate
