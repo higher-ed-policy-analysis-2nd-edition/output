@@ -1,0 +1,254 @@
+Chapter 4 log opened: 02 Jul 2026 10:04:04 
+
+*===============================================================================
+* Section 4.2.1: Primary Data Entry
+*===============================================================================
+
+. list
+
+  variable_x variable_y variable_z
+1         31         57         18
+2         25         68         12
+3         35         60         13
+4         38         59         17
+5         30         59         15
+
+file Example_1_0.dta saved
+
+file Example_1.csv saved
+
+. insheet using Example_1.csv
+
+  variable_x variable_y variable_z
+1         31         57         18
+2         25         68         12
+3         35         60         13
+4         38         59         17
+5         30         59         15
+
+*===============================================================================
+* Section 4.2.2: Secondary Data - Cross-Sectional Data
+*===============================================================================
+
+  Available sheets in tabn302_50.xlsx: Digest 2016 Table 302.50, reformatted 
+  Reading sheet: reformatted 
+
+. describe
+
+  Observations: 51 
+  Variables:    9 
+
+# A tibble: 6 × 9
+  stateid State       Total Public Private anystate homestate anyrate homerate
+    <dbl> <chr>       <dbl>  <dbl>   <dbl>    <dbl>     <dbl>   <dbl>    <dbl>
+1       1 Alabama     50164  45394    4770    29728     26567      59       53
+2       2 Alaska       8189   7989     200     3732      2413      46       29
+3       3 Arizona     66218  63208    3010    35181     31132      53       47
+4       4 Arkansas    30019  28419    1600    20185     18244      67       61
+5       5 California 451364 418664   32700   263843    231215      58       51
+6       6 Colorado    52607  50087    2520    31139     23268      59       44
+
+. statastates + order state_abbrev state_fips
+
+# A tibble: 6 × 11
+  stateid state_abbrev state_fips State       Total Public Private anystate homestate anyrate homerate
+    <dbl> <chr>             <dbl> <chr>       <dbl>  <dbl>   <dbl>    <dbl>     <dbl>   <dbl>    <dbl>
+1       1 AL                    1 Alabama     50164  45394    4770    29728     26567      59       53
+2       2 AK                    2 Alaska       8189   7989     200     3732      2413      46       29
+3       3 AZ                    4 Arizona     66218  63208    3010    35181     31132      53       47
+4       4 AR                    5 Arkansas    30019  28419    1600    20185     18244      67       61
+5       5 CA                    6 California 451364 418664   32700   263843    231215      58       51
+6       6 CO                    8 Colorado    52607  50087    2520    31139     23268      59       44
+
+. describe (with labels)
+
+  stateid          State ID number
+  state_abbrev     State abbreviation
+  state_fips       FIPS code
+  State            State name
+  Total            Total number of graduates from HS located in the state
+  Public           Number of graduates from public HS located in the state
+  Private          Number of graduates from private HS located in the state
+  anystate         Number of 1st-time freshmen graduating from HS enrolled in any state
+  homestate        Number of 1st-time freshmen graduating from HS enrolled in home state
+  anyrate          Estimated rate of HS graduates going to college in any state
+  homerate         Estimated rate of HS graduates going to college in home state
+
+file saved: US high school graduates in 2012 enrolled in PSE, by state.dta
+
+*===============================================================================
+* Section 4.2.2: Secondary Data - Time Series Data
+*===============================================================================
+
+  Available sheets in tabn302_10.xlsx: Digest 2017 Table 302.10, reformatted 
+  Reading sheet: reformatted 
+
+. tsdes
+
+  Time variable: year
+  Range:         1960 to 2015 
+  Delta:         1 year
+  Observations:  56 
+
+file saved: Percent of US high school graduates in PSE, 1960 to 2016.dta
+
+*===============================================================================
+* Section 4.2.2: Secondary Data - Panel Data (Wide Format)
+*===============================================================================
+
+  Available sheets in tabn304_70.xlsx: Digest 2018 Table 304.70, HSGrad 
+  Reading sheet: Digest 2018 Table 304.70 
+
+. describe (wide format)
+
+  Observations: 0   Variables: 7 
+  Names: State, Ugrad_2000, Ugrad_2010, Ugrad_2012, Ugrad_2015, Ugrad_2016, Ugrad_2017 
+
+# A tibble: 0 × 7
+# ℹ 7 variables: State <chr>, Ugrad_2000 <dbl>, Ugrad_2010 <dbl>, Ugrad_2012 <dbl>, Ugrad_2015 <dbl>, Ugrad_2016 <dbl>,
+#   Ugrad_2017 <dbl>
+
+file saved: Undergraduate enrollment data - Wide.dta
+
+. sreshape long Ugrad, i(id) j(year)
+
+  Observations after reshape: 0 
+  Variables: State, year, Ugrad, id 
+
+# A tibble: 0 × 4
+# ℹ 4 variables: State <chr>, year <int>, Ugrad <dbl>, id <int>
+
+. xtdes
+
+  Panel variable: id
+  Time variable:  year, Inf to -Inf 
+  n = 0 panels
+  T = 0 periods
+  N = 0 observations
+
+file saved: Undergraduate enrollment data - Long.dta
+
+*===============================================================================
+* Section 4.2.2: Creating Additional Panel Variables
+*===============================================================================
+
+  Available sheets in tabn219_20.xlsx: Digest 2018 Table 219.20, HSGrad 
+  Reading sheet: HSGrad 
+
+  [parse_nces_wide] Could not locate a year row in tabn219_20.xlsx — returning empty data frame.
+file saved: HSGrad - Wide.dta
+
+  [Warning] No HSGrad_YYYY columns found — check sheet layout.
+  Column names found: State 
+
+[1] State  year   HSGrad id    
+<0 rows> (or 0-length row.names)
+file saved: HSGrad - Long.dta
+
+*===============================================================================
+* Section 4.2.2: Joining Panel Datasets
+*===============================================================================
+
+. xtdes (HSGrad - Long)
+
+  Panel variable: id
+  Time variable:  year, Inf to -Inf 
+  n = 0 panels
+  N = 0 observations
+
+. xtdes (combined panel)
+
+  Panel variable: id
+  Time variable:  year, Inf to -Inf 
+  n = 0 panels
+  N = 0 observations
+
+file saved: Example_4_2_2_Panel.dta
+
+*===============================================================================
+* Additional Data Management and Panel Data Commands
+*===============================================================================
+
+. describe
+
+  Observations: 0 
+  Variables:    4 
+  Names: State, year, Ugrad, id 
+
+. summarize
+
+    State                year         Ugrad           id     
+ Length:0           Min.   : NA   Min.   : NA   Min.   : NA  
+ Class :character   1st Qu.: NA   1st Qu.: NA   1st Qu.: NA  
+ Mode  :character   Median : NA   Median : NA   Median : NA  
+                    Mean   :NaN   Mean   :NaN   Mean   :NaN  
+                    3rd Qu.: NA   3rd Qu.: NA   3rd Qu.: NA  
+                    Max.   : NA   Max.   : NA   Max.   : NA  
+
+. summarize, detail
+
+        vars n mean sd median trimmed mad min  max range skew kurtosis se
+State**    1 0  NaN NA     NA     NaN  NA Inf -Inf  -Inf   NA       NA NA
+year*      2 0  NaN NA     NA     NaN  NA Inf -Inf  -Inf   NA       NA NA
+Ugrad*     3 0  NaN NA     NA     NaN  NA Inf -Inf  -Inf   NA       NA NA
+id*        4 0  NaN NA     NA     NaN  NA Inf -Inf  -Inf   NA       NA NA
+
+. misstable summarize
+
+  No missing values.
+
+. list in 1/10
+
+# A tibble: 0 × 4
+# ℹ 4 variables: State <chr>, year <int>, Ugrad <dbl>, id <int>
+
+  Column types in df_panel:
+    State            class: character     NAs: 0
+    year             class: integer       NAs: 0
+    Ugrad            class: numeric       NAs: 0
+    id               class: integer       NAs: 0
+
+. xtdes
+
+  Panel variable: id
+  Time variable:  year, Inf to -Inf 
+  n = 0 
+  T: min = Inf  max = -Inf 
+  Balanced: No 
+
+. xtsum
+
+  Ugrad                 Overall sd:       NA  Between sd:       NA  Within sd:       NA
+
+. list id year Ugrad Ugrad_lag1 Ugrad_diff in 1/20
+
+# A tibble: 0 × 5
+# ℹ 5 variables: id <int>, year <int>, Ugrad <dbl>, Ugrad_lag1 <dbl>, Ugrad_diff <dbl>
+
+files saved: Example_4_2_2_Panel.csv, Example_4_2_2_Panel.xlsx
+
+file saved: Example_4_2_2_Panel.dta
+
+*===============================================================================
+* Additional Useful Panel Data Examples
+*===============================================================================
+
+. tsdes
+
+  Time variable: year, 1960 to 2015 
+  Delta: 1 year   Observations: 56 
+
+. summarize
+
+      year         totalpct         trend       totalpct_lag1   totalpct_diff    
+ Min.   :1960   Min.   :45.03   Min.   : 1.00   Min.   :45.03   Min.   :-4.2913  
+ 1st Qu.:1974   1st Qu.:50.60   1st Qu.:14.75   1st Qu.:50.60   1st Qu.:-1.0703  
+ Median :1988   Median :59.26   Median :28.50   Median :58.92   Median : 0.6811  
+ Mean   :1988   Mean   :58.23   Mean   :28.50   Mean   :58.02   Mean   : 0.4477  
+ 3rd Qu.:2001   3rd Qu.:65.70   3rd Qu.:42.25   3rd Qu.:65.44   3rd Qu.: 2.2632  
+ Max.   :2015   Max.   :70.08   Max.   :56.00   Max.   :70.08   Max.   : 4.6197  
+                                                NA's   :1       NA's   :1        
+
+file saved: Example_4_2_2_TS.dta
+
+Chapter 4 R script completed: 02 Jul 2026 10:04:07 
