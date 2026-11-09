@@ -1,0 +1,2921 @@
+-----------------------------------------------------------------------------------------------
+      name:  ga_did
+       log:  C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/logs/Georgia_DiD.log
+  log type:  text
+ opened on:  15 Oct 2026, 16:35:45
+
+. 
+. di as text "Georgia_DiD.do: logging to $log_dir/Georgia_DiD.log"
+Georgia_DiD.do: logging to C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/logs/Georg
+> ia_DiD.log
+
+. 
+. * ------------------------------------------------------------------------
+. * VERSION STAMP -- printed INSIDE the log on purpose.
+. * If a log does not show this line, an older copy of the script ran.  That
+. * is the fastest way to settle "did my edit take effect?" without diffing
+. * files.  Bump the date when the script changes.
+. * ------------------------------------------------------------------------
+. di as text "Georgia_DiD.do: version 2026-09-23b"
+Georgia_DiD.do: version 2026-09-23b
+
+. di as text "Georgia_DiD.do: working directory = " c(pwd)
+Georgia_DiD.do: working directory = C:\Users\marvi
+
+. di as text "Georgia_DiD.do: out_root   = $out_root"
+Georgia_DiD.do: out_root   = C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output
+
+. di as text "Georgia_DiD.do: graphs_dir = $graphs_dir"
+Georgia_DiD.do: graphs_dir = C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs
+
+. di as text "Georgia_DiD.do: tables_dir = $tables_dir"
+Georgia_DiD.do: tables_dir = C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/tables
+
+. di as text "Georgia_DiD.do: log_dir    = $log_dir"
+Georgia_DiD.do: log_dir    = C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/logs
+
+. 
+. * ------------------------------------------------------------------------
+. * chkfig -- independent verification that a figure really reached disk.
+. * Stata's "saved as PNG format" only means -graph export- returned; it is
+. * not evidence that a file exists at the path we think it does.  chkfig
+. * re-opens the file and reports its byte length via -checksum- r(filelen),
+. * so the log carries proof rather than a claim.  Matches RDD.do.
+. * Dropped and redefined unconditionally: a copy left in memory by an
+. * earlier script in the same session is exactly the stale state that has
+. * bitten this chapter before, so we never inherit one.
+. * ------------------------------------------------------------------------
+. capture program drop chkfig
+
+. program define chkfig
+  1.     args f
+  2.     capture confirm file "`f'"
+  3.     if _rc {
+  4.         di as error "   chkfig: MISSING   `f'"
+  5.         exit
+  6.     }
+  7.     quietly checksum "`f'"
+  8.     di as text "   chkfig: OK  " %9.0fc r(filelen) " bytes   `f'"
+  9. end
+
+. 
+. *============================================================================================
+> =========================
+. * SECTION 10.3.1: DATA STRUCTURE AND VARIABLE CONSTRUCTION
+. *============================================================================================
+> =========================
+. di as text _n "============================================================"
+
+============================================================
+
+. di as text    "SECTION 10.3.1: DATA STRUCTURE AND VARIABLE CONSTRUCTION"
+SECTION 10.3.1: DATA STRUCTURE AND VARIABLE CONSTRUCTION
+
+. di as text    "============================================================"
+============================================================
+
+. 
+. * ------------------------------------------------------------------
+. * Download SHEEO state-level panel from GitHub
+. * ------------------------------------------------------------------
+. copy "https://raw.githubusercontent.com/higher-ed-policy-analysis-2nd-edition/data/main/ch10/
+> Example_10_3_1.csv" ///
+>      "Example_10_3_1.csv", replace
+
+. 
+. import delimited "Example_10_3_1.csv", clear
+(encoding automatically selected: UTF-8)
+(10 vars, 1,082 obs)
+
+. 
+. replace state = strtrim(state)
+(0 real changes made)
+
+. 
+. * SREB 16-state indicator
+. gen sreb = inlist(state, "Alabama","Arkansas","Delaware","Florida",        ///
+>                          "Georgia","Kentucky","Louisiana","Maryland","Mississippi") ///
+>          | inlist(state, "North Carolina","Oklahoma","South Carolina",     ///
+>                          "Tennessee","Texas","Virginia","West Virginia")
+
+. keep if sreb == 1
+(746 observations deleted)
+
+. 
+. * State FIPS codes for xtset
+. gen fips = .
+(336 missing values generated)
+
+. replace fips = 1  if state == "Alabama"
+(21 real changes made)
+
+. replace fips = 5  if state == "Arkansas"
+(21 real changes made)
+
+. replace fips = 10 if state == "Delaware"
+(21 real changes made)
+
+. replace fips = 12 if state == "Florida"
+(21 real changes made)
+
+. replace fips = 13 if state == "Georgia"
+(21 real changes made)
+
+. replace fips = 21 if state == "Kentucky"
+(21 real changes made)
+
+. replace fips = 22 if state == "Louisiana"
+(21 real changes made)
+
+. replace fips = 24 if state == "Maryland"
+(21 real changes made)
+
+. replace fips = 28 if state == "Mississippi"
+(21 real changes made)
+
+. replace fips = 37 if state == "North Carolina"
+(21 real changes made)
+
+. replace fips = 40 if state == "Oklahoma"
+(21 real changes made)
+
+. replace fips = 45 if state == "South Carolina"
+(21 real changes made)
+
+. replace fips = 47 if state == "Tennessee"
+(21 real changes made)
+
+. replace fips = 48 if state == "Texas"
+(21 real changes made)
+
+. replace fips = 51 if state == "Virginia"
+(21 real changes made)
+
+. replace fips = 54 if state == "West Virginia"
+(21 real changes made)
+
+. 
+. * Treatment indicators
+. gen byte treat_state  = (state == "Georgia")    // 1 = Georgia
+
+. gen byte post         = (fy >= 2018)             // post-consolidation
+
+. gen byte did          = treat_state * post       // TWFE DiD term
+
+. * The placebo pair below feeds the falsification test in Section 10.3.2
+. * (Eq. 10.10).  FY 2012 is chosen as a pseudo-treatment date far enough
+. * inside the pre-period that no genuine post-2018 year enters that model.
+. gen byte post_placebo = (fy >= 2012)             // placebo treatment year
+
+. gen byte did_placebo  = treat_state * post_placebo
+
+. 
+. * Log-transformed financial variables
+. * NOTE ON COLUMN NAMES: Example_10_3_1.csv carries underscore-separated
+. * headers, so -import delimited- yields general_public_operations,
+. * total_state_support, etc.  This differs from Example_10_7_3.csv used in
+. * Section 10.7.3, whose raw SHEEO headers arrive lowercased WITHOUT
+. * underscores (generalpublicoperations, ...).  Do not copy variable names
+. * between the two sections.
+. gen lngenop  = log(general_public_operations)
+
+. gen lntotsup = log(total_state_support)
+
+. gen lnfinaid = log(total_financial_aid)
+
+. gen lntuifee = log(net_tuition_and_fee_revenue)
+
+. gen lnfte    = log(net_fte_enrollment)
+
+. 
+. label var lngenop  "Log(General Operating Expenses)"
+
+. label var lntotsup "Log(Total State Support)"
+
+. label var lnfinaid "Log(Total Financial Aid)"
+
+. label var lntuifee "Log(Net Tuition & Fee Revenue)"
+
+. label var lnfte    "Log(FTE Enrollment)"
+
+. label var did      "DiD: Georgia × Post-2018"
+
+. 
+. global controls "lntotsup lnfinaid lntuifee lnfte"
+
+. 
+. * Declare strongly balanced panel
+. xtset fips fy
+
+Panel variable: fips (strongly balanced)
+ Time variable: fy, 2001 to 2021
+         Delta: 1 unit
+
+. di as text "Panel declared: N = " c(N) ", G = 16 states, T = 2001-2021"
+Panel declared: N = 336, G = 16 states, T = 2001-2021
+
+. 
+. * Save working dataset (referenced by later sections)
+. * Working dataset goes to $out_root/data, not the current directory.
+. capture mkdir "$out_root/data"
+
+. save "$out_root/data/ga_did_work.dta", replace
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/data/ga_did_work.dta saved
+
+. 
+. *============================================================================================
+> =========================
+. * SECTION 10.3.2: TWFE DiD ESTIMATION
+. *============================================================================================
+> =========================
+. di as text _n "============================================================"
+
+============================================================
+
+. di as text    "SECTION 10.3.2: TWFE DiD ESTIMATION"
+SECTION 10.3.2: TWFE DiD ESTIMATION
+
+. di as text    "============================================================"
+============================================================
+
+. 
+. * Primary TWFE estimate (state + year FEs, clustered SEs)
+. * Estimates Eq. 10.9:
+. *     lngenop_it = alpha_i + lambda_t + delta*(T_i x Post_t) + X_it'beta + e_it
+. * i.fy supplies lambda_t and the -fe- option supplies alpha_i.  T_i and Post_t
+. * do not appear as separate regressors: T_i is collinear with the state fixed
+. * effects and Post_t with the year fixed effects, so only their interaction
+. * (did) is estimable.  delta is the coefficient on did.
+. * NOTE: the reported model F is missing here (F(15,15) = .) because the
+. * cluster-robust VCE has rank 15 with 16 clusters.  The coefficient estimates
+. * and their cluster-robust t-tests are unaffected.
+. xtreg lngenop did $controls i.fy, fe vce(cluster fips)
+
+Fixed-effects (within) regression               Number of obs     =        336
+Group variable: fips                            Number of groups  =         16
+
+R-squared:                                      Obs per group:
+     Within  = 0.9111                                         min =         21
+     Between = 0.9785                                         avg =       21.0
+     Overall = 0.9740                                         max =         21
+
+                                                F(15, 15)         =          .
+corr(u_i, Xb) = -0.9173                         Prob > F          =          .
+
+                                  (Std. err. adjusted for 16 clusters in fips)
+------------------------------------------------------------------------------
+             |               Robust
+     lngenop | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+         did |  -.0427127   .0183103    -2.33   0.034    -.0817403   -.0036851
+    lntotsup |   1.185232    .069625    17.02   0.000      1.03683    1.333634
+    lnfinaid |  -.0898411   .0227798    -3.94   0.001    -.1383951   -.0412872
+    lntuifee |   .0791758   .0469805     1.69   0.113    -.0209608    .1793125
+       lnfte |   .2970798    .167996     1.77   0.097    -.0609952    .6551549
+             |
+          fy |
+       2002  |    -.01329   .0089112    -1.49   0.157    -.0322839    .0057038
+       2003  |  -.0326712   .0147473    -2.22   0.043    -.0641044   -.0012381
+       2004  |  -.0571007   .0209236    -2.73   0.016    -.1016983    -.012503
+       2005  |  -.0730714    .025314    -2.89   0.011     -.127027   -.0191157
+       2006  |  -.0822867   .0277106    -2.97   0.010    -.1413504    -.023223
+       2007  |  -.0960822   .0304614    -3.15   0.007    -.1610091   -.0311554
+       2008  |  -.1139024     .03598    -3.17   0.006    -.1905919   -.0372128
+       2009  |  -.1423289   .0368375    -3.86   0.002    -.2208462   -.0638117
+       2010  |  -.2512993   .0462211    -5.44   0.000    -.3498172   -.1527813
+       2011  |  -.2612435   .0580994    -4.50   0.000    -.3850794   -.1374075
+       2012  |  -.1980059   .0487947    -4.06   0.001    -.3020094   -.0940024
+       2013  |  -.1975904   .0522261    -3.78   0.002    -.3089077   -.0862731
+       2014  |  -.1967187   .0537629    -3.66   0.002    -.3113116   -.0821258
+       2015  |  -.1914164   .0548433    -3.49   0.003    -.3083122   -.0745206
+       2016  |  -.2072377   .0605195    -3.42   0.004     -.336232   -.0782435
+       2017  |  -.2018546   .0591903    -3.41   0.004    -.3280158   -.0756934
+       2018  |   -.201032    .061786    -3.25   0.005    -.3327257   -.0693382
+       2019  |  -.2011604   .0595906    -3.38   0.004    -.3281748    -.074146
+       2020  |  -.2229903   .0645473    -3.45   0.004    -.3605697    -.085411
+       2021  |  -.2494196   .0694934    -3.59   0.003    -.3975413   -.1012979
+             |
+       _cons |  -7.630737    2.23446    -3.42   0.004    -12.39338   -2.868098
+-------------+----------------------------------------------------------------
+     sigma_u |  .33717718
+     sigma_e |  .05086995
+         rho |  .97774479   (fraction of variance due to u_i)
+------------------------------------------------------------------------------
+
+. estimates store twfe_did
+
+. 
+. local twfe_b  = _b[did]
+
+. local twfe_se = _se[did]
+
+. local twfe_t  = _b[did] / _se[did]
+
+. local twfe_p  = 2 * ttail(e(df_r), abs(`twfe_t'))
+
+. 
+. di as text _n "--- TWFE main estimate ---"
+
+--- TWFE main estimate ---
+
+. di as text    "   DiD coef = " %8.4f `twfe_b' ///
+>               "   SE = " %7.4f `twfe_se' ///
+>               "   p  = " %6.4f `twfe_p'
+   DiD coef =  -0.0427   SE =  0.0183   p  = 0.0340
+
+. 
+. * Pre-treatment placebo (falsification: 2012 pseudo-treatment date)
+. * Estimates Eq. 10.10 — identical to Eq. 10.9 except that the interaction is
+. * redated to FY 2012 and the sample is restricted to FY 2001-2017.
+. * SCOPE OF THIS TEST: it looks for a discrete SHIFT IN LEVEL at a false
+. * treatment date.  A steady annual divergence between Georgia and the
+. * comparison states produces no sharp break at 2012 and is largely invisible
+. * to it.  A pass here is therefore weak evidence; the slope test in Section
+. * 10.3.3 (Eq. 10.11) is the binding one, and in this panel the two disagree.
+. xtreg lngenop did_placebo $controls i.fy if fy < 2018, fe vce(cluster fips)
+
+Fixed-effects (within) regression               Number of obs     =        272
+Group variable: fips                            Number of groups  =         16
+
+R-squared:                                      Obs per group:
+     Within  = 0.9002                                         min =         17
+     Between = 0.9788                                         avg =       17.0
+     Overall = 0.9746                                         max =         17
+
+                                                F(15, 15)         =          .
+corr(u_i, Xb) = -0.9330                         Prob > F          =          .
+
+                                  (Std. err. adjusted for 16 clusters in fips)
+------------------------------------------------------------------------------
+             |               Robust
+     lngenop | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+ did_placebo |  -.0370001    .024013    -1.54   0.144    -.0881827    .0141824
+    lntotsup |    1.21039   .0663074    18.25   0.000     1.069059    1.351721
+    lnfinaid |  -.0914784   .0210953    -4.34   0.001    -.1364419   -.0465148
+    lntuifee |   .0718089   .0601416     1.19   0.251    -.0563798    .1999977
+       lnfte |    .304807   .1634615     1.86   0.082    -.0436028    .6532169
+             |
+          fy |
+       2002  |  -.0134691   .0081622    -1.65   0.120    -.0308665    .0039283
+       2003  |   -.032245     .01374    -2.35   0.033    -.0615311   -.0029588
+       2004  |   -.055877   .0221334    -2.52   0.023    -.1030532   -.0087008
+       2005  |  -.0722824   .0265437    -2.72   0.016    -.1288591   -.0157058
+       2006  |  -.0823656   .0325016    -2.53   0.023    -.1516412     -.01309
+       2007  |   -.098008   .0362854    -2.70   0.016    -.1753485   -.0206675
+       2008  |  -.1175972   .0411714    -2.86   0.012     -.205352   -.0298423
+       2009  |  -.1447453   .0431755    -3.35   0.004    -.2367716   -.0527189
+       2010  |    -.25362   .0560433    -4.53   0.000    -.3730735   -.1341665
+       2011  |  -.2627797   .0688228    -3.82   0.002     -.409472   -.1160874
+       2012  |   -.194602   .0570077    -3.41   0.004    -.3161111   -.0730929
+       2013  |  -.1934601    .062652    -3.09   0.008    -.3269996   -.0599206
+       2014  |  -.1928947   .0654824    -2.95   0.010    -.3324673   -.0533222
+       2015  |  -.1875186   .0674565    -2.78   0.014    -.3312987   -.0437386
+       2016  |  -.2033422   .0744498    -2.73   0.015    -.3620282   -.0446562
+       2017  |   -.198264   .0719328    -2.76   0.015    -.3515851   -.0449428
+             |
+       _cons |  -8.072125   1.952567    -4.13   0.001    -12.23392   -3.910326
+-------------+----------------------------------------------------------------
+     sigma_u |  .35904949
+     sigma_e |   .0464875
+         rho |  .98351292   (fraction of variance due to u_i)
+------------------------------------------------------------------------------
+
+. estimates store twfe_placebo
+
+. 
+. local placebo_b  = _b[did_placebo]
+
+. local placebo_se = _se[did_placebo]
+
+. local placebo_p  = 2 * ttail(e(df_r), abs(`placebo_b'/`placebo_se'))
+
+. di as text "   Placebo DiD (2012) = " %8.4f `placebo_b' "   p = " %6.4f `placebo_p'
+   Placebo DiD (2012) =  -0.0370   p = 0.1442
+
+. * Read PASS below as "no LEVEL shift at the false date" — not as evidence that
+. * parallel trends holds.  Section 10.3.3 rejects it on the slope test.
+. if `placebo_p' > 0.10 di as text "   PASS: no pre-2018 treatment effect detected."
+   PASS: no pre-2018 treatment effect detected.
+
+. else                   di as text "   WARNING: significant placebo — inspect pre-trends."
+
+. 
+. * Alternative outcomes (same DiD specification)
+. * Each variable is also in $controls, so we must exclude it from
+. * the regressor list to avoid placing the outcome on both sides.
+. * Stata list subtraction: `list A - B` removes B's content from A.
+. di as text _n "--- DiD on alternative outcomes ---"
+
+--- DiD on alternative outcomes ---
+
+. di as text    "   Outcome        Coef        SE        p"
+   Outcome        Coef        SE        p
+
+. di as text    "   {hline 48}"
+   ------------------------------------------------
+
+. foreach v in lntotsup lnfinaid lntuifee lnfte {
+  2.     local full_ctrl "${controls}"
+  3.     local alt_ctrl  : list full_ctrl - v         // drop current outcome from controls
+  4.     qui xtreg `v' did `alt_ctrl' i.fy, fe vce(cluster fips)
+  5.     local alt_b = _b[did]
+  6.     local alt_p = 2 * ttail(e(df_r), abs(_b[did]/_se[did]))
+  7.     di as text "   `v'" _col(20) %8.4f `alt_b' "   " %7.4f _se[did] "   " %6.4f `alt_p'
+  8.     estimates store twfe_`v'
+  9. }
+   lntotsup          0.1032    0.0262   0.0013
+   lnfinaid         -0.1242    0.1261   0.3404
+   lntuifee          0.2700    0.0525   0.0001
+   lnfte             0.0123    0.0208   0.5620
+
+. di as text    "   {hline 48}"
+   ------------------------------------------------
+
+. 
+. *============================================================================================
+> =========================
+. * SECTION 10.3.3: PARALLEL TRENDS ASSESSMENT
+. *============================================================================================
+> =========================
+. di as text _n "============================================================"
+
+============================================================
+
+. di as text    "SECTION 10.3.3: PARALLEL TRENDS"
+SECTION 10.3.3: PARALLEL TRENDS
+
+. di as text    "============================================================"
+============================================================
+
+. 
+. * ── Visual inspection ────────────────────────────────────────────
+. preserve
+
+.     collapse (mean) lngenop, by(treat_state fy)
+
+.     twoway ///
+>         (connected lngenop fy if treat_state == 0,                             ///
+>              lpattern(dash) lcolor(gs8) mcolor(gs8) msymbol(Oh))               ///
+>         (connected lngenop fy if treat_state == 1,                             ///
+>              lpattern(solid) lcolor(gs0) mcolor(gs0) msymbol(O)),              ///
+>         xline(2018, lpattern(dot) lcolor(gs6))                                 ///
+>         legend(label(1 "Control States") label(2 "Georgia") rows(1))          ///
+>         ytitle("Log Operating Expenses") xtitle("Fiscal Year")                ///
+>         title("Parallel Trends: Georgia vs. SREB Control States")             ///
+>         subtitle("Vertical dotted line = 2018 consolidation")                 ///
+>         name(fig10_5, replace)
+
+.     * MANUSCRIPT Fig. 10.5 - parallel trends, Georgia vs. SREB controls.
+.     graph export "$graphs_dir/fig10_5_parallel_trends_Stata.png", replace width(1200)
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
+    10/Output/graphs/fig10_5_parallel_trends_Stata.png saved as PNG format
+
+.     chkfig "$graphs_dir/fig10_5_parallel_trends_Stata.png"
+   chkfig: OK     86,637 bytes   C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/grap
+> hs/fig10_5_parallel_trends_Stata.png
+
+.     graph save   "$graphs_dir/fig10_5.gph", replace
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/fig10_5.gph saved
+
+. restore
+
+. di as text "   fig10_5_parallel_trends_Stata.png exported"
+   fig10_5_parallel_trends_Stata.png exported
+
+. 
+. * ── Formal pre-trends test: continuous trend-by-treatment interaction ─
+. * Preferred test: reghdfe with c.treat_state#c.fy absorbing unit × time FEs.
+. * Fallback (xtreg with explicit interaction) executes if reghdfe still fails
+. * after the reinstall block above.
+. di as text _n "--- Formal pre-trend test (linear trend interaction, fy < 2018) ---"
+
+--- Formal pre-trend test (linear trend interaction, fy < 2018) ---
+
+. 
+. local pt_b = .
+
+. local pt_p = .
+
+. local pt_method ""
+
+. 
+. * Force Stata to reload all ado-files from disk before calling reghdfe.
+. * Without this, a stale pre-install version cached in memory causes r(9)
+. * ("unrecognized command") even after ssc install reghdfe runs successfully.
+. capture discard
+
+. 
+. * Estimates Eq. 10.11:
+. *     lngenop_it = alpha_i + lambda_t + pi*(T_i x t) + X_it'beta + e_it,  t < 2018
+. * absorb(fips fy) supplies alpha_i and lambda_t.  Because lambda_t absorbs any
+. * trend common to all states, pi is identified only from Georgia's deviation
+. * from that common path.  Under parallel trends pi = 0.  Unlike the placebo in
+. * Eq. 10.10, this is a SLOPE test, matched to the form the violation takes.
+. capture reghdfe lngenop c.treat_state#c.fy $controls if fy < 2018, ///
+>     absorb(fips fy) vce(cluster fips)
+
+. if _rc == 0 {
+.     local pt_b      = _b[c.treat_state#c.fy]
+.     local pt_se     = _se[c.treat_state#c.fy]
+.     * Cluster-robust t, df = G - 1, matching the p-value reghdfe prints in the
+.     * table above (t = -4.42, p = 0.0005).  The earlier normal(...) form
+.     * disagreed with that table and overstated significance.  The xtreg
+.     * fallback below already uses ttail(e(df_r)), which xtreg sets to G - 1
+.     * under vce(cluster fips), so the two branches now agree.
+.     local pt_p      = 2 * ttail(e(N_clust) - 1, abs(`pt_b'/`pt_se'))
+.     local pt_method "reghdfe"
+. }
+
+. else {
+.     di as text "   reghdfe still unavailable (r(" _rc ")). Using xtreg fallback."
+.     gen double fy_treat = fy * treat_state
+.     qui xtreg lngenop fy_treat $controls i.fy if fy < 2018, fe vce(cluster fips)
+.     local pt_b      = _b[fy_treat]
+.     local pt_se     = _se[fy_treat]
+.     local pt_p      = 2 * ttail(e(df_r), abs(`pt_b'/`pt_se'))
+.     local pt_method "xtreg (fallback)"
+.     drop fy_treat
+. }
+
+. 
+. di as text "   Method: `pt_method'"
+   Method: reghdfe
+
+. di as text "   Trend-interaction coef = " %8.4f `pt_b' "   p = " %6.4f `pt_p'
+   Trend-interaction coef =  -0.0076   p = 0.0005
+
+. if `pt_p' > 0.10 di as text "   RESULT: No evidence of differential pre-trend (p > 0.10)."
+
+. else              di as text "   NOTE: p ≤ 0.10 — investigate pre-trend robustness."
+   NOTE: p ≤ 0.10 — investigate pre-trend robustness.
+
+. 
+. * ── Event-study leads/lags (Section 10.3.3 + feeds Section 10.7) ─────
+. * Relative time: ry = fy - 2018 (Georgia only; control rows unused in dummies)
+. * Convention: omit ry = -1 (FY 2017) as reference period.
+. * Bin leading periods ry ≤ -16 into F16 to avoid sparse-cell estimates.
+. 
+. gen int rel_year = fy - 2018
+
+. 
+. local kpre  16     // max pre-treatment periods to show explicitly
+
+. local kpost  3     // post-treatment periods
+
+. 
+. * Pre-treatment leads (F2 … F16; F1 is omitted reference)
+. forvalues k = 2/`kpre' {
+  2.     gen byte F`k'_ga = (treat_state == 1 & rel_year == -`k')
+  3. }
+
+. * Bin: all ry ≤ -kpre collapsed into F{kpre}
+. replace F`kpre'_ga = (treat_state == 1 & rel_year <= -`kpre')
+(1 real change made)
+
+. 
+. * Post-treatment lags (L0 … L{kpost})
+. forvalues k = 0/`kpost' {
+  2.     gen byte L`k'_ga = (treat_state == 1 & rel_year == `k')
+  3. }
+
+. 
+. * Assemble regressor list (pre-periods descending, then post)
+. * leads_all  = all `=`kpre'-1' lead terms, used for the boundary demonstration below
+. * leads_ex   = leads WITHOUT the binned F{kpre} term, the usable joint test
+. local evars ""
+
+. local leads_all ""
+
+. forvalues k = `kpre'(-1)2 {
+  2.     local evars     "`evars' F`k'_ga"
+  3.     local leads_all "`leads_all' F`k'_ga"
+  4. }
+
+. local kpre_m1 = `kpre' - 1
+
+. local leads_ex ""
+
+. forvalues k = `kpre_m1'(-1)2 {
+  2.     local leads_ex "`leads_ex' F`k'_ga"
+  3. }
+
+. forvalues k = 0/`kpost' {
+  2.     local evars "`evars' L`k'_ga"
+  3. }
+
+. 
+. * Estimate (xtreg used for portability; reghdfe equivalent via absorb)
+. * NOT quiet: Section 10.7.1 of the manuscript prints this table (the 19
+. * F16_ga-L3_ga coefficients).  Restoring -qui- here would leave the page
+. * showing output the script no longer produces.
+. xtreg lngenop `evars' $controls i.fy, fe vce(cluster fips)
+
+Fixed-effects (within) regression               Number of obs     =        336
+Group variable: fips                            Number of groups  =         16
+
+R-squared:                                      Obs per group:
+     Within  = 0.9171                                         min =         21
+     Between = 0.9787                                         avg =       21.0
+     Overall = 0.9738                                         max =         21
+
+                                                F(16, 15)         =          .
+corr(u_i, Xb) = -0.9363                         Prob > F          =          .
+
+                                  (Std. err. adjusted for 16 clusters in fips)
+------------------------------------------------------------------------------
+             |               Robust
+     lngenop | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+      F16_ga |   .1146938   .0287838     3.98   0.001     .0533425    .1760451
+      F15_ga |   .0990892   .0298572     3.32   0.005     .0354502    .1627282
+      F14_ga |    .098708   .0318889     3.10   0.007     .0307384    .1666776
+      F13_ga |    .102565   .0330171     3.11   0.007     .0321907    .1729393
+      F12_ga |   .1025447   .0269715     3.80   0.002     .0450563     .160033
+      F11_ga |   .0958638   .0248347     3.86   0.002     .0429299    .1487978
+      F10_ga |   .0735618   .0239732     3.07   0.008     .0224642    .1246594
+       F9_ga |   .0304222   .0235742     1.29   0.216    -.0198251    .0806695
+       F8_ga |  -.1173843   .0378132    -3.10   0.007    -.1979813   -.0367873
+       F7_ga |   .0192108   .0447492     0.43   0.674    -.0761698    .1145914
+       F6_ga |  -.0333759    .020079    -1.66   0.117    -.0761732    .0094214
+       F5_ga |   .0251675   .0148903     1.69   0.112    -.0065704    .0569054
+       F4_ga |   .0286402   .0114324     2.51   0.024     .0042726    .0530078
+       F3_ga |   .0132114   .0070415     1.88   0.080    -.0017972      .02822
+       F2_ga |   .0158728   .0084756     1.87   0.081    -.0021925     .033938
+       L0_ga |  -.0068432   .0045909    -1.49   0.157    -.0166284    .0029421
+       L1_ga |  -.0159323   .0114595    -1.39   0.185    -.0403576    .0084931
+       L2_ga |   -.007458   .0186865    -0.40   0.695    -.0472874    .0323713
+       L3_ga |  -.0027707   .0351451    -0.08   0.938    -.0776806    .0721393
+    lntotsup |   1.177909   .0784674    15.01   0.000      1.01066    1.345159
+    lnfinaid |  -.0913805   .0223871    -4.08   0.001    -.1390973   -.0436636
+    lntuifee |   .1137143   .0484941     2.34   0.033     .0103517     .217077
+       lnfte |   .3466768    .170193     2.04   0.060     -.016081    .7094347
+             |
+          fy |
+       2002  |  -.0172058   .0092654    -1.86   0.083    -.0369545    .0025428
+       2003  |  -.0412619   .0132259    -3.12   0.007    -.0694522   -.0130715
+       2004  |  -.0696391   .0189031    -3.68   0.002    -.1099301   -.0293482
+       2005  |  -.0901316   .0226592    -3.98   0.001    -.1384285   -.0418347
+       2006  |  -.1020827   .0252256    -4.05   0.001    -.1558499   -.0483155
+       2007  |  -.1168161   .0278509    -4.19   0.001    -.1761789   -.0574533
+       2008  |  -.1356916   .0339153    -4.00   0.001    -.2079803   -.0634029
+       2009  |  -.1660076   .0337437    -4.92   0.000    -.2379306   -.0940846
+       2010  |  -.2730305    .044761    -6.10   0.000    -.3684362   -.1776247
+       2011  |  -.2964887   .0523732    -5.66   0.000    -.4081196   -.1848578
+       2012  |  -.2343569   .0421396    -5.56   0.000    -.3241753   -.1445385
+       2013  |  -.2385621   .0443006    -5.39   0.000    -.3329867   -.1441376
+       2014  |  -.2385157   .0466056    -5.12   0.000    -.3378532   -.1391782
+       2015  |   -.232762     .04901    -4.75   0.000    -.3372243   -.1282996
+       2016  |  -.2501124   .0554263    -4.51   0.000    -.3682508    -.131974
+       2017  |  -.2443494   .0544689    -4.49   0.000    -.3604472   -.1282516
+       2018  |  -.2464367   .0568359    -4.34   0.001    -.3675796   -.1252938
+       2019  |   -.245692   .0543601    -4.52   0.000    -.3615578   -.1298262
+       2020  |  -.2675148   .0614774    -4.35   0.001    -.3985508   -.1364788
+       2021  |  -.2921316   .0692758    -4.22   0.001    -.4397895   -.1444737
+             |
+       _cons |  -8.733726   2.036451    -4.29   0.001    -13.07432   -4.393134
+-------------+----------------------------------------------------------------
+     sigma_u |  .38549158
+     sigma_e |  .05068719
+         rho |  .98300495   (fraction of variance due to u_i)
+------------------------------------------------------------------------------
+
+. estimates store es_twfe
+
+. 
+. * ── Joint pre-trend (lead) tests — the CONTRAST is the point ────────────
+. * With G = 16 clusters the cluster-robust VCE has rank at most G - 1 = 15.
+. *
+. * TEST 1 imposes all 15 lead restrictions, which sits EXACTLY at that rank
+. * boundary.  Stata returns rc = 0 and a finite F, but the required inverse
+. * is numerically unstable and the statistic is arbitrary: F ~ 5.97e+05,
+. * four orders of magnitude above anything the individual lead t-statistics
+. * (all between 0.4 and 4.0) could support.  DO NOT REPORT IT.  It is run
+. * here only so the log documents the failure mode -- a reader who runs the
+. * obvious test and sees p ~ 1e-40 needs to know why it is meaningless.
+. *
+. * TEST 2 drops the binned F{kpre} term, which collects all periods at or
+. * before -{kpre} and is the least interpretable of the leads.  That brings
+. * the test to 14 restrictions, inside the rank bound, and it returns a
+. * usable F(14,15) = 90.77.  Dropping one further lead gives F(13,15) =
+. * 97.50, so the instability is confined to the 15th restriction and the
+. * 14-restriction test is on stable ground.  THIS is the number the
+. * manuscript reports.
+. *
+. * Both are joint counterparts to the single-restriction trend-interaction
+. * test above; all three reject the no-pre-trend null.
+. * NOTE: this is also why the model F is missing from the table above --
+. * there the test imposes MORE restrictions than the rank supports, and
+. * Stata returns missing rather than an unstable number.
+. di as text _n "--- Joint lead tests (rank bound: G - 1 = 15) ---"
+
+--- Joint lead tests (rank bound: G - 1 = 15) ---
+
+. 
+. capture test `leads_all'
+
+. if _rc == 0 {
+.     di as text "   15 restrictions (AT the rank bound, NOT usable):" _n ///
+>                "      F(15,15) = " %14.2f r(F) "   p = " %10.3e r(p)
+   15 restrictions (AT the rank bound, NOT usable):
+      F(15,15) =      596769.41   p =  1.594e-40
+. }
+
+. else di as text "   15 restrictions: test failed, rc = " _rc
+
+. 
+. capture test `leads_ex'
+
+. if _rc == 0 {
+.     local jl_F = r(F)
+.     local jl_p = r(p)
+.     di as text "   14 restrictions (binned F`kpre'_ga dropped) — REPORTED:" _n ///
+>                "      F(14,15) = " %14.2f `jl_F' "   p = " %10.4f `jl_p'
+   14 restrictions (binned F16_ga dropped) — REPORTED:
+      F(14,15) =          90.77   p =     0.0000
+.     if `jl_p' < 0.05 di as text "      RESULT: joint leads reject; pre-trend present."
+      RESULT: joint leads reject; pre-trend present.
+.     else             di as text "      RESULT: joint leads do not reject."
+. }
+
+. else di as text "   14 restrictions: test failed, rc = " _rc
+
+. 
+. * Extract coefficients into a temporary dataset for plotting
+. preserve
+
+.     local nobs = (`kpre' - 1) + 1 + (`kpost' + 1)   // F{kpre}..F2, F1(ref)=0, L0..L{kpost}
+
+.     clear
+
+.     set obs `nobs'
+Number of observations (_N) was 0, now 20.
+
+.     gen int t  = .
+(20 missing values generated)
+
+.     gen b      = .
+(20 missing values generated)
+
+.     gen lo     = .
+(20 missing values generated)
+
+.     gen hi     = .
+(20 missing values generated)
+
+. 
+.     local i = 0
+
+.     forvalues k = `kpre'(-1)2 {
+  2.         local ++i
+  3.         qui replace t  = -`k'              in `i'
+  4.         qui replace b  = _b[F`k'_ga]      in `i'
+  5.         qui replace lo = _b[F`k'_ga] - 1.96*_se[F`k'_ga] in `i'
+  6.         qui replace hi = _b[F`k'_ga] + 1.96*_se[F`k'_ga] in `i'
+  7.     }
+
+.     local ++i    // reference period t = -1, coef = 0 by normalisation
+
+.     qui replace t = -1 in `i'
+
+.     qui replace b = 0  in `i'
+
+.     qui replace lo = 0 in `i'
+
+.     qui replace hi = 0 in `i'
+
+.     forvalues k = 0/`kpost' {
+  2.         local ++i
+  3.         qui replace t  = `k'              in `i'
+  4.         qui replace b  = _b[L`k'_ga]     in `i'
+  5.         qui replace lo = _b[L`k'_ga] - 1.96*_se[L`k'_ga] in `i'
+  6.         qui replace hi = _b[L`k'_ga] + 1.96*_se[L`k'_ga] in `i'
+  7.     }
+
+.     sort t
+
+. 
+.     twoway ///
+>         (rarea lo hi t if t < 0, fcolor(gs14) lwidth(none))                   ///
+>         (rarea lo hi t if t >= 0, fcolor(gs10) lwidth(none))                  ///
+>         (line  b  t,  lcolor(gs0) lwidth(medthick) lpattern(solid))           ///
+>         (scatter b t if t == -1, mcolor(gs0) msymbol(X) msize(large)),        ///
+>         yline(0, lpattern(dash) lcolor(gs8))                                  ///
+>         xline(-0.5, lpattern(dot) lcolor(gs6))                                ///
+>         xtitle("Years Relative to Consolidation (FY 2018 = 0)")               ///
+>         ytitle("Coefficient (log operating expenses)")                        ///
+>         title("Event Study: Georgia Higher Education Consolidation")          ///
+>         subtitle("Reference period: t = -1 (FY 2017). Shaded = 95% CI.")     ///
+>         legend(off) name(fig10_8, replace)
+
+.     * MANUSCRIPT Fig. 10.8 - event study, Georgia consolidation.
+.     graph export "$graphs_dir/fig10_8_event_study_Stata.png", replace width(1200)
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
+    10/Output/graphs/fig10_8_event_study_Stata.png saved as PNG format
+
+.     chkfig "$graphs_dir/fig10_8_event_study_Stata.png"
+   chkfig: OK     91,978 bytes   C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/grap
+> hs/fig10_8_event_study_Stata.png
+
+.     graph save   "$graphs_dir/fig10_8.gph", replace
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/fig10_8.gph saved
+
+. restore
+
+. di as text "   fig10_8_event_study_Stata.png exported"
+   fig10_8_event_study_Stata.png exported
+
+. 
+. *============================================================================================
+> =========================
+. * SECTION 10.3.4: ROBUSTNESS CHECKS
+. *============================================================================================
+> =========================
+. di as text _n "============================================================"
+
+============================================================
+
+. di as text    "SECTION 10.3.4: ROBUSTNESS CHECKS"
+SECTION 10.3.4: ROBUSTNESS CHECKS
+
+. di as text    "============================================================"
+============================================================
+
+. 
+. * (a) No controls
+. qui xtreg lngenop did i.fy, fe vce(cluster fips)
+
+. estimates store twfe_nocontrols
+
+. local b_nc  = _b[did]
+
+. local se_nc = _se[did]
+
+. local p_nc  = 2 * ttail(e(df_r), abs(`b_nc'/`se_nc'))
+
+. di as text "   No controls: DiD = " %7.4f `b_nc' "   p = " %6.4f `p_nc'
+   No controls: DiD =  0.1428   p = 0.0209
+
+. 
+. * (b) State-specific linear time trends added
+. qui xtreg lngenop did $controls c.fy#i.fips i.fy, fe vce(cluster fips)
+
+. estimates store twfe_trends
+
+. local b_tr  = _b[did]
+
+. local se_tr = _se[did]
+
+. local p_tr  = 2 * ttail(e(df_r), abs(`b_tr'/`se_tr'))
+
+. di as text "   + State trends: DiD = " %7.4f `b_tr' "   p = " %6.4f `p_tr'
+   + State trends: DiD =  0.0170   p = 0.1926
+
+. 
+. * (c) Drop Delaware (geographic and system-size outlier within the SREB bloc).
+. *     Earlier versions of this comment described Delaware as the one
+. *     "non-contiguous" SREB state.  That is wrong: Delaware borders Maryland,
+. *     itself an SREB member.  The defensible rationale is that it is the
+. *     northernmost member and has the smallest public system in the bloc.
+. qui xtreg lngenop did $controls i.fy if fips != 10, fe vce(cluster fips)
+
+. estimates store twfe_nodela
+
+. local b_nd  = _b[did]
+
+. local se_nd = _se[did]
+
+. local p_nd  = 2 * ttail(e(df_r), abs(`b_nd'/`se_nd'))
+
+. di as text "   Drop Delaware: DiD = " %7.4f `b_nd' "   p = " %6.4f `p_nd'
+   Drop Delaware: DiD = -0.0520   p = 0.0080
+
+. 
+. * (d) Restricted estimation window (FY 2015-2021; FY 2015-2017 = pre).
+. *     NOT a two-period DiD: i.fy is retained, so every year keeps its own
+. *     fixed effect.  Only the sample is narrowed.  The earlier "Balanced
+. *     two-period DiD" label misdescribed the specification actually run.
+. qui xtreg lngenop did $controls i.fy if fy >= 2015, fe vce(cluster fips)
+
+. estimates store twfe_window
+
+. local b_wn = _b[did]
+
+. local p_wn = 2 * ttail(e(df_r), abs(_b[did]/_se[did]))
+
+. di as text "   2015-2021 window: DiD = " %7.4f `b_wn' "   p = " %6.4f `p_wn'
+   2015-2021 window: DiD =  0.0057   p = 0.7920
+
+. 
+. * Robustness comparison plot: four specs, point estimates + 95% CIs
+. * FIX v3: locals (twfe_b/twfe_se, b_nc/se_nc, b_tr/se_tr, b_nd/se_nd) are
+. *          used directly here instead of -estimates restore-.  The earlier
+. *          preserve/clear block in Section 10.3.3 evicts stored estimates from
+. *          memory; locals are unaffected by -clear- and survive intact.
+. preserve
+
+.     clear
+
+.     set obs 4
+Number of observations (_N) was 0, now 4.
+
+.     gen int  spec = _n
+
+.     gen      b    = .
+(4 missing values generated)
+
+.     gen      lo   = .
+(4 missing values generated)
+
+.     gen      hi   = .
+(4 missing values generated)
+
+. 
+.     * Row 1 – Baseline TWFE
+.     qui replace b  = `twfe_b'                      in 1
+
+.     qui replace lo = `twfe_b' - 1.96*`twfe_se'     in 1
+
+.     qui replace hi = `twfe_b' + 1.96*`twfe_se'     in 1
+
+. 
+.     * Row 2 – No controls
+.     qui replace b  = `b_nc'                        in 2
+
+.     qui replace lo = `b_nc' - 1.96*`se_nc'         in 2
+
+.     qui replace hi = `b_nc' + 1.96*`se_nc'         in 2
+
+. 
+.     * Row 3 – State-specific linear trends
+.     qui replace b  = `b_tr'                        in 3
+
+.     qui replace lo = `b_tr' - 1.96*`se_tr'         in 3
+
+.     qui replace hi = `b_tr' + 1.96*`se_tr'         in 3
+
+. 
+.     * Row 4 – Drop Delaware
+.     qui replace b  = `b_nd'                        in 4
+
+.     qui replace lo = `b_nd' - 1.96*`se_nd'         in 4
+
+.     qui replace hi = `b_nd' + 1.96*`se_nd'         in 4
+
+. 
+.     label define spec_lbl 1 "Baseline TWFE" 2 "No controls" ///
+>                            3 "+ State trends" 4 "Drop Delaware"
+
+.     label values spec spec_lbl
+
+. 
+.     twoway ///
+>         (rcap lo hi spec, horizontal lcolor(gs0) lwidth(medium))            ///
+>         (scatter spec b, mcolor(gs0) msymbol(D) msize(large)),              ///
+>         xline(0, lpattern(dash) lcolor(gs8))                                ///
+>         ylabel(1 "Baseline TWFE" 2 "No controls"                            ///
+>                3 "+ State trends" 4 "Drop Delaware",                        ///
+>                angle(0) labsize(small))                                     ///
+>         xtitle("DiD Coefficient (log operating expenses)")                  ///
+>         ytitle("") legend(off)                                              ///
+>         title("Robustness: DiD Across Specifications")                      ///
+>         subtitle("Point estimates with 95% CIs — outcome: lngenop")        ///
+>         name(fig10_3_2, replace)
+
+.     graph export "$graphs_dir/fig10_3_2_robustness_Stata.png", replace width(1200)
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
+    10/Output/graphs/fig10_3_2_robustness_Stata.png saved as PNG format
+
+.     chkfig "$graphs_dir/fig10_3_2_robustness_Stata.png"
+   chkfig: OK     58,940 bytes   C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/grap
+> hs/fig10_3_2_robustness_Stata.png
+
+.     graph save   "$graphs_dir/fig10_3_2.gph", replace
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/fig10_3_2.gph saved
+
+. restore
+
+. 
+. di as text "   fig10_3_2_robustness_Stata.png exported"
+   fig10_3_2_robustness_Stata.png exported
+
+. 
+. *============================================================================================
+> =========================
+. * SECTION 10.4: LASSO-RESIDUALIZED DiD (DOUBLE SELECTION)
+. *============================================================================================
+> =========================
+. di as text _n "============================================================"
+
+============================================================
+
+. di as text    "SECTION 10.4: LASSO-RESIDUALIZED DiD"
+SECTION 10.4: LASSO-RESIDUALIZED DiD
+
+. di as text    "============================================================"
+============================================================
+
+. *
+. * Method: Belloni, Chernozhukov & Hansen (2014) double selection.
+. * Step 1: Within-transform lngenop, did, and all controls via xtreg residuals
+. *         (unit + year FEs partialled out — equivalent to reghdfe residuals).
+. * Step 2: rlasso of demeaned lngenop on demeaned controls  → selected set S1
+. *         rlasso of demeaned did      on demeaned controls  → selected set S2
+. * Step 3: Final OLS of lngenop on did + union(S1 ∪ S2) + unit + year FEs.
+. * Inference: clustered SEs at state level.
+. 
+. * -- Step 1: Within-transformation ---------------------------------
+. di as text "   Step 1: partialling out unit/year FEs via xtreg residuals"
+   Step 1: partialling out unit/year FEs via xtreg residuals
+
+. foreach v in lngenop did lntotsup lnfinaid lntuifee lnfte {
+  2.     qui xtreg `v' i.fy, fe
+  3.     qui predict double wr_`v', e
+  4. }
+
+. 
+. * -- Step 2: Double selection via rlasso ---------------------------
+. di as text "   Step 2: double selection via rlasso"
+   Step 2: double selection via rlasso
+
+. 
+. * S1: controls that predict the outcome
+. qui rlasso wr_lngenop wr_lntotsup wr_lnfinaid wr_lntuifee wr_lnfte
+
+. local S1 ""
+
+. foreach v in lntotsup lnfinaid lntuifee lnfte {
+  2.     capture local coef_s1 = _b[wr_`v']
+  3.     if !_rc {
+  4.         if abs(`coef_s1') > 1e-10 local S1 "`S1' `v'"
+  5.     }
+  6. }
+
+. di as text "   S1 (outcome equation): `S1'"
+   S1 (outcome equation):  lntotsup lnfinaid lnfte
+
+. if "`S1'" == "" di as text "   (rlasso selected no controls for outcome — using full set)"
+
+. 
+. * S2: controls that predict the treatment
+. qui rlasso wr_did wr_lntotsup wr_lnfinaid wr_lntuifee wr_lnfte
+
+. local S2 ""
+
+. foreach v in lntotsup lnfinaid lntuifee lnfte {
+  2.     capture local coef_s2 = _b[wr_`v']
+  3.     if !_rc {
+  4.         if abs(`coef_s2') > 1e-10 local S2 "`S2' `v'"
+  5.     }
+  6. }
+
+. di as text "   S2 (selection equation):  `S2'"
+   S2 (selection equation):   lntuifee
+
+. 
+. * Union of selected sets
+. local S_union : list S1 | S2
+
+. if "`S_union'" == "" local S_union "${controls}"   // fallback to full control set
+
+. di as text "   Union (S1 ∪ S2): `S_union'"
+   Union (S1 ∪ S2):  lntotsup lnfinaid lnfte lntuifee
+
+. 
+. drop wr_*
+
+. 
+. * -- Step 3: LASSO-selected TWFE -----------------------------------
+. di as text "   Step 3: final TWFE with LASSO-selected controls"
+   Step 3: final TWFE with LASSO-selected controls
+
+. xtreg lngenop did `S_union' i.fy, fe vce(cluster fips)
+
+Fixed-effects (within) regression               Number of obs     =        336
+Group variable: fips                            Number of groups  =         16
+
+R-squared:                                      Obs per group:
+     Within  = 0.9111                                         min =         21
+     Between = 0.9785                                         avg =       21.0
+     Overall = 0.9740                                         max =         21
+
+                                                F(15, 15)         =          .
+corr(u_i, Xb) = -0.9173                         Prob > F          =          .
+
+                                  (Std. err. adjusted for 16 clusters in fips)
+------------------------------------------------------------------------------
+             |               Robust
+     lngenop | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+         did |  -.0427127   .0183103    -2.33   0.034    -.0817403   -.0036851
+    lntotsup |   1.185232    .069625    17.02   0.000      1.03683    1.333634
+    lnfinaid |  -.0898411   .0227798    -3.94   0.001    -.1383951   -.0412872
+       lnfte |   .2970798    .167996     1.77   0.097    -.0609952    .6551549
+    lntuifee |   .0791758   .0469805     1.69   0.113    -.0209608    .1793125
+             |
+          fy |
+       2002  |    -.01329   .0089112    -1.49   0.157    -.0322839    .0057038
+       2003  |  -.0326712   .0147473    -2.22   0.043    -.0641044   -.0012381
+       2004  |  -.0571007   .0209236    -2.73   0.016    -.1016983    -.012503
+       2005  |  -.0730714    .025314    -2.89   0.011     -.127027   -.0191157
+       2006  |  -.0822867   .0277106    -2.97   0.010    -.1413504    -.023223
+       2007  |  -.0960822   .0304614    -3.15   0.007    -.1610091   -.0311554
+       2008  |  -.1139024     .03598    -3.17   0.006    -.1905919   -.0372128
+       2009  |  -.1423289   .0368375    -3.86   0.002    -.2208462   -.0638117
+       2010  |  -.2512993   .0462211    -5.44   0.000    -.3498172   -.1527813
+       2011  |  -.2612435   .0580994    -4.50   0.000    -.3850794   -.1374075
+       2012  |  -.1980059   .0487947    -4.06   0.001    -.3020094   -.0940024
+       2013  |  -.1975904   .0522261    -3.78   0.002    -.3089077   -.0862731
+       2014  |  -.1967187   .0537629    -3.66   0.002    -.3113116   -.0821258
+       2015  |  -.1914164   .0548433    -3.49   0.003    -.3083122   -.0745206
+       2016  |  -.2072377   .0605195    -3.42   0.004     -.336232   -.0782435
+       2017  |  -.2018546   .0591903    -3.41   0.004    -.3280158   -.0756934
+       2018  |   -.201032    .061786    -3.25   0.005    -.3327257   -.0693382
+       2019  |  -.2011604   .0595906    -3.38   0.004    -.3281748    -.074146
+       2020  |  -.2229903   .0645473    -3.45   0.004    -.3605697    -.085411
+       2021  |  -.2494196   .0694934    -3.59   0.003    -.3975413   -.1012979
+             |
+       _cons |  -7.630737    2.23446    -3.42   0.004    -12.39338   -2.868098
+-------------+----------------------------------------------------------------
+     sigma_u |  .33717718
+     sigma_e |  .05086995
+         rho |  .97774479   (fraction of variance due to u_i)
+------------------------------------------------------------------------------
+
+. estimates store lasso_did
+
+. 
+. local lasso_b  = _b[did]
+
+. local lasso_se = _se[did]
+
+. local lasso_p  = 2 * ttail(e(df_r), abs(`lasso_b'/`lasso_se'))
+
+. 
+. di as text _n "--- LASSO-residualized DiD ---"
+
+--- LASSO-residualized DiD ---
+
+. di as text    "   DiD coef = " %8.4f `lasso_b' ///
+>               "   SE = " %7.4f `lasso_se' ///
+>               "   p  = " %6.4f `lasso_p'
+   DiD coef =  -0.0427   SE =  0.0183   p  = 0.0340
+
+. di as text    "   TWFE baseline: " %8.4f `twfe_b' ///
+>               "   Difference: " %7.4f (`lasso_b' - `twfe_b')
+   TWFE baseline:  -0.0427   Difference:  0.0000
+
+. di as text    "   NOTE: LASSO selected full control set (S1 ∪ S2 = all four controls);"
+   NOTE: LASSO selected full control set (S1 ∪ S2 = all four controls);
+
+. di as text    "         LASSO-DiD estimate is numerically identical to TWFE baseline."
+         LASSO-DiD estimate is numerically identical to TWFE baseline.
+
+. 
+. * LASSO comparison plot (fig10_4_1)
+. preserve
+
+.     clear
+
+.     set obs 2
+Number of observations (_N) was 0, now 2.
+
+.     gen j       = _n
+
+.     gen b       = .
+(2 missing values generated)
+
+.     gen lo      = .
+(2 missing values generated)
+
+.     gen hi      = .
+(2 missing values generated)
+
+.     replace b  = `twfe_b'                      in 1
+(1 real change made)
+
+.     replace lo = `twfe_b'  - 1.96*`twfe_se'   in 1
+(1 real change made)
+
+.     replace hi = `twfe_b'  + 1.96*`twfe_se'   in 1
+(1 real change made)
+
+.     replace b  = `lasso_b'                     in 2
+(1 real change made)
+
+.     replace lo = `lasso_b' - 1.96*`lasso_se'  in 2
+(1 real change made)
+
+.     replace hi = `lasso_b' + 1.96*`lasso_se'  in 2
+(1 real change made)
+
+.     twoway ///
+>         (rcap lo hi j, horizontal lcolor(gs0) lwidth(medium))              ///
+>         (scatter j b,  mcolor(gs0) msymbol(D) msize(large)),               ///
+>         xline(0, lpattern(dash) lcolor(gs8))                               ///
+>         ylabel(1 "TWFE (full controls)" 2 "LASSO-residualized DiD",        ///
+>                angle(0) labsize(small))                                    ///
+>         xtitle("DiD Coefficient (log operating expenses)")                 ///
+>         ytitle("") legend(off)                                             ///
+>         title("TWFE vs. LASSO-Residualized DiD")                          ///
+>         subtitle("Point estimates with 95% CIs — outcome: lngenop")       ///
+>         note("LASSO selected full control set; estimates are numerically identical.") ///
+>         name(fig10_4_1, replace)
+
+.     graph export "$graphs_dir/fig10_4_1_lasso_comparison_Stata.png", replace width(1200)
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
+    10/Output/graphs/fig10_4_1_lasso_comparison_Stata.png saved as PNG format
+
+.     chkfig "$graphs_dir/fig10_4_1_lasso_comparison_Stata.png"
+   chkfig: OK     60,949 bytes   C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/grap
+> hs/fig10_4_1_lasso_comparison_Stata.png
+
+.     graph save   "$graphs_dir/fig10_4_1.gph", replace
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/fig10_4_1.gph saved
+
+. restore
+
+. di as text "   fig10_4_1_lasso_comparison_Stata.png exported"
+   fig10_4_1_lasso_comparison_Stata.png exported
+
+. 
+. *============================================================================================
+> =========================
+. * SECTION 10.5: SYNTHETIC CONTROL METHOD (SCM)
+. *============================================================================================
+> =========================
+. di as text _n "============================================================"
+
+============================================================
+
+. di as text    "SECTION 10.5: SYNTHETIC CONTROL METHOD (SCM)"
+SECTION 10.5: SYNTHETIC CONTROL METHOD (SCM)
+
+. di as text    "============================================================"
+============================================================
+
+. *
+. * Application: Abadie, Diamond & Hainmueller (2010, 2015).
+. * Treated unit: Georgia (fips = 13).
+. * Donor pool:   remaining 15 SREB states.
+. * Predictors:   lngenop averages in selected pre-treatment years +
+. *               time-invariant financial covariates.
+. * Treatment year: 2018. Result period: 2001–2021.
+. 
+. * synth requires xtset; already declared above.
+. 
+. di as text "   Running synth (may take ~30 seconds)..."
+   Running synth (may take ~30 seconds)...
+
+. 
+. * NOTE: synth is memory-intensive. Wrap in capture for robustness.
+. capture {
+
+. 
+. if _rc == 0 {
+.     di as text "   synth converged."
+   synth converged.
+. 
+.     * Print the fit and the donor weights (synth's own output is hidden by
+.     * -capture- above).  Section 10.5 of the manuscript quotes both.
+.     di as text "   Pre-treatment RMSPE: " %7.4f el(e(RMSPE),1,1)
+   Pre-treatment RMSPE:  0.0367
+.     matrix list e(W_weights), format(%6.3f) title("Unit weights")
+
+e(W_weights)[15,2]:  Unit weights
+    _Co_Number   _W_Weight
+ 1       1.000       0.000
+ 5       5.000       0.000
+10      10.000       0.000
+12      12.000       0.428
+21      21.000       0.000
+22      22.000       0.031
+24      24.000       0.000
+28      28.000       0.000
+37      37.000       0.315
+40      40.000       0.000
+45      45.000       0.227
+47      47.000       0.000
+48      48.000       0.000
+51      51.000       0.000
+54      54.000       0.000
+. 
+.     * ── Plot 1: Actual vs. Synthetic Georgia trend ──────────────
+.     preserve
+.         use synth_results, clear
+.         rename _Y_treated Y_ga
+.         rename _Y_synthetic Y_synth
+.         rename _time fy
+. 
+.         twoway ///
+>             (line Y_ga    fy, lcolor(gs0)  lwidth(medthick) lpattern(solid)) ///
+>             (line Y_synth fy, lcolor(gs0)  lwidth(medthick) lpattern(dash)), ///
+>             xline(2018, lpattern(dot) lcolor(gs6))                           ///
+>             legend(label(1 "Georgia") label(2 "Synthetic Georgia") rows(1))  ///
+>             ytitle("Log Operating Expenses") xtitle("Fiscal Year")           ///
+>             title("SCM: Georgia vs. Synthetic Control")                      ///
+>             subtitle("Dashed = synthetic Georgia; dotted = 2018 consolidation") ///
+>             name(fig10_6, replace)
+.         * MANUSCRIPT Fig. 10.6 - synthetic control, Georgia vs. synthetic Georgia.
+.         graph export "$graphs_dir/fig10_6_scm_trends_Stata.png", replace width(1200)
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
+    10/Output/graphs/fig10_6_scm_trends_Stata.png saved as PNG format
+.         chkfig "$graphs_dir/fig10_6_scm_trends_Stata.png"
+   chkfig: OK     89,848 bytes   C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/grap
+> hs/fig10_6_scm_trends_Stata.png
+.         graph save   "$graphs_dir/fig10_6.gph", replace
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/fig10_6.gph saved
+. 
+.         * ── Plot 2: Gap plot (actual − synthetic) ────────────────
+.         gen gap = Y_ga - Y_synth
+.         twoway ///
+>             (line gap fy, lcolor(gs0) lwidth(medthick) lpattern(solid)), ///
+>             yline(0, lpattern(dash) lcolor(gs8))                          ///
+>             xline(2018, lpattern(dot) lcolor(gs6))                        ///
+>             ytitle("Gap: Log Expenses (Georgia − Synthetic)") xtitle("Fiscal Year") ///
+>             title("SCM Gap: Effect of Georgia Consolidation")             ///
+>             subtitle("Above zero = Georgia > synthetic counterfactual")   ///
+>             name(fig10_5_1, replace)
+.         graph export "$graphs_dir/fig10_5_1_scm_gap_Stata.png", replace width(1200)
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
+    10/Output/graphs/fig10_5_1_scm_gap_Stata.png saved as PNG format
+.         chkfig "$graphs_dir/fig10_5_1_scm_gap_Stata.png"
+   chkfig: OK     96,433 bytes   C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/grap
+> hs/fig10_5_1_scm_gap_Stata.png
+.     graph save   "$graphs_dir/fig10_5_1.gph", replace
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/fig10_5_1.gph saved
+. 
+.         * Average post-treatment gap
+.         qui sum gap if fy >= 2018
+.         local scm_att = r(mean)
+.         di as text "   SCM average post-treatment gap: " %7.4f `scm_att'
+   SCM average post-treatment gap:  0.0165
+.     restore
+. 
+.     di as text "   fig10_5_1_scm_gap + fig10_6_scm_trends exported"
+   fig10_5_1_scm_gap + fig10_6_scm_trends exported
+. }
+
+. else {
+.     di as text "   synth failed (r(" _rc ")). Check synth installation."
+.     di as text "   Proceeding with remaining sections."
+.     local scm_att = .
+. }
+
+. 
+. *============================================================================================
+> =========================
+. * SECTION 10.6: SYNTHETIC DiD (SDID)
+. *============================================================================================
+> =========================
+. di as text _n "============================================================"
+
+============================================================
+
+. di as text    "SECTION 10.6: SYNTHETIC DiD (SDID)"
+SECTION 10.6: SYNTHETIC DiD (SDID)
+
+. di as text    "============================================================"
+============================================================
+
+. *
+. * Clarke, Pailañir, Athey & Imbens (2023). sdid package.
+. * Combines SCM-style unit weights with DiD-style time weights.
+. * Estimate: ATT with placebo SEs (50 reps, seed 123), covariates projected.
+. * NOTE: vce(bootstrap) requires ≥2 treated units and returns r(451) here.
+. * vce(placebo) uses donor states as placebo units — correct for N_treated=1.
+. 
+. di as text "   Running sdid (placebo SE, 50 reps, covariate-adjusted)..."
+   Running sdid (placebo SE, 50 reps, covariate-adjusted)...
+
+. 
+. * discard flushes any stale in-memory ado version that can cause r(198)
+. capture discard
+
+. 
+. * ── Estimation and graph in ONE call ────────────────────────────────────────
+. * MANUSCRIPT Fig. 10.7 - synthetic DiD, Georgia vs. synthetic control.
+. *
+. * The earlier r(198) was NOT a rendering failure.  -graph_export()- takes a
+. * FILENAME PREFIX and a file type as two arguments, not a full path with an
+. * extension; passing a complete filename returns r(198), which was
+. * misdiagnosed for several revisions as sdid being unable to draw in do-file
+. * context.  Verified interactively 15 Aug 2026: the call below produces
+. * fig10_7_sdid_trends2018.png.
+. *
+. * sdid appends its own suffix to the prefix, so the exported file is
+. * <prefix>trends<treatment year>.png -- here fig10_7_sdid_trends2018.png.
+. * Estimation and graph are now a single call; -capture noisily- keeps the
+. * export confirmation in the log.
+. * SPECIFICATION (aligned with Section 10.6 of the manuscript, 15 Aug 2026).
+. * This script previously ran sdid WITHOUT covariates, which returned
+. * ATT = +0.0338 -- opposite in sign to the covariate-adjusted -0.01959 the
+. * chapter reports and to the TWFE baseline.  Every other estimator in the
+. * chapter conditions on $controls, so the unadjusted call was the outlier.
+. * The call below matches the manuscript exactly: treat_sdid as the treatment
+. * variable, seed(123), 50 placebo replications, and the four baseline
+. * controls projected out.
+. capture drop treat_sdid
+
+. gen byte treat_sdid = did
+
+. label var treat_sdid "Georgia x Post-2018 (SDID treatment indicator)"
+
+. 
+. capture noisily {
+.     sdid lngenop fips fy treat_sdid, vce(placebo) seed(123) ///
+>         covariates($controls, projected) ///
+>         graph graph_export("$graphs_dir/fig10_7_sdid_", .png)
+Placebo replications (50). This may take some time.
+----+--- 1 ---+--- 2 ---+--- 3 ---+--- 4 ---+--- 5
+..................................................     50
+
+
+Synthetic Difference-in-Differences Estimator
+
+-----------------------------------------------------------------------------
+     lngenop |     ATT     Std. Err.     t      P>|t|    [95% Conf. Interval]
+-------------+---------------------------------------------------------------
+  treat_sdid |  -0.01959    0.05318    -0.37    0.713    -0.12383     0.08464
+-----------------------------------------------------------------------------
+95% CIs and p-values are based on large-sample approximations.
+Refer to Arkhangelsky et al., (2021) for theoretical derivations.
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
+    10/Output/graphs/fig10_7_sdid_trends2018.png saved as PNG format
+.     local sdid_att  = e(ATT)
+.     local sdid_se   = e(se)
+.     local sdid_p    = 2 * normal(-abs(`sdid_att'/`sdid_se'))
+.     di as text "   SDID ATT = " %7.4f `sdid_att' ///
+>                "   SE = " %7.4f `sdid_se' ///
+>                "   p  = " %6.4f `sdid_p'
+   SDID ATT = -0.0196   SE =  0.0532   p  = 0.7126
+. }
+
+. if _rc != 0 {
+.     di as text "   sdid failed (r(" _rc ")). Verify: ssc install sdid, replace"
+.     local sdid_att = .
+.     local sdid_se  = .
+. }
+
+. else {
+.     capture confirm file "$graphs_dir/fig10_7_sdid_trends2018.png"
+.     if _rc {
+.         di as error "   fig10_7_sdid_trends2018.png was NOT created in $graphs_dir"
+.     }
+.     else {
+.         di as text "   fig10_7_sdid_trends2018.png exported (MANUSCRIPT Fig. 10.7)"
+   fig10_7_sdid_trends2018.png exported (MANUSCRIPT Fig. 10.7)
+.     }
+. }
+
+. 
+. *============================================================================================
+> =========================
+. * SECTION 10.7: EVENT STUDY AND CALLAWAY-SANT'ANNA DiD
+. *============================================================================================
+> =========================
+. di as text _n "============================================================"
+
+============================================================
+
+. di as text    "SECTION 10.7: EVENT STUDY AND CALLAWAY-SANT'ANNA DiD"
+SECTION 10.7: EVENT STUDY AND CALLAWAY-SANT'ANNA DiD
+
+. di as text    "============================================================"
+============================================================
+
+. *
+. * The event-study plot was generated in Section 10.3.3.
+. * This section runs the CS estimator (csdid package) and compares
+. * to the TWFE event study above.
+. *
+. * With a single treated cohort (2018), the CS aggregated ATT
+. * is numerically equivalent to TWFE under parallel trends.
+. * The section is nevertheless included to demonstrate the
+. * workflow for the general staggered case (extended in 10.7.3).
+. 
+. * Create cohort (gvar) variable: year of first treatment, 0 for never-treated
+. gen int gvar = cond(treat_state == 1, 2018, 0)
+
+. label var gvar "First treatment year (0 = never treated)"
+
+. 
+. di as text "   Running csdid (CS-DiD, single cohort 2018)..."
+   Running csdid (CS-DiD, single cohort 2018)...
+
+. 
+. * capture noisily: csdid output table appears in the log even if a later
+. * command in the block fails.  Plain capture suppresses all output, which
+. * makes it impossible to verify the ATT without re-running interactively.
+. capture noisily {
+.     * method(reg) is regression-based and numerically equivalent to TWFE
+.     * for a single treated cohort. method(dripw) with wboot produces
+.     * a degenerate ATT=0 when there is only one treated unit.
+.     csdid lngenop $controls, ivar(fips) time(fy) gvar(gvar) ///
+>         method(reg) notyet
+....................
+Difference-in-difference with Multiple Time Periods
+
+                                                           Number of obs = 336
+Outcome model  : regression adjustment
+Treatment model: none
+------------------------------------------------------------------------------
+             | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+g2018        |
+ t_2001_2002 |   .0153926   .0364077     0.42   0.672    -.0559651    .0867504
+ t_2002_2003 |   .0369514   .0742774     0.50   0.619    -.1086296    .1825324
+ t_2003_2004 |   .1057219   .0515692     2.05   0.040     .0046481    .2067956
+ t_2004_2005 |   .0486129    .043893     1.11   0.268    -.0374159    .1346416
+ t_2005_2006 |   .0429211   .0442321     0.97   0.332    -.0437723    .1296144
+ t_2006_2007 |   .0084464   .0424227     0.20   0.842    -.0747005    .0915933
+ t_2007_2008 |   .0048902   .0422087     0.12   0.908    -.0778374    .0876178
+ t_2008_2009 |   .0172673   .0362824     0.48   0.634    -.0538448    .0883795
+ t_2009_2010 |  -.0894035   .0339086    -2.64   0.008    -.1558631   -.0229439
+ t_2010_2011 |   .0897076   .0325723     2.75   0.006     .0258671    .1535481
+ t_2011_2012 |  -.0074466   .0416231    -0.18   0.858    -.0890264    .0741333
+ t_2012_2013 |   .0354439   .0237171     1.49   0.135    -.0110408    .0819285
+ t_2013_2014 |   .0294223   .0385177     0.76   0.445     -.046071    .1049155
+ t_2014_2015 |   .0221218   .0157975     1.40   0.161    -.0088408    .0530844
+ t_2015_2016 |   .0422878   .0222232     1.90   0.057    -.0012688    .0858445
+ t_2016_2017 |   .0049179   .0117787     0.42   0.676     -.018168    .0280038
+ t_2017_2018 |   .0180491   .0175688     1.03   0.304    -.0163851    .0524832
+ t_2017_2019 |   .0279946   .0290621     0.96   0.335     -.028966    .0849553
+ t_2017_2020 |   .0154295    .038535     0.40   0.689    -.0600978    .0909568
+ t_2017_2021 |  -.0782121    .048803    -1.60   0.109    -.1738643    .0174401
+------------------------------------------------------------------------------
+Control: Not yet Treated
+
+See Callaway and Sant'Anna (2021) for details
+. 
+.     * FIX v6: csdid_plot MUST run before estimates store.
+.     * estimates store overwrites the internal csdid result objects that
+.     * csdid_plot reads; calling it after store gives r(693) "matrix has
+.     * no columns" because those objects are gone.
+.     * -capture noisily-, not plain -capture-: a plain capture block suppresses
+.     * the echo AND the output of everything inside it, including the
+.     * "file ... saved as PNG format" confirmation, so the log gives no
+.     * evidence that the figure was drawn.  noisily keeps the record.
+.     capture noisily {
+.         * FIX v7: csdid_plot reads the event-time aggregation, which does not
+.         * exist until estat event has run.  Calling it directly after csdid
+.         * gives r(693) "matrix has no columns".
+.         estat event
+ATT by Periods Before and After treatment
+Event Study:Dynamic effects
+------------------------------------------------------------------------------
+             | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+     Pre_avg |   .0254534   .0134093     1.90   0.058    -.0008282    .0517351
+    Post_avg |  -.0041847   .0319893    -0.13   0.896    -.0668825    .0585131
+        Tm16 |   .0153926   .0364077     0.42   0.672    -.0559651    .0867504
+        Tm15 |   .0369514   .0742774     0.50   0.619    -.1086296    .1825324
+        Tm14 |   .1057219   .0515692     2.05   0.040     .0046481    .2067956
+        Tm13 |   .0486129    .043893     1.11   0.268    -.0374159    .1346416
+        Tm12 |   .0429211   .0442321     0.97   0.332    -.0437723    .1296144
+        Tm11 |   .0084464   .0424227     0.20   0.842    -.0747005    .0915933
+        Tm10 |   .0048902   .0422087     0.12   0.908    -.0778374    .0876178
+         Tm9 |   .0172673   .0362824     0.48   0.634    -.0538448    .0883795
+         Tm8 |  -.0894035   .0339086    -2.64   0.008    -.1558631   -.0229439
+         Tm7 |   .0897076   .0325723     2.75   0.006     .0258671    .1535481
+         Tm6 |  -.0074466   .0416231    -0.18   0.858    -.0890264    .0741333
+         Tm5 |   .0354439   .0237171     1.49   0.135    -.0110408    .0819285
+         Tm4 |   .0294223   .0385177     0.76   0.445     -.046071    .1049155
+         Tm3 |   .0221218   .0157975     1.40   0.161    -.0088408    .0530844
+         Tm2 |   .0422878   .0222232     1.90   0.057    -.0012688    .0858445
+         Tm1 |   .0049179   .0117787     0.42   0.676     -.018168    .0280038
+         Tp0 |   .0180491   .0175688     1.03   0.304    -.0163851    .0524832
+         Tp1 |   .0279946   .0290621     0.96   0.335     -.028966    .0849553
+         Tp2 |   .0154295    .038535     0.40   0.689    -.0600978    .0909568
+         Tp3 |  -.0782121    .048803    -1.60   0.109    -.1738643    .0174401
+------------------------------------------------------------------------------
+.         csdid_plot, title("CS-DiD Event Study: Georgia Consolidation") ///
+>             ytitle("ATT(g,t): Log Operating Expenses")                 ///
+>             xtitle("Fiscal Year")                                      ///
+>             name(fig10_7_2, replace)
+.         graph export "$graphs_dir/fig10_7_2_csdid_Stata.png", replace width(1200)
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
+    10/Output/graphs/fig10_7_2_csdid_Stata.png saved as PNG format
+.         chkfig "$graphs_dir/fig10_7_2_csdid_Stata.png"
+   chkfig: OK     67,863 bytes   C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/grap
+> hs/fig10_7_2_csdid_Stata.png
+.         di as text "   fig10_7_2_csdid_Stata.png exported"
+   fig10_7_2_csdid_Stata.png exported
+.     }
+.     if _rc != 0 di as text "   csdid_plot failed (r(" _rc ")) — check csdid version."
+. 
+.     estimates store csdid_main
+. 
+.     * Aggregate: simple average ATT
+.     * Use csdid_stats (newer API) with r(b)/r(V) fallback for robustness
+.     * across package versions.
+.     estat simple
+Average Treatment Effect on Treated
+------------------------------------------------------------------------------
+             | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+         ATT |  -.0041847   .0319893    -0.13   0.896    -.0668825    .0585131
+------------------------------------------------------------------------------
+.     capture local cs_att = r(table)[1,1]
+.     capture local cs_se  = r(table)[2,1]
+.     capture local cs_p   = r(table)[4,1]
+.     * Validate: r(table)[1,1]==0 with missing SE signals wrong matrix layout;
+.     * fall back to e(b) from the stored csdid estimates.
+.     if missing(`cs_att') | (`cs_att'==0 & missing(`cs_se')) {
+.         estimates restore csdid_main
+.         local cs_att = e(b)[1, colsof(e(b))]   // last col = most recent period
+.         local cs_se  = sqrt(e(V)[colsof(e(b)), colsof(e(b))])
+.         local cs_p   = 2 * normal(-abs(`cs_att' / `cs_se'))
+.         di as text "   (r(table) fallback: using e(b) from csdid estimates)"
+.     }
+.     di as text "   CS simple ATT = " %7.4f `cs_att' ///
+>                "   SE = " %7.4f `cs_se' ///
+>                "   p  = " %6.4f `cs_p'
+   CS simple ATT = -0.0042   SE =  0.0320   p  = 0.8959
+. }
+
+. if _rc != 0 {
+.     di as text "   csdid failed (r(" _rc ")). Verify: ssc install csdid, replace"
+.     local cs_att = .
+.     local cs_se  = .
+. }
+
+. 
+. *============================================================================================
+> =========================
+. * SECTION 10.7.3: MULTI-STATE STAGGERED ADOPTION
+. *============================================================================================
+> =========================
+. di as text _n "============================================================"
+
+============================================================
+
+. di as text    "SECTION 10.7.3: MULTI-STATE STAGGERED ADOPTION"
+SECTION 10.7.3: MULTI-STATE STAGGERED ADOPTION
+
+. di as text    "============================================================"
+============================================================
+
+. *
+. * Application: hypothetical staggered consolidation policy.
+. * Demonstrates heterogeneous treatment timing and the importance
+. * of using Callaway-Sant'Anna over naive TWFE when ATTs differ by cohort.
+. *
+. * TWO DATA PATHS, selected by the use_synthetic toggle below.
+. *
+. *   use_synthetic 1 (default, used in the chapter)
+. *     Simulated 16-unit panel, 20 years (2001-2020), cohorts 2014, 2016, 2018
+. *     plus 4 never-treated units.  Cohort effects are hardcoded in the DGP at
+. *     -0.06, -0.04, and -0.03, so the true cohort-weighted ATT is about -0.043.
+. *     A known target is what makes the TWFE-vs-CS comparison interpretable:
+. *     the reader can check which estimator recovers it.  set seed 20260511
+. *     makes the panel exactly reproducible.
+. *
+. *   use_synthetic 0
+. *     Example_10_7_3.csv from GitHub: real SHEEO data, 48 states, FY 2001-2024
+. *     (N = 1,152), with cohorts assigned by FIPS to Georgia (2013),
+. *     Wisconsin (2018), and Pennsylvania (2022).  Realistic panel dimensions,
+. *     but the cohort assignment is arbitrary, so there is no true effect to
+. *     compare the estimators against and pre-treatment ATT(g,t) are violated.
+. 
+. * -- Data path toggle: 1 = simulated panel (chapter default), 0 = 48-state CSV --
+. local use_synthetic 1
+
+. 
+. * -- Attempt download; validate columns; fall back to synthetic if anything fails --
+. * copy is inside capture: a 404 HTML page downloaded without error previously
+. * caused import delimited to succeed (rc=0) but with wrong columns, bypassing
+. * the synthetic fallback and crashing xtset with r(111) (no observations).
+. * The confirm var check after import enforces the expected schema.
+. * Skipped entirely when use_synthetic == 1, so the simulated path needs
+. * no internet connection.
+. capture {
+
+. 
+. * -- Use the simulated panel when requested, or when the CSV path failed --
+. if _rc != 0 | `use_synthetic' {
+.     if `use_synthetic' di as text "   use_synthetic = 1 — generating simulated staggered pane
+> l"
+   use_synthetic = 1 — generating simulated staggered panel
+.     else               di as text "   Download or validation failed (r(" _rc ")) — generating
+>  simulated staggered panel"
+.     clear
+.     * 16 SREB states, 20 years (2001-2020)
+.     set obs 320
+Number of observations (_N) was 0, now 320.
+.     gen fips_s = ceil(_n / 20)
+.     gen year_s = 2000 + mod(_n - 1, 20) + 1
+. 
+.     * Assign cohorts: cohort 2014 (4 states), 2016 (4 states), 2018 (4 states),
+.     *                 never-treated (4 states)
+.     gen first_treat_s = 0
+.     replace first_treat_s = 2014 if inrange(fips_s, 1, 4)
+(80 real changes made)
+.     replace first_treat_s = 2016 if inrange(fips_s, 5, 8)
+(80 real changes made)
+.     replace first_treat_s = 2018 if inrange(fips_s, 9, 12)
+(80 real changes made)
+.     * 13-16 = never treated (first_treat_s = 0)
+. 
+.     gen treat_s = (first_treat_s > 0 & year_s >= first_treat_s)
+. 
+.     * DGP: cohort-heterogeneous treatment effects
+.     set seed 20260511
+.     gen fe_unit = 0.1 * rnormal()   // unit FE
+.     gen fe_time = 0.05 * (year_s - 2000)   // common trend
+.     gen te = 0
+.     replace te = -0.06 if first_treat_s == 2014 & treat_s == 1
+(28 real changes made)
+.     replace te = -0.04 if first_treat_s == 2016 & treat_s == 1
+(20 real changes made)
+.     replace te = -0.03 if first_treat_s == 2018 & treat_s == 1
+(12 real changes made)
+.     gen lngenop_s = 13.5 + fe_unit + fe_time + te + rnormal(0, 0.05)
+. 
+.     rename fips_s state_id
+.     rename year_s year
+.     rename first_treat_s gvar_s
+.     rename lngenop_s lngen_s
+.     label var gvar_s  "First treatment year (0 = never)"
+.     label var lngen_s "Log operating expenses (staggered)"
+.     di as text "   Synthetic staggered panel generated: N = " c(N)
+   Synthetic staggered panel generated: N = 320
+. }
+
+. 
+. * -- TWFE (naive) vs. CS-DiD on staggered data --
+. * Variable names after synthetic path: state_id, year, gvar_s, lngen_s, treat_s
+. * Variable names after CSV path:       state_id, year, first_treat, lngenop (or outcome)
+. * Resolve to canonical names used below: s_id, s_year, s_gvar, s_y, s_treat
+. 
+. if c(N) > 0 {
+. 
+.     * ── Resolve variable names to canonical locals ──────────────────────────
+.     local s_id   "state_id"
+.     local s_year "year"
+. 
+.     * Outcome: prefer lngen_s (synthetic path), then lngenop_s (CSV path)
+.     capture confirm var lngen_s
+.     if !_rc        local s_y "lngen_s"
+.     else {
+.         capture confirm var lngenop_s
+.         if !_rc    local s_y "lngenop_s"
+.         else       local s_y "outcome"
+.     }
+. 
+.     * Cohort variable: gvar_s is built on both paths; first_treat kept as a
+.     * fallback for older versions of the CSV.
+.     capture confirm var gvar_s
+.     if !_rc        local s_gvar "gvar_s"
+.     else {
+.         capture confirm var first_treat
+.         if !_rc    local s_gvar "first_treat"
+.         else {
+.             gen gvar_s = 0
+.             local s_gvar "gvar_s"
+.         }
+.     }
+. 
+.     * Treatment indicator — regenerate cleanly from resolved cohort variable
+.     capture drop s_treat
+.     gen byte s_treat = (`s_gvar' > 0 & `s_year' >= `s_gvar')
+. 
+.     xtset `s_id' `s_year'
+
+Panel variable: state_id (strongly balanced)
+ Time variable: year, 2001 to 2020
+         Delta: 1 unit
+. 
+.     di as text "   Canonical vars — id:`s_id'  time:`s_year'  y:`s_y'  gvar:`s_gvar'"
+   Canonical vars — id:state_id  time:year  y:lngen_s  gvar:gvar_s
+. 
+.     * ── Naive TWFE ──────────────────────────────────────────────────────────
+.     capture noisily {
+.         qui xtreg `s_y' s_treat i.`s_year', fe vce(cluster `s_id')
+.         local stag_twfe_b = _b[s_treat]
+.         local stag_twfe_p = 2 * ttail(e(df_r), abs(_b[s_treat]/_se[s_treat]))
+.         di as text "   Naive TWFE (staggered): DiD = " %7.4f `stag_twfe_b' ///
+>                    "   p = " %6.4f `stag_twfe_p'
+   Naive TWFE (staggered): DiD = -0.0901   p = 0.0090
+.     }
+.     if _rc != 0 di as text "   Naive TWFE failed (r(" _rc "))."
+. 
+.     * ── Callaway-Sant'Anna CS-DiD ───────────────────────────────────────────
+.     * discard reloads csdid from disk to avoid stale-cache errors
+.     capture discard
+.     capture noisily {
+.         csdid `s_y', ivar(`s_id') time(`s_year') gvar(`s_gvar') ///
+>             method(reg) notyet
+..................................................
+.......
+Difference-in-difference with Multiple Time Periods
+
+                                                           Number of obs = 320
+Outcome model  : regression adjustment
+Treatment model: none
+------------------------------------------------------------------------------
+             | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+g2014        |
+ t_2001_2002 |  -.0999521   .0991523    -1.01   0.313    -.2942871    .0943828
+ t_2002_2003 |  -.0170694    .097805    -0.17   0.861    -.2087637    .1746249
+ t_2003_2004 |  -.0164576   .0678171    -0.24   0.808    -.1493766    .1164615
+ t_2004_2005 |   -.070112   .0566255    -1.24   0.216     -.181096     .040872
+ t_2005_2006 |  -.0208155   .0764697    -0.27   0.785    -.1706933    .1290624
+ t_2006_2007 |   .0912427   .0656867     1.39   0.165    -.0375008    .2199862
+ t_2007_2008 |   .0559683   .1217541     0.46   0.646    -.1826654     .294602
+ t_2008_2009 |  -.0459342   .0628597    -0.73   0.465     -.169137    .0772686
+ t_2009_2010 |   .1871441   .0836696     2.24   0.025     .0231547    .3511336
+ t_2010_2011 |  -.1729467    .064244    -2.69   0.007    -.2988625   -.0470308
+ t_2011_2012 |   .0124728   .0710337     0.18   0.861    -.1267507    .1516963
+ t_2012_2013 |  -.0449931    .068327    -0.66   0.510    -.1789116    .0889254
+ t_2013_2014 |  -.1158932   .0688299    -1.68   0.092    -.2507973    .0190109
+ t_2013_2015 |   .0219198   .0764074     0.29   0.774    -.1278359    .1716755
+ t_2013_2016 |  -.2239492   .0854434    -2.62   0.009    -.3914151   -.0564833
+ t_2013_2017 |  -.0758919   .1178878    -0.64   0.520    -.3069477     .155164
+ t_2013_2018 |  -.0287106   .0581224    -0.49   0.621    -.1426285    .0852073
+ t_2013_2019 |  -.0744781   .0772105    -0.96   0.335    -.2258079    .0768516
+ t_2013_2020 |  -.1621058   .1242148    -1.31   0.192    -.4055624    .0813508
+-------------+----------------------------------------------------------------
+g2016        |
+ t_2001_2002 |   .0353996    .095191     0.37   0.710    -.1511713    .2219705
+ t_2002_2003 |  -.0978703   .0967666    -1.01   0.312    -.2875294    .0917887
+ t_2003_2004 |    .110571   .1011123     1.09   0.274    -.0876055    .3087476
+ t_2004_2005 |  -.0522859   .0666914    -0.78   0.433    -.1829986    .0784268
+ t_2005_2006 |   .0151583   .0622326     0.24   0.808    -.1068154     .137132
+ t_2006_2007 |  -.0662625   .0950154    -0.70   0.486    -.2524893    .1199643
+ t_2007_2008 |    .074849   .0771112     0.97   0.332    -.0762861    .2259842
+ t_2008_2009 |   .1140311   .0815852     1.40   0.162     -.045873    .2739351
+ t_2009_2010 |  -.2168339   .1151325    -1.88   0.060    -.4424895    .0088216
+ t_2010_2011 |   .0859301    .085693     1.00   0.316    -.0820252    .2538854
+ t_2011_2012 |  -.0330056    .077908    -0.42   0.672    -.1857025    .1196913
+ t_2012_2013 |   .1733942    .073141     2.37   0.018     .0300406    .3167478
+ t_2013_2014 |  -.0898752   .0580327    -1.55   0.121    -.2036172    .0238668
+ t_2014_2015 |  -.0552354   .0525627    -1.05   0.293    -.1582565    .0477857
+ t_2015_2016 |  -.1057119   .0571268    -1.85   0.064    -.2176783    .0062545
+ t_2015_2017 |  -.1324645   .0755143    -1.75   0.079    -.2804698    .0155407
+ t_2015_2018 |  -.0409369   .0935333    -0.44   0.662    -.2242589     .142385
+ t_2015_2019 |  -.2098935   .0980857    -2.14   0.032     -.402138    -.017649
+ t_2015_2020 |  -.2774146   .1107322    -2.51   0.012    -.4944457   -.0603834
+-------------+----------------------------------------------------------------
+g2018        |
+ t_2001_2002 |  -.2655799   .0544905    -4.87   0.000    -.3723793   -.1587806
+ t_2002_2003 |    .214057   .1280643     1.67   0.095    -.0369444    .4650583
+ t_2003_2004 |  -.0345542   .0677766    -0.51   0.610     -.167394    .0982855
+ t_2004_2005 |  -.0086317    .061281    -0.14   0.888    -.1287402    .1114768
+ t_2005_2006 |  -.0154827    .067507    -0.23   0.819    -.1477939    .1168286
+ t_2006_2007 |  -.1699347   .1073759    -1.58   0.114    -.3803877    .0405182
+ t_2007_2008 |   .1364005   .1230283     1.11   0.268    -.1047306    .3775315
+ t_2008_2009 |  -.0070815   .1032159    -0.07   0.945     -.209381     .195218
+ t_2009_2010 |   .0235012   .0760484     0.31   0.757     -.125551    .1725533
+ t_2010_2011 |   .1207151   .0857645     1.41   0.159    -.0473802    .2888105
+ t_2011_2012 |  -.0863454   .1248942    -0.69   0.489    -.3311335    .1584426
+ t_2012_2013 |   .0490379   .1334362     0.37   0.713    -.2124923    .3105681
+ t_2013_2014 |  -.0500016   .0867149    -0.58   0.564    -.2199597    .1199565
+ t_2014_2015 |   .0623126   .0827442     0.75   0.451     -.099863    .2244882
+ t_2015_2016 |  -.0639935   .0970322    -0.66   0.510     -.254173    .1261861
+ t_2016_2017 |  -.1191709   .0935221    -1.27   0.203    -.3024709    .0641291
+ t_2017_2018 |   .1978879   .0601211     3.29   0.001     .0800528     .315723
+ t_2017_2019 |   .0766094   .0973674     0.79   0.431    -.1142271    .2674459
+ t_2017_2020 |   .0671039   .0477004     1.41   0.159    -.0263872    .1605949
+------------------------------------------------------------------------------
+Control: Not yet Treated
+
+See Callaway and Sant'Anna (2021) for details
+. 
+.         * FIX v6: csdid_plot before estimates store (same root cause as §10.7)
+.         * -capture noisily- so the log records whether Fig. 10.9 was exported
+.         * (see the note on the matching block in Section 10.7).
+.         capture noisily {
+.             * FIX v7: estat event must precede csdid_plot (see Section 10.7)
+.             estat event
+ATT by Periods Before and After treatment
+Event Study:Dynamic effects
+------------------------------------------------------------------------------
+             | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+     Pre_avg |  -.0107107   .0052762    -2.03   0.042    -.0210519   -.0003695
+    Post_avg |  -.0882406   .0573614    -1.54   0.124    -.2006669    .0241857
+        Tm16 |  -.2655799   .0544905    -4.87   0.000    -.3723793   -.1587806
+        Tm15 |    .214057   .1280643     1.67   0.095    -.0369444    .4650583
+        Tm14 |   .0004227   .0619932     0.01   0.995    -.1210819    .1219272
+        Tm13 |   -.053251    .047117    -1.13   0.258    -.1455986    .0390966
+        Tm12 |  -.0016213   .0562637    -0.03   0.977     -.111896    .1086535
+        Tm11 |  -.0797634   .0519635    -1.53   0.125      -.18161    .0220833
+        Tm10 |   .0450337   .0570751     0.79   0.430    -.0668314    .1568989
+         Tm9 |  -.0478187   .0592433    -0.81   0.420    -.1639334    .0682961
+         Tm8 |   .0258449   .0428962     0.60   0.547    -.0582301    .1099199
+         Tm7 |    .108663   .0425542     2.55   0.011     .0252582    .1920677
+         Tm6 |  -.0824037   .0823565    -1.00   0.317    -.2438196    .0790122
+         Tm5 |   .0296779   .0621279     0.48   0.633    -.0920905    .1514464
+         Tm4 |   .0347123    .055232     0.63   0.530    -.0735405    .1429651
+         Tm3 |     .02092   .0487904     0.43   0.668    -.0747074    .1165474
+         Tm2 |   -.047132   .0393837    -1.20   0.231    -.1243225    .0300586
+         Tm1 |  -.0731331   .0470038    -1.56   0.120     -.165259    .0189927
+         Tp0 |  -.0079057   .0584937    -0.14   0.892    -.1225512    .1067397
+         Tp1 |  -.0113118   .0537748    -0.21   0.833    -.1167084    .0940849
+         Tp2 |  -.0659274   .0641346    -1.03   0.304    -.1916289     .059774
+         Tp3 |  -.1428927   .0762498    -1.87   0.061    -.2923394    .0065541
+         Tp4 |  -.1530626   .0810468    -1.89   0.059    -.3119114    .0057862
+         Tp5 |  -.0744781   .0772105    -0.96   0.335    -.2258079    .0768516
+         Tp6 |  -.1621058   .1242148    -1.31   0.192    -.4055624    .0813508
+------------------------------------------------------------------------------
+.             csdid_plot, name(fig10_9, replace) ///
+>                 title("Staggered Adoption: Three Simulated Groups") ///
+>                 subtitle("Groups treated in 2014, 2016, and 2018") ///
+>                 ytitle("ATT(g,t)") xtitle("Year")
+.             * MANUSCRIPT Fig. 10.9 - staggered adoption across three cohorts.
+.             graph export "$graphs_dir/fig10_9_staggered_es_Stata.png", replace width(1200)
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
+    10/Output/graphs/fig10_9_staggered_es_Stata.png saved as PNG format
+.             chkfig "$graphs_dir/fig10_9_staggered_es_Stata.png"
+   chkfig: OK     66,411 bytes   C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/grap
+> hs/fig10_9_staggered_es_Stata.png
+.             di as text "   fig10_9_staggered_es_Stata.png exported"
+   fig10_9_staggered_es_Stata.png exported
+.         }
+.         if _rc != 0 di as text "   csdid_plot (staggered) failed (r(" _rc "))."
+. 
+.         estimates store csdid_stag
+. 
+.         estat simple
+Average Treatment Effect on Treated
+------------------------------------------------------------------------------
+             | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+         ATT |   -.072262   .0532284    -1.36   0.175    -.1765877    .0320638
+------------------------------------------------------------------------------
+.         local stag_cs_att = r(table)[1,1]
+.         local stag_cs_se  = r(table)[2,1]
+.         di as text "   CS simple ATT = " %7.4f `stag_cs_att' ///
+>                    "   SE = " %7.4f `stag_cs_se'
+   CS simple ATT = -0.0723   SE =  0.0532
+. 
+.         di as text "   Cohort-specific ATTs:"
+   Cohort-specific ATTs:
+.         estat group
+ATT by group
+------------------------------------------------------------------------------
+             | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    GAverage |  -.0445252   .0444726    -1.00   0.317    -.1316898    .0426394
+       G2014 |  -.0941584   .0776579    -1.21   0.225    -.2463652    .0580483
+       G2016 |  -.1532843     .06014    -2.55   0.011    -.2711565   -.0354121
+       G2018 |    .113867   .0563622     2.02   0.043     .0033992    .2243349
+------------------------------------------------------------------------------
+.     }
+.     if _rc != 0 di as text "   Staggered CS-DiD failed (r(" _rc ")). " ///
+>         "Check: ssc install csdid, replace"
+. }
+
+. 
+. * Restore main dataset
+. use "$out_root/data/ga_did_work.dta", clear
+
+. xtset fips fy
+
+Panel variable: fips (strongly balanced)
+ Time variable: fy, 2001 to 2021
+         Delta: 1 unit
+
+. 
+. *============================================================================================
+> =========================
+. * SECTION 10.8.2: PERMUTATION INFERENCE
+. *============================================================================================
+> =========================
+. di as text _n "============================================================"
+
+============================================================
+
+. di as text    "SECTION 10.8.2: PERMUTATION INFERENCE"
+SECTION 10.8.2: PERMUTATION INFERENCE
+
+. di as text    "============================================================"
+============================================================
+
+. *
+. * Method: "In-space" permutation (Abadie et al. 2010).
+. * Assign the Georgia treatment date to each control state in turn,
+. * re-estimate TWFE, collect the placebo DiD coefficient.
+. * The p-value is the fraction of placebo estimates at least as
+. * extreme as the actual estimate.
+. 
+. * Collect control state FIPS values
+. levelsof fips if treat_state == 0, local(control_fips)
+1 5 10 12 21 22 24 28 37 40 45 47 48 51 54
+
+. local n_controls : word count `control_fips'
+
+. 
+. di as text "   Running permutation test over `n_controls' control states..."
+   Running permutation test over 15 control states...
+
+. di as text "   (Each dot = 1 placebo state)"
+   (Each dot = 1 placebo state)
+
+. 
+. * postfile for results
+. tempname perm_h
+
+. tempfile perm_f
+
+. postfile `perm_h' fips_placebo b_placebo using `perm_f', replace
+(file C:\Users\marvi\AppData\Local\Temp\ST_4f08_000006.tmp not found)
+
+. 
+. foreach cf of local control_fips {
+  2. 
+.     * Assign post-2018 "treatment" to this control state
+.     gen byte did_perm = (`cf' == fips & fy >= 2018)
+  3. 
+.     * Exclude the actual treated state (Georgia) from donor pool
+.     qui xtreg lngenop did_perm $controls i.fy if fips != 13, ///
+>         fe vce(cluster fips)
+  4. 
+.     post `perm_h' (`cf') (_b[did_perm])
+  5.     drop did_perm
+  6.     di "." _continue
+  7. }
+...............
+. di ""    // newline after dots
+
+
+. 
+. postclose `perm_h'
+
+. 
+. * Extract placebo distribution and compute p-value
+. preserve
+
+.     use `perm_f', clear
+
+.     qui sum b_placebo
+
+.     local perm_mean = r(mean)
+
+.     local perm_sd   = r(sd)
+
+. 
+.     * Fraction of placebos as extreme as actual estimate (two-sided)
+.     qui count if abs(b_placebo) >= abs(`twfe_b')
+
+.     local n_extreme = r(N)
+
+.     local perm_p    = `n_extreme' / `n_controls'
+
+. 
+.     di as text _n "--- Permutation test results ---"
+
+--- Permutation test results ---
+
+.     di as text    "   Actual DiD estimate:     " %7.4f `twfe_b'
+   Actual DiD estimate:     -0.0427
+
+.     di as text    "   Placebo mean (H0 ≈ 0):   " %7.4f `perm_mean'
+   Placebo mean (H0 ≈ 0):    0.0010
+
+.     di as text    "   Placebo SD:              " %7.4f `perm_sd'
+   Placebo SD:               0.0637
+
+.     di as text    "   |Placebo| ≥ |actual|:    `n_extreme' / `n_controls'"
+   |Placebo| ≥ |actual|:    7 / 15
+
+.     di as text    "   Permutation p-value:      " %6.4f `perm_p'
+   Permutation p-value:      0.4667
+
+. 
+.     * Pre-format p-value string (note() only accepts string literals)
+.     local perm_p_str : display %5.3f `perm_p'
+
+. 
+.     * Pre-compute mirror xline value.
+.     * twfe_b is negative (-0.0427), so -`twfe_b' would expand to --0.0427
+.     * inside a graph option, which Stata's parser rejects with r(198).
+.     * Storing the negation in a local avoids the double-minus.
+.     local twfe_b_mirror = -`twfe_b'
+
+. 
+.     * Distribution plot
+.     twoway ///
+>         (histogram b_placebo, bin(10) fcolor(gs12) lcolor(gs8)  ///
+>              freq ytitle("Count"))                                ///
+>         (function y = 0, lcolor(gs0) lwidth(thin)),              ///
+>         xline(`twfe_b',        lcolor(gs0) lwidth(medthick) lpattern(solid)) ///
+>         xline(`twfe_b_mirror', lcolor(gs8) lwidth(medium)   lpattern(dash))  ///
+>         xtitle("Placebo DiD Coefficient")                             ///
+>         title("Permutation Distribution")                            ///
+>         subtitle("Solid line = actual Georgia estimate")              ///
+>         note("Permutation p = `perm_p_str'")                         ///
+>         name(fig10_8_1, replace)
+
+.     graph export "$graphs_dir/fig10_8_1_permutation_Stata.png", replace width(1200)
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
+    10/Output/graphs/fig10_8_1_permutation_Stata.png saved as PNG format
+
+.     chkfig "$graphs_dir/fig10_8_1_permutation_Stata.png"
+   chkfig: OK     55,974 bytes   C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/grap
+> hs/fig10_8_1_permutation_Stata.png
+
+.     graph save   "$graphs_dir/fig10_8_1.gph", replace
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/fig10_8_1.gph saved
+
+. restore
+
+. di as text "   fig10_8_1_permutation_Stata.png exported"
+   fig10_8_1_permutation_Stata.png exported
+
+. 
+. *============================================================================================
+> =========================
+. * SECTION 10.8.3: LEAVE-ONE-OUT SENSITIVITY
+. *============================================================================================
+> =========================
+. di as text _n "============================================================"
+
+============================================================
+
+. di as text    "SECTION 10.8.3: LEAVE-ONE-OUT SENSITIVITY"
+SECTION 10.8.3: LEAVE-ONE-OUT SENSITIVITY
+
+. di as text    "============================================================"
+============================================================
+
+. *
+. * Drop each control state in turn, re-estimate TWFE.
+. * Stable estimates across the distribution imply no single control
+. * state is driving the baseline finding.
+. 
+. di as text "   Running leave-one-out over `n_controls' control states..."
+   Running leave-one-out over 15 control states...
+
+. di as text "   (Each dot = 1 state dropped)"
+   (Each dot = 1 state dropped)
+
+. 
+. tempname loo_h
+
+. tempfile loo_f
+
+. postfile `loo_h' fips_dropped b_loo lo_loo hi_loo using `loo_f', replace
+(file C:\Users\marvi\AppData\Local\Temp\ST_4f08_000008.tmp not found)
+
+. 
+. foreach cf of local control_fips {
+  2.     qui xtreg lngenop did $controls i.fy if fips != `cf', ///
+>         fe vce(cluster fips)
+  3.     post `loo_h' (`cf') (_b[did]) ///
+>         (_b[did] - 1.96*_se[did]) ///
+>         (_b[did] + 1.96*_se[did])
+  4.     di "." _continue
+  5. }
+...............
+. di ""
+
+
+. 
+. postclose `loo_h'
+
+. 
+. preserve
+
+.     use `loo_f', clear
+
+.     gen obs = _n
+
+.     sort b_loo
+
+. 
+.     qui sum b_loo
+
+.     local loo_mean = r(mean)
+
+.     local loo_min  = r(min)
+
+.     local loo_max  = r(max)
+
+. 
+.     di as text _n "--- Leave-one-out results ---"
+
+--- Leave-one-out results ---
+
+.     di as text    "   Baseline DiD:   " %7.4f `twfe_b'
+   Baseline DiD:   -0.0427
+
+.     di as text    "   LOO mean:       " %7.4f `loo_mean'
+   LOO mean:       -0.0415
+
+.     di as text    "   LOO range:      [" %6.4f `loo_min' ", " %6.4f `loo_max' "]"
+   LOO range:      [-0.0520, -0.0338]
+
+.     di as text    "   All same sign:  " cond((`loo_min' < 0) == (`twfe_b' < 0) & ///
+>                                             (`loo_max' < 0) == (`twfe_b' < 0), "YES", "NO")
+   All same sign:  YES
+
+. 
+.     twoway ///
+>         (rcap lo_loo hi_loo obs, lcolor(gs8))                              ///
+>         (scatter b_loo obs, mcolor(gs0) msymbol(D) msize(medlarge)),       ///
+>         yline(`twfe_b', lpattern(dash) lcolor(gs0))                        ///
+>         yline(0, lpattern(shortdash) lcolor(gs10))                         ///
+>         xtitle("Control State Dropped (sorted by estimate)")               ///
+>         ytitle("DiD Coefficient (log operating expenses)")                 ///
+>         title("Leave-One-Out Sensitivity Analysis")                        ///
+>         subtitle("Dashed horizontal = baseline TWFE estimate")            ///
+>         note("Diamonds = point estimate. Spikes = 95% CI.")               ///
+>         legend(off) name(fig10_8_2, replace)
+
+.     graph export "$graphs_dir/fig10_8_2_loo_Stata.png", replace width(1200)
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/fig10_8_2_loo_Stata.png
+    saved as PNG format
+
+.     chkfig "$graphs_dir/fig10_8_2_loo_Stata.png"
+   chkfig: OK     83,822 bytes   C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/grap
+> hs/fig10_8_2_loo_Stata.png
+
+.     graph save   "$graphs_dir/fig10_8_2.gph", replace
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/fig10_8_2.gph saved
+
+. restore
+
+. di as text "   fig10_8_2_loo_Stata.png exported"
+   fig10_8_2_loo_Stata.png exported
+
+. 
+. *============================================================================================
+> =========================
+. * SECTION 10.9: RESULTS SUMMARY
+. *============================================================================================
+> =========================
+. di as text _n "============================================================"
+
+============================================================
+
+. di as text    "SECTION 10.9: RESULTS SUMMARY"
+SECTION 10.9: RESULTS SUMMARY
+
+. di as text    "============================================================"
+============================================================
+
+. 
+. * ── Consolidated summary table ───────────────────────────────────
+. di as text _n "   {hline 70}"
+
+   ----------------------------------------------------------------------
+
+. di as text    "   Estimator                  Coef      SE         p"
+   Estimator                  Coef      SE         p
+
+. di as text    "   {hline 70}"
+   ----------------------------------------------------------------------
+
+. di as text    "   TWFE (baseline)         " %8.4f `twfe_b'  ///
+>               "   " %7.4f `twfe_se' "   " %6.4f `twfe_p'
+   TWFE (baseline)          -0.0427    0.0183   0.0340
+
+. di as text    "   TWFE placebo (2012)     " %8.4f `placebo_b' ///
+>               "   " %7.4f `placebo_se' "   " %6.4f `placebo_p'
+   TWFE placebo (2012)      -0.0370    0.0240   0.1442
+
+. di as text    "   TWFE no controls        " %8.4f `b_nc'
+   TWFE no controls          0.1428
+
+. di as text    "   TWFE + state trends     " %8.4f `b_tr'
+   TWFE + state trends       0.0170
+
+. di as text    "   TWFE drop Delaware      " %8.4f `b_nd'
+   TWFE drop Delaware       -0.0520
+
+. di as text    "   LASSO-residualized DiD  " %8.4f `lasso_b' ///
+>               "   " %7.4f `lasso_se' "   " %6.4f `lasso_p'
+   LASSO-residualized DiD   -0.0427    0.0183   0.0340
+
+. if !missing(`sdid_att') ///
+>     di as text "   SDID                    " %8.4f `sdid_att' ///
+>                "   " %7.4f `sdid_se' "   " %6.4f `sdid_p'
+   SDID                     -0.0196    0.0532   0.7126
+
+. if !missing(`cs_att') ///
+>     di as text "   CS-DiD (single cohort)  " %8.4f `cs_att' ///
+>                "   " %7.4f `cs_se'
+   CS-DiD (single cohort)   -0.0042    0.0320
+
+. if !missing(`scm_att') ///
+>     di as text "   SCM (post-period avg)   " %8.4f `scm_att'
+   SCM (post-period avg)     0.0165
+
+. di as text    "   {hline 70}"
+   ----------------------------------------------------------------------
+
+. di as text    "   All estimates: log points. Outcome: lngenop. N=336, G=16."
+   All estimates: log points. Outcome: lngenop. N=336, G=16.
+
+. 
+. * ── Export summary table to CSV ──────────────────────────────────
+. preserve
+
+.     clear
+
+.     local rows 7
+
+.     set obs `rows'
+Number of observations (_N) was 0, now 7.
+
+.     gen str25 estimator = ""
+(7 missing values generated)
+
+.     gen double b  = .
+(7 missing values generated)
+
+.     gen double se = .
+(7 missing values generated)
+
+.     gen double p  = .
+(7 missing values generated)
+
+. 
+.     replace estimator = "TWFE baseline"          in 1
+(1 real change made)
+
+.     replace estimator = "TWFE placebo 2012"      in 2
+(1 real change made)
+
+.     replace estimator = "TWFE no controls"       in 3
+(1 real change made)
+
+.     replace estimator = "TWFE state trends"      in 4
+(1 real change made)
+
+.     replace estimator = "TWFE drop Delaware"     in 5
+(1 real change made)
+
+.     replace estimator = "LASSO-residualized DiD" in 6
+(1 real change made)
+
+.     replace estimator = "SCM (post-period avg)"  in 7
+(1 real change made)
+
+. 
+.     replace b  = `twfe_b'   in 1
+(1 real change made)
+
+.     replace se = `twfe_se'  in 1
+(1 real change made)
+
+.     replace p  = `twfe_p'   in 1
+(1 real change made)
+
+. 
+.     replace b  = `placebo_b'  in 2
+(1 real change made)
+
+.     replace se = `placebo_se' in 2
+(1 real change made)
+
+.     replace p  = `placebo_p'  in 2
+(1 real change made)
+
+. 
+.     replace b = `b_nc'  in 3
+(1 real change made)
+
+.     replace b = `b_tr'  in 4
+(1 real change made)
+
+.     replace b = `b_nd'  in 5
+(1 real change made)
+
+. 
+.     replace b  = `lasso_b'  in 6
+(1 real change made)
+
+.     replace se = `lasso_se' in 6
+(1 real change made)
+
+.     replace p  = `lasso_p'  in 6
+(1 real change made)
+
+. 
+.     replace b = `scm_att'  in 7
+(1 real change made)
+
+. 
+.     export delimited "$tables_dir/results.csv", replace
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/tables/results.csv saved
+
+.     di as text "   results.csv saved to $tables_dir"
+   results.csv saved to C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/tables
+
+. restore
+
+. 
+. * ── LASSO comparison CSV ─────────────────────────────────────────
+. preserve
+
+.     clear
+
+.     set obs 2
+Number of observations (_N) was 0, now 2.
+
+.     gen str25 estimator = ""
+(2 missing values generated)
+
+.     gen double b  = .
+(2 missing values generated)
+
+.     gen double se = .
+(2 missing values generated)
+
+.     gen double p  = .
+(2 missing values generated)
+
+.     replace estimator = "TWFE (full controls)"       in 1
+(1 real change made)
+
+.     replace estimator = "LASSO-residualized DiD"     in 2
+(1 real change made)
+
+.     replace b  = `twfe_b'   in 1
+(1 real change made)
+
+.     replace se = `twfe_se'  in 1
+(1 real change made)
+
+.     replace p  = `twfe_p'   in 1
+(1 real change made)
+
+.     replace b  = `lasso_b'  in 2
+(1 real change made)
+
+.     replace se = `lasso_se' in 2
+(1 real change made)
+
+.     replace p  = `lasso_p'  in 2
+(1 real change made)
+
+.     export delimited "$tables_dir/results_lasso.csv", replace
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/tables/results_lasso.csv saved
+
+.     di as text "   results_lasso.csv saved to $tables_dir"
+   results_lasso.csv saved to C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/tables
+
+. restore
+
+. 
+. * ── Combined results CSV ─────────────────────────────────────────
+. preserve
+
+.     clear
+
+.     set obs 4
+Number of observations (_N) was 0, now 4.
+
+.     gen str30 method = ""
+(4 missing values generated)
+
+.     gen double estimate = .
+(4 missing values generated)
+
+.     gen double se_val   = .
+(4 missing values generated)
+
+.     replace method   = "TWFE"          in 1
+(1 real change made)
+
+.     replace method   = "LASSO-DiD"     in 2
+(1 real change made)
+
+.     replace method   = "SDID"          in 3
+(1 real change made)
+
+.     replace method   = "CS-DiD"        in 4
+(1 real change made)
+
+.     replace estimate = `twfe_b'    in 1
+(1 real change made)
+
+.     replace se_val   = `twfe_se'   in 1
+(1 real change made)
+
+.     replace estimate = `lasso_b'   in 2
+(1 real change made)
+
+.     replace se_val   = `lasso_se'  in 2
+(1 real change made)
+
+.     if !missing(`sdid_att') {
+.         replace estimate = `sdid_att' in 3
+(1 real change made)
+.         replace se_val   = `sdid_se'  in 3
+(1 real change made)
+.     }
+
+.     if !missing(`cs_att') {
+.         replace estimate = `cs_att' in 4
+(1 real change made)
+.         replace se_val   = `cs_se'  in 4
+(1 real change made)
+.     }
+
+.     export delimited "$tables_dir/results_combined.csv", replace
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/tables/results_combined.csv save
+> d
+
+.     di as text "   results_combined.csv saved to $tables_dir"
+   results_combined.csv saved to C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/tabl
+> es
+
+. restore
+
+. 
+. * ── Comparison figure ────────────────────────────────────────────
+. preserve
+
+.     clear
+
+.     set obs 4
+Number of observations (_N) was 0, now 4.
+
+.     gen j      = _n
+
+.     gen str16 label = ""
+(4 missing values generated)
+
+.     gen b      = .
+(4 missing values generated)
+
+.     gen lo     = .
+(4 missing values generated)
+
+.     gen hi     = .
+(4 missing values generated)
+
+. 
+.     replace label = "TWFE"      in 1
+(1 real change made)
+
+.     replace label = "LASSO-DiD" in 2
+(1 real change made)
+
+.     replace label = "SDID"      in 3
+(1 real change made)
+
+.     replace label = "CS-DiD"    in 4
+(1 real change made)
+
+. 
+.     replace b  = `twfe_b'               in 1
+(1 real change made)
+
+.     replace lo = `twfe_b' - 1.96*`twfe_se'  in 1
+(1 real change made)
+
+.     replace hi = `twfe_b' + 1.96*`twfe_se'  in 1
+(1 real change made)
+
+. 
+.     replace b  = `lasso_b'              in 2
+(1 real change made)
+
+.     replace lo = `lasso_b' - 1.96*`lasso_se' in 2
+(1 real change made)
+
+.     replace hi = `lasso_b' + 1.96*`lasso_se' in 2
+(1 real change made)
+
+. 
+.     if !missing(`sdid_att') {
+.         replace b  = `sdid_att'             in 3
+(1 real change made)
+.         replace lo = `sdid_att' - 1.96*`sdid_se' in 3
+(1 real change made)
+.         replace hi = `sdid_att' + 1.96*`sdid_se' in 3
+(1 real change made)
+.     }
+
+.     if !missing(`cs_att') {
+.         replace b  = `cs_att'               in 4
+(1 real change made)
+.         replace lo = `cs_att' - 1.96*`cs_se'    in 4
+(1 real change made)
+.         replace hi = `cs_att' + 1.96*`cs_se'    in 4
+(1 real change made)
+.     }
+
+. 
+.     label define jlbl 1 "TWFE" 2 "LASSO-DiD" 3 "SDID" 4 "CS-DiD"
+
+.     label values j jlbl
+
+. 
+.     twoway ///
+>         (rcap lo hi j, horizontal lcolor(gs0) lwidth(medium))     ///
+>         (scatter j b,  mcolor(gs0) msymbol(D) msize(large)),      ///
+>         xline(0, lpattern(dash) lcolor(gs8))                      ///
+>         ylabel(1 "TWFE" 2 "LASSO-DiD" 3 "SDID" 4 "CS-DiD",      ///
+>                angle(0) labsize(small))                            ///
+>         xtitle("DiD Estimate (log operating expenses)")            ///
+>         ytitle("")                                                 ///
+>         title("Estimator Comparison: Georgia Consolidation")       ///
+>         subtitle("Point estimates with 95% CIs")                  ///
+>         legend(off) name(fig10_9_1, replace)
+
+.     graph export "$graphs_dir/fig10_9_1_summary_Stata.png", replace width(1200)
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
+    10/Output/graphs/fig10_9_1_summary_Stata.png saved as PNG format
+
+.     chkfig "$graphs_dir/fig10_9_1_summary_Stata.png"
+   chkfig: OK     55,433 bytes   C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/grap
+> hs/fig10_9_1_summary_Stata.png
+
+.     graph save   "$graphs_dir/fig10_9_1.gph", replace
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/fig10_9_1.gph saved
+
+. restore
+
+. di as text "   fig10_9_1_summary_Stata.png exported"
+   fig10_9_1_summary_Stata.png exported
+
+. 
+. *============================================================================================
+> =========================
+. * CLOSE-OUT
+. *============================================================================================
+> =========================
+. di as text _n "============================================================"
+
+============================================================
+
+. di as text    "SECTIONS 10.3–10.9 COMPLETE"
+SECTIONS 10.3–10.9 COMPLETE
+
+. di as text    "============================================================"
+============================================================
+
+. di as text    "  Figures exported to: $graphs_dir"
+  Figures exported to: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs
+
+. di as text    "  Data files: results.csv  results_lasso.csv  results_combined.csv"
+  Data files: results.csv  results_lasso.csv  results_combined.csv
+
+. di as text    ""
+
+
+. di as text    "  PRE-TREND EVIDENCE"
+  PRE-TREND EVIDENCE
+
+. if !missing(`pt_b') ///
+>     di as text "  Pre-2018 trend interaction = " %7.4f `pt_b' ///
+>                " per year (p = " %6.4f `pt_p' ")"
+  Pre-2018 trend interaction = -0.0076 per year (p = 0.0005)
+
+. di as text    "  Parallel trends is rejected: Georgia was already diverging"
+  Parallel trends is rejected: Georgia was already diverging
+
+. di as text    "  from the comparison states before consolidation."
+  from the comparison states before consolidation.
+
+. di as text    ""
+
+
+. 
+. di as text    "  ESTIMATES THAT IMPOSE PARALLEL TRENDS"
+  ESTIMATES THAT IMPOSE PARALLEL TRENDS
+
+. di as text    "  TWFE (baseline): DiD = " %7.4f `twfe_b' ///
+>               " (SE = " %6.4f `twfe_se' ", p = " %5.3f `twfe_p' ")"
+  TWFE (baseline): DiD = -0.0427 (SE = 0.0183, p = 0.034)
+
+. di as text    "  LASSO-DiD: all four controls selected, so identical to TWFE;"
+  LASSO-DiD: all four controls selected, so identical to TWFE;
+
+. di as text    "  it adds no independent evidence."
+  it adds no independent evidence.
+
+. di as text    "  These are the only specifications that reach significance."
+  These are the only specifications that reach significance.
+
+. di as text    ""
+
+
+. 
+. di as text    "  ESTIMATES THAT RELAX PARALLEL TRENDS"
+  ESTIMATES THAT RELAX PARALLEL TRENDS
+
+. if !missing(`scm_att')  di as text "  SCM post-treatment gap   = " %7.4f `scm_att'
+  SCM post-treatment gap   =  0.0165
+
+. if !missing(`sdid_att') di as text "  SDID ATT                 = " %7.4f `sdid_att'
+  SDID ATT                 = -0.0196
+
+. if !missing(`cs_att')   di as text "  CS-DiD ATT               = " %7.4f `cs_att'
+  CS-DiD ATT               = -0.0042
+
+. if !missing(`b_tr')     di as text "  TWFE + state trends      = " %7.4f `b_tr' ///
+>                                    "  (p = " %6.4f `p_tr' ")"
+  TWFE + state trends      =  0.0170  (p = 0.1926)
+
+. di as text    "  All small and not significant, with differing signs --"
+  All small and not significant, with differing signs --
+
+. di as text    "  the pattern expected if the true effect is near zero."
+  the pattern expected if the true effect is near zero.
+
+. di as text    ""
+
+
+. 
+. di as text    "  POWER"
+  POWER
+
+. di as text    "  Permutation p = " %5.3f `perm_p' ///
+>               " (one treated state, 15 comparison states: low power)."
+  Permutation p = 0.467 (one treated state, 15 comparison states: low power).
+
+. di as text    "  LOO range [" %6.4f `loo_min' ", " %6.4f `loo_max' ///
+>               "] -- stable, but dropping a state does not relax parallel trends."
+  LOO range [-0.0520, -0.0338] -- stable, but dropping a state does not relax parallel trends.
+
+. di as text    "  Placebo (2012): p = " %5.3f `placebo_p' ///
+>               " -- tests for a break at one date, not a gradual pre-trend."
+  Placebo (2012): p = 0.144 -- tests for a break at one date, not a gradual pre-trend.
+
+. di as text    ""
+
+
+. 
+. di as text    "  CONCLUSION"
+  CONCLUSION
+
+. di as text    "  These data cannot detect an effect of consolidation on"
+  These data cannot detect an effect of consolidation on
+
+. di as text    "  operating expenditures. See Section 10.9.1."
+  operating expenditures. See Section 10.9.1.
+
+. di as text    "============================================================"
+============================================================
+
+. 
+. di as text _n "  FIGURE ROLL CALL (independent re-check of every export)"
+
+  FIGURE ROLL CALL (independent re-check of every export)
+
+. chkfig "$graphs_dir/fig10_5_parallel_trends_Stata.png"
+   chkfig: OK     86,637 bytes   C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/grap
+> hs/fig10_5_parallel_trends_Stata.png
+
+. chkfig "$graphs_dir/fig10_8_event_study_Stata.png"
+   chkfig: OK     91,978 bytes   C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/grap
+> hs/fig10_8_event_study_Stata.png
+
+. chkfig "$graphs_dir/fig10_3_2_robustness_Stata.png"
+   chkfig: OK     58,940 bytes   C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/grap
+> hs/fig10_3_2_robustness_Stata.png
+
+. chkfig "$graphs_dir/fig10_4_1_lasso_comparison_Stata.png"
+   chkfig: OK     60,949 bytes   C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/grap
+> hs/fig10_4_1_lasso_comparison_Stata.png
+
+. chkfig "$graphs_dir/fig10_6_scm_trends_Stata.png"
+   chkfig: OK     89,848 bytes   C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/grap
+> hs/fig10_6_scm_trends_Stata.png
+
+. chkfig "$graphs_dir/fig10_5_1_scm_gap_Stata.png"
+   chkfig: OK     96,433 bytes   C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/grap
+> hs/fig10_5_1_scm_gap_Stata.png
+
+. chkfig "$graphs_dir/fig10_7_2_csdid_Stata.png"
+   chkfig: OK     67,863 bytes   C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/grap
+> hs/fig10_7_2_csdid_Stata.png
+
+. chkfig "$graphs_dir/fig10_9_staggered_es_Stata.png"
+   chkfig: OK     66,411 bytes   C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/grap
+> hs/fig10_9_staggered_es_Stata.png
+
+. chkfig "$graphs_dir/fig10_8_1_permutation_Stata.png"
+   chkfig: OK     55,974 bytes   C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/grap
+> hs/fig10_8_1_permutation_Stata.png
+
+. chkfig "$graphs_dir/fig10_8_2_loo_Stata.png"
+   chkfig: OK     83,822 bytes   C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/grap
+> hs/fig10_8_2_loo_Stata.png
+
+. chkfig "$graphs_dir/fig10_9_1_summary_Stata.png"
+   chkfig: OK     55,433 bytes   C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/grap
+> hs/fig10_9_1_summary_Stata.png
+
+. di as text ""
+
+
+. dir "$graphs_dir/fig10_*.png"
+  58.6k   6/13/26 18:58  fig10_10_mte_byarea_curve_R.png
+  99.1k   6/26/26 19:17  fig10_10_mte_byarea_curve_Stata.png
+  49.9k   5/15/26  1:39  fig10_11_mte_curve_R.png
+  67.4k   6/08/26 11:19  fig10_11_mte_curve_Stata.png
+  55.4k   6/13/26 18:58  fig10_11_mte_policy_regions_R.png
+  66.7k   6/26/26 19:17  fig10_11_mte_policy_regions_Stata.png
+ 154.6k   6/30/26 10:17  fig10_12.png      
+  57.0k   6/13/26 18:58  fig10_12_mte_by_decile_R.png
+  69.5k   6/26/26 19:17  fig10_12_mte_by_decile_Stata.png
+  65.1k   6/29/26 22:05  fig10_12_R.png    
+ 152.3k   6/30/26 10:17  fig10_13.png      
+  65.6k   5/15/26  1:39  fig10_13_mte_byarea_curve_R.png
+  90.9k   6/08/26 11:19  fig10_13_mte_byarea_curve_Stata.png
+  65.0k   6/29/26 21:45  fig10_13_R.png    
+  36.2k   6/13/26 18:58  fig10_14_mprte_by_intensity_R.png
+  61.3k   6/26/26 19:17  fig10_14_mprte_by_intensity_Stata.png
+  47.7k   5/15/26  1:39  fig10_15_mte_policy_regions_R.png
+  66.7k   6/08/26 11:19  fig10_15_mte_policy_regions_Stata.png
+  43.7k   5/15/26  1:39  fig10_16_mte_by_propensity_R.png
+  76.2k   6/08/26 11:19  fig10_16_mte_by_propensity_Stata.png
+  93.1k   9/23/26 16:17  fig10_1_rdd_plot_credits.png
+  83.2k  10/15/26 15:22  fig10_1_rdd_plot_credits_R.png
+ 139.2k   8/11/26 16:36  fig10_2_1_rdd_density_test.png
+  65.8k   5/15/26  1:35  fig10_2_1_rdd_density_test_R.png
+  66.6k   9/23/26 16:17  fig10_2_2_rdd_binscatter_cgpa_y1.png
+  69.5k  10/15/26 15:21  fig10_2_2_rdd_binscatter_cgpa_y1_R.png
+  65.9k   9/23/26 16:17  fig10_2_2_rdd_binscatter_credits_y1.png
+  66.4k  10/15/26 15:21  fig10_2_2_rdd_binscatter_credits_y1_R.png
+  69.9k   9/23/26 16:17  fig10_2_2_rdd_binscatter_persist_sharp.png
+  71.4k  10/15/26 15:21  fig10_2_2_rdd_binscatter_persist_sharp_R.png
+  76.1k   9/23/26 16:17  fig10_2_3_rdd_bw_sensitivity.png
+  45.1k  10/15/26 15:21  fig10_2_3_rdd_bw_sensitivity_R.png
+ 108.1k   9/23/26 16:17  fig10_2_4_rdd_plot_persistence.png
+  89.3k  10/15/26 15:21  fig10_2_4_rdd_plot_persistence_R.png
+  93.1k   6/08/26 11:16  fig10_2_5_rdd_plot_credits.png
+  62.7k   5/15/26  1:35  fig10_2_5_rdd_plot_credits_R.png
+  91.7k   9/23/26 16:17  fig10_2_6_rdd_plot_cgpa.png
+  86.3k  10/15/26 15:22  fig10_2_6_rdd_plot_cgpa_R.png
+  91.6k   8/11/26 16:37  fig10_2_7_rdd_plot_firststage.png
+  61.0k   5/15/26  1:35  fig10_2_7_rdd_plot_firststage_R.png
+ 105.0k   9/23/26 16:17  fig10_2_8_rdd_plot_persist_fuzzy.png
+  89.7k  10/15/26 15:22  fig10_2_8_rdd_plot_persist_fuzzy_R.png
+  80.3k   6/04/26 14:36  fig10_2_9_fuzzy_late_comparison.png
+  46.4k   5/15/26  1:35  fig10_2_9_fuzzy_late_comparison_R.png
+  69.6k   8/11/26 16:37  fig10_2_fuzzy_late_credits.png
+ 112.1k   9/23/26 16:17  fig10_2_rdd_density_test.png
+  91.6k  10/15/26 15:21  fig10_2_rdd_density_test_R.png
+  68.9k   5/15/26  1:35  fig10_3_1_parallel_trends_R.png
+  84.6k   6/08/26 11:16  fig10_3_1_parallel_trends_Stata.png
+  41.3k  10/15/26 15:22  fig10_3_2_robustness_R.png
+  57.6k  10/15/26 16:35  fig10_3_2_robustness_Stata.png
+  86.1k   8/20/26 22:23  fig10_3_parallel_trends_R.png
+  91.6k   9/23/26 16:17  fig10_3_rdd_plot_firststage.png
+  80.4k  10/15/26 15:22  fig10_3_rdd_plot_firststage_R.png
+  47.2k  10/15/26 15:22  fig10_4_1_lasso_comparison_R.png
+  59.5k  10/15/26 16:35  fig10_4_1_lasso_comparison_Stata.png
+  86.0k   9/23/26 16:17  fig10_4_fuzzy_late_credits.png
+  55.0k  10/15/26 15:22  fig10_4_fuzzy_late_credits_R.png
+  87.1k   8/20/26 22:23  fig10_4_scm_trends_R.png
+  87.5k  10/15/26 15:22  fig10_5_1_scm_gap_R.png
+  94.2k  10/15/26 16:35  fig10_5_1_scm_gap_Stata.png
+  72.5k   5/15/26  1:36  fig10_5_2_scm_trends_R.png
+  87.7k   6/04/26 14:36  fig10_5_2_scm_trends_Stata.png
+  86.1k  10/15/26 15:22  fig10_5_parallel_trends_R.png
+  84.6k  10/15/26 16:35  fig10_5_parallel_trends_Stata.png
+ 164.0k   6/30/26 10:31  fig10_6.png       
+  49.6k   5/15/26  1:36  fig10_6_1_sdid_R.png
+  91.8k   8/20/26 22:23  fig10_6_event_study_R.png
+  54.9k   6/29/26 22:01  fig10_6_R.png     
+  87.1k  10/15/26 15:22  fig10_6_scm_trends_R.png
+  87.7k  10/15/26 16:35  fig10_6_scm_trends_Stata.png
+  75.4k   5/15/26  1:35  fig10_7_1_event_study_R.png
+  89.8k   6/08/26 11:16  fig10_7_1_event_study_Stata.png
+ 164.0k   6/08/26 15:50  fig10_7_2.png     
+  83.8k  10/15/26 15:22  fig10_7_2_csdid_R.png
+  66.3k  10/15/26 16:36  fig10_7_2_csdid_Stata.png
+  64.3k   6/12/26 21:06  fig10_7_2_R.png   
+ 164.0k   6/30/26 14:08  fig10_7_3.png     
+  54.9k  10/15/26 15:25  fig10_7_4_etwfe_event_study_R.png
+ 164.0k   9/23/26 16:18  fig10_7_4_etwfe_event_study_Stata.png
+  54.9k   9/22/26 18:01  fig10_7_R.png     
+  32.3k  10/15/26 16:36  fig10_7_sdid_trends2018.png
+  52.2k  10/15/26 15:22  fig10_7_sdid_trends_R.png
+  82.5k   8/20/26 22:23  fig10_7_staggered_es_R.png
+  63.5k   8/11/26 17:41  fig10_7_staggered_es_Stata.png
+  32.3k   8/15/26 12:36  fig10_7_trends2018.png
+  35.8k  10/15/26 15:22  fig10_8_1_permutation_R.png
+  54.7k  10/15/26 16:36  fig10_8_1_permutation_Stata.png
+  61.6k  10/15/26 15:22  fig10_8_2_loo_R.png
+  81.9k  10/15/26 16:36  fig10_8_2_loo_Stata.png
+  91.8k  10/15/26 15:22  fig10_8_event_study_R.png
+  89.8k  10/15/26 16:35  fig10_8_event_study_Stata.png
+  60.0k   6/13/26 18:58  fig10_8_mte_curve_R.png
+  73.1k   6/26/26 19:17  fig10_8_mte_curve_Stata.png
+  34.9k  10/15/26 15:22  fig10_9_1_summary_R.png
+  54.1k  10/15/26 16:36  fig10_9_1_summary_Stata.png
+  53.0k   6/13/26 18:58  fig10_9_mte_by_propensity_R.png
+  86.3k   6/26/26 19:17  fig10_9_mte_by_propensity_Stata.png
+  83.9k  10/15/26 15:22  fig10_9_staggered_es_R.png
+  64.9k  10/15/26 16:36  fig10_9_staggered_es_Stata.png
+ 108.0k   6/26/26 19:46  fig10_cate_forest.png
+  91.7k   6/26/26 19:46  fig10_cate_interact.png
+
+. di as text "============================================================"
+============================================================
+
+. 
+. * Close the named log opened at the top.  -capture- so that re-running the
+. * script, or a master driver that has already closed it, is harmless.
+. capture log close ga_did

@@ -1,0 +1,351 @@
+Log: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/logs/R_code10_Georgia_DiD.log 
+Opened: 2026-10-15 15:15:28 
+
+R_code10_Georgia_DiD.R: version 2026-10-15a
+  out_root  = C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output 
+  graphs_dir= C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs 
+
+============================================================
+SECTION 10.3.1: DATA STRUCTURE AND VARIABLE CONSTRUCTION
+============================================================
+Cluster-robust df (G - 1) = 15
+Panel: N = 336, G = 16 states, T = 2001–2021
+
+============================================================
+SECTION 10.3.2: TWFE DiD ESTIMATION
+============================================================
+
+--- TWFE main estimate ---
+   DiD coef =  -0.0427   SE =  0.0183   p = 0.0340
+   Placebo DiD (2012) =  -0.0370   p = 0.1442
+   PASS: no pre-2018 treatment effect detected.
+
+--- DiD on alternative outcomes ---
+   Outcome              Coef       SE        p
+   ------------------------------------------------ 
+   lntotsup           0.1032   0.0262   0.0013
+   lnfinaid          -0.1242   0.1261   0.3404
+   lntuifee           0.2700   0.0525   0.0001
+   lnfte              0.0123   0.0208   0.5620
+   ------------------------------------------------ 
+
+============================================================
+SECTION 10.3.3: PARALLEL TRENDS
+============================================================
+   chkfig: OK     88,186 bytes   fig10_5_parallel_trends_R.png
+   fig10_5_parallel_trends_R.png exported
+
+--- Formal pre-trend test (linear trend interaction, fy < 2018) ---
+   Trend-interaction coef =  -0.0076   p = 0.0005
+   NOTE: p <= 0.10 — investigate pre-trend robustness.
+
+--- Joint lead tests (rank bound: G - 1 = 15) ---
+   15 restrictions (AT the rank bound, NOT usable): F = 598046.25, p = 4.545e-43
+   14 restrictions (binned F16_ga dropped): F = 90.78, p = 0.0000
+      RESULT: joint leads reject; pre-trend present.
+   chkfig: OK     93,960 bytes   fig10_8_event_study_R.png
+   fig10_8_event_study_R.png exported
+
+============================================================
+SECTION 10.3.4: ROBUSTNESS CHECKS
+============================================================
+   No controls: DiD =  0.1428   p = 0.0209
+   + State trends: DiD =  0.0170   p = 0.1933
+   Drop Delaware: DiD = -0.0520   p = 0.0080
+   2015-2021 window: DiD =  0.0057   p = 0.7921
+   chkfig: OK     42,323 bytes   fig10_3_2_robustness_R.png
+   fig10_3_2_robustness_R.png exported
+
+============================================================
+SECTION 10.4: LASSO-RESIDUALIZED DiD
+============================================================
+   Step 1: partialling out unit/year FEs
+   Step 2: double selection via rlasso
+   S1 (outcome equation): lntotsup lnfinaid lnfte
+   S2 (selection equation): (none)
+   Union (S1 U S2): lntotsup lnfinaid lnfte
+   Step 3: final TWFE with LASSO-selected controls
+
+--- LASSO-residualized DiD ---
+   DiD coef =  -0.0213   SE =  0.0152   p = 0.1820
+   TWFE baseline:  -0.0427   Difference:  0.0214
+   chkfig: OK     48,307 bytes   fig10_4_1_lasso_comparison_R.png
+   fig10_4_1_lasso_comparison_R.png exported
+
+============================================================
+SECTION 10.5: SYNTHETIC CONTROL METHOD (SCM)
+============================================================
+   Running synth (may take ~30 seconds)...
+   SCM inputs: 15 donors, 4 predictors (lntotsup lnfinaid lntuifee lnfte), 7 special predictors
+   synth converged. SCM average post-treatment gap:  0.0307
+   Pre-treatment RMSPE:  0.0323
+   Donor weights (non-zero only):
+     Florida               0.545
+     Texas                 0.074
+     South Carolina        0.070
+     North Carolina        0.053
+     Virginia              0.036
+     Louisiana             0.034
+     Kentucky              0.032
+     West Virginia         0.029
+     Tennessee             0.026
+     Alabama               0.025
+     Oklahoma              0.018
+     Maryland              0.016
+     Arkansas              0.015
+     Mississippi           0.015
+     Delaware              0.013
+     (sum)                 1.000
+   chkfig: OK     89,148 bytes   fig10_6_scm_trends_R.png
+   chkfig: OK     89,614 bytes   fig10_5_1_scm_gap_R.png
+   fig10_5_1_scm_gap + fig10_6_scm_trends_R.png exported
+
+============================================================
+SECTION 10.6: SYNTHETIC DiD (SDID)
+============================================================
+   Running synthdid (placebo SE)...
+   SDID ATT =  0.0338   SE =  0.0860   p = 0.6945
+   chkfig: OK     53,486 bytes   fig10_7_sdid_trends_R.png
+   fig10_7_sdid_trends_R.png exported
+
+============================================================
+SECTION 10.7: EVENT STUDY AND CALLAWAY-SANT'ANNA DiD
+============================================================
+   Running did::att_gt (CS-DiD, single cohort 2018)...
+   chkfig: OK     85,861 bytes   fig10_7_2_csdid_R.png
+   fig10_7_2_csdid_R.png exported
+   CS simple ATT = -0.0042   SE =  0.0345   p = 0.9034
+Warning messages:
+1: In did_standardization(data, args) :
+  Some groups in your dataset have very few observations, which may cause estimation problems.
+  Check groups: 2018.
+2: In att_gt(yname = "lngenop", tname = "fy", idname = "fips", gname = "gvar",  :
+  Not returning pre-test Wald statistic due to singular covariance matrix
+
+============================================================
+SECTION 10.7.3: MULTI-STATE STAGGERED ADOPTION
+============================================================
+   use_synthetic = TRUE — generating simulated staggered panel
+   Canonical vars — id:state_id  time:year  y:lngenop  gvar:first_treat
+   Naive TWFE (staggered): DiD = -0.0510   p = 0.0002
+   chkfig: OK     85,899 bytes   fig10_9_staggered_es_R.png
+   fig10_9_staggered_es_R.png exported
+   CS simple ATT = -0.0827   SE =  0.0291
+   Cohort-specific ATTs:
+     Cohort 2014: ATT = -0.1314 (SE = 0.0447)
+     Cohort 2016: ATT = -0.0610 (SE = 0.0359)
+     Cohort 2018: ATT = -0.0053 (SE = 0.0413)
+Warning messages:
+1: In did_standardization(data, args) :
+  Some groups in your dataset have very few observations, which may cause estimation problems.
+  Check groups: 2014,2016,2018,0.
+2: In att_gt(yname = s_y, tname = s_year, idname = s_id, gname = s_gvar,  :
+  Not returning pre-test Wald statistic due to singular covariance matrix
+
+============================================================
+SECTION 10.8.2: PERMUTATION INFERENCE
+============================================================
+   Running permutation test over 15 control states...
+
+--- Permutation test results ---
+   Actual DiD estimate:     -0.0427
+   Placebo mean (H0 ~ 0):    0.0010
+   Placebo SD:               0.0637
+   |Placebo| >= |actual|:   7 / 15
+   Permutation p-value:     0.4667
+   chkfig: OK     36,686 bytes   fig10_8_1_permutation_R.png
+   fig10_8_1_permutation_R.png exported
+
+============================================================
+SECTION 10.8.3: LEAVE-ONE-OUT SENSITIVITY
+============================================================
+   Running leave-one-out over 15 control states...
+
+--- Leave-one-out results ---
+   Baseline DiD:   -0.0427
+   LOO mean:       -0.0415
+   LOO range:      [-0.0520, -0.0338]
+   All same sign:  YES
+   chkfig: OK     63,127 bytes   fig10_8_2_loo_R.png
+   fig10_8_2_loo_R.png exported
+
+============================================================
+SECTION 10.9: RESULTS SUMMARY
+============================================================
+
+   ----------------------------------------------------------------------
+   Estimator                          Coef       SE        p
+   ----------------------------------------------------------------------
+   TWFE (baseline)                 -0.0427   0.0183   0.0340
+   TWFE placebo (2012)             -0.0370   0.0240   0.1442
+   TWFE no controls                 0.1428
+   TWFE + state trends              0.0170
+   TWFE drop Delaware              -0.0520
+   LASSO-residualized DiD          -0.0213   0.0152   0.1820
+   SDID                             0.0338   0.0860   0.6945
+   CS-DiD (single cohort)          -0.0042   0.0345
+   SCM (post-period avg)            0.0307
+   ----------------------------------------------------------------------
+   All estimates: log points. Outcome: lngenop. N=336, G=16.
+   results.csv saved
+   results_lasso.csv saved
+   results_combined.csv saved
+   chkfig: OK     35,748 bytes   fig10_9_1_summary_R.png
+   fig10_9_1_summary_R.png exported
+
+============================================================
+SECTIONS 10.3-10.9 COMPLETE
+============================================================
+  Figures exported to: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs
+  Data files: results.csv  results_lasso.csv  results_combined.csv
+
+  PRE-TREND EVIDENCE
+  Pre-2018 trend interaction = -0.0076 per year (p = 0.0005)
+  Parallel trends is rejected: Georgia was already diverging
+  from the comparison states before consolidation.
+
+  ESTIMATES THAT IMPOSE PARALLEL TRENDS
+  TWFE (baseline): DiD = -0.0427 (SE = 0.0183, p = 0.034)
+  LASSO-DiD: -0.0213 (p = 0.182) -- LASSO dropped 1 of 4 controls
+  (retained: lntotsup, lnfinaid, lnfte). Stata's lassopack rlasso retains all four,
+  so there the LASSO estimate is identical to TWFE (see Section 10.11.5).
+  Specifications that reach significance all impose this assumption.
+
+  ESTIMATES THAT RELAX PARALLEL TRENDS
+  SCM post-treatment gap   =  0.0307
+  SDID ATT                 =  0.0338
+  CS-DiD ATT               = -0.0042
+  TWFE + state trends      =  0.0170  (p = 0.1933)
+  All small and not significant, with differing signs --
+  the pattern expected if the true effect is near zero.
+
+  POWER
+  Permutation p = 0.467 (one treated state, 15 comparison states: low power).
+  LOO range [-0.0520, -0.0338] -- stable, but dropping a state does not relax parallel trends.
+  Placebo (2012): p = 0.144 -- tests for a break at one date, not a gradual pre-trend.
+
+  CONCLUSION
+  These data cannot detect an effect of consolidation on
+  operating expenditures. See Section 10.9.1.
+============================================================
+
+  FIGURE ROLL CALL (independent re-check of every export)
+   chkfig: OK     88,186 bytes   fig10_5_parallel_trends_R.png
+   chkfig: OK     93,960 bytes   fig10_8_event_study_R.png
+   chkfig: OK     42,323 bytes   fig10_3_2_robustness_R.png
+   chkfig: OK     48,307 bytes   fig10_4_1_lasso_comparison_R.png
+   chkfig: OK     89,148 bytes   fig10_6_scm_trends_R.png
+   chkfig: OK     89,614 bytes   fig10_5_1_scm_gap_R.png
+   chkfig: OK     53,486 bytes   fig10_7_sdid_trends_R.png
+   chkfig: OK     85,861 bytes   fig10_7_2_csdid_R.png
+   chkfig: OK     85,899 bytes   fig10_9_staggered_es_R.png
+   chkfig: OK     36,686 bytes   fig10_8_1_permutation_R.png
+   chkfig: OK     63,127 bytes   fig10_8_2_loo_R.png
+   chkfig: OK     35,748 bytes   fig10_9_1_summary_R.png
+
+  All PNGs currently in graphs_dir:
+   fig10_1_rdd_plot_credits.png
+   fig10_1_rdd_plot_credits_R.png
+   fig10_10_mte_byarea_curve_R.png
+   fig10_10_mte_byarea_curve_Stata.png
+   fig10_11_mte_curve_R.png
+   fig10_11_mte_curve_Stata.png
+   fig10_11_mte_policy_regions_R.png
+   fig10_11_mte_policy_regions_Stata.png
+   fig10_12.png
+   fig10_12_mte_by_decile_R.png
+   fig10_12_mte_by_decile_Stata.png
+   fig10_12_R.png
+   fig10_13.png
+   fig10_13_mte_byarea_curve_R.png
+   fig10_13_mte_byarea_curve_Stata.png
+   fig10_13_R.png
+   fig10_14_mprte_by_intensity_R.png
+   fig10_14_mprte_by_intensity_Stata.png
+   fig10_15_mte_policy_regions_R.png
+   fig10_15_mte_policy_regions_Stata.png
+   fig10_16_mte_by_propensity_R.png
+   fig10_16_mte_by_propensity_Stata.png
+   fig10_2_1_rdd_density_test.png
+   fig10_2_1_rdd_density_test_R.png
+   fig10_2_2_rdd_binscatter_cgpa_y1.png
+   fig10_2_2_rdd_binscatter_cgpa_y1_R.png
+   fig10_2_2_rdd_binscatter_credits_y1.png
+   fig10_2_2_rdd_binscatter_credits_y1_R.png
+   fig10_2_2_rdd_binscatter_persist_sharp.png
+   fig10_2_2_rdd_binscatter_persist_sharp_R.png
+   fig10_2_3_rdd_bw_sensitivity.png
+   fig10_2_3_rdd_bw_sensitivity_R.png
+   fig10_2_4_rdd_plot_persistence.png
+   fig10_2_4_rdd_plot_persistence_R.png
+   fig10_2_5_rdd_plot_credits.png
+   fig10_2_5_rdd_plot_credits_R.png
+   fig10_2_6_rdd_plot_cgpa.png
+   fig10_2_6_rdd_plot_cgpa_R.png
+   fig10_2_7_rdd_plot_firststage.png
+   fig10_2_7_rdd_plot_firststage_R.png
+   fig10_2_8_rdd_plot_persist_fuzzy.png
+   fig10_2_8_rdd_plot_persist_fuzzy_R.png
+   fig10_2_9_fuzzy_late_comparison.png
+   fig10_2_9_fuzzy_late_comparison_R.png
+   fig10_2_fuzzy_late_credits.png
+   fig10_2_rdd_density_test.png
+   fig10_2_rdd_density_test_R.png
+   fig10_3_1_parallel_trends_R.png
+   fig10_3_1_parallel_trends_Stata.png
+   fig10_3_2_robustness_R.png
+   fig10_3_2_robustness_Stata.png
+   fig10_3_parallel_trends_R.png
+   fig10_3_rdd_plot_firststage.png
+   fig10_3_rdd_plot_firststage_R.png
+   fig10_4_1_lasso_comparison_R.png
+   fig10_4_1_lasso_comparison_Stata.png
+   fig10_4_fuzzy_late_credits.png
+   fig10_4_fuzzy_late_credits_R.png
+   fig10_4_scm_trends_R.png
+   fig10_5_1_scm_gap_R.png
+   fig10_5_1_scm_gap_Stata.png
+   fig10_5_2_scm_trends_R.png
+   fig10_5_2_scm_trends_Stata.png
+   fig10_5_parallel_trends_R.png
+   fig10_5_parallel_trends_Stata.png
+   fig10_6.png
+   fig10_6_1_sdid_R.png
+   fig10_6_event_study_R.png
+   fig10_6_R.png
+   fig10_6_scm_trends_R.png
+   fig10_6_scm_trends_Stata.png
+   fig10_7_1_event_study_R.png
+   fig10_7_1_event_study_Stata.png
+   fig10_7_2.png
+   fig10_7_2_csdid_R.png
+   fig10_7_2_csdid_Stata.png
+   fig10_7_2_R.png
+   fig10_7_3.png
+   fig10_7_4_etwfe_event_study_R.png
+   fig10_7_4_etwfe_event_study_Stata.png
+   fig10_7_R.png
+   fig10_7_sdid_trends_R.png
+   fig10_7_sdid_trends2018.png
+   fig10_7_staggered_es_R.png
+   fig10_7_staggered_es_Stata.png
+   fig10_7_trends2018.png
+   fig10_8_1_permutation_R.png
+   fig10_8_1_permutation_Stata.png
+   fig10_8_2_loo_R.png
+   fig10_8_2_loo_Stata.png
+   fig10_8_event_study_R.png
+   fig10_8_event_study_Stata.png
+   fig10_8_mte_curve_R.png
+   fig10_8_mte_curve_Stata.png
+   fig10_9_1_summary_R.png
+   fig10_9_1_summary_Stata.png
+   fig10_9_mte_by_propensity_R.png
+   fig10_9_mte_by_propensity_Stata.png
+   fig10_9_staggered_es_R.png
+   fig10_9_staggered_es_Stata.png
+   fig10_cate_forest.png
+   fig10_cate_interact.png
+
+============================================================
+

@@ -1,0 +1,1229 @@
+Log: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/logs/R_code10.log 
+Opened: 2026-10-15 15:21:45 
+
+R_code10.R: version 2026-10-15a
+  out_root  = C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output 
+  graphs_dir= C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs 
+  tables_dir= C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/tables 
+  data_dir  = C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/data 
+  log_dir   = C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/logs 
+
+Chapter 10 started: 2026-10-15 15:21:45 
+Graphs : C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs 
+Tables : C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/tables 
+Data   : C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/data 
+
+All required packages confirmed.
+
+====================================================================== 
+ SECTION 10.2: Regression Discontinuity Design
+====================================================================== 
+G2;H2;Warningh: package ‘rdrobust’ was built under R version 4.5.3g
+G2;H2;Warningh: package ‘rddensity’ was built under R version 4.5.3g
+G2;H2;Warningh: package ‘AER’ was built under R version 4.5.3g
+G2;H2;Warningh: package ‘dplyr’ was built under R version 4.5.3g
+G2;H2;Warningh: package ‘truncnorm’ was built under R version 4.5.3g
+R_code10_RDD.R: version 2026-10-15a
+  out_root  = C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output 
+  graphs_dir= C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs 
+
+========================================================
+SECTION 10.2: REGRESSION DISCONTINUITY DESIGN
+========================================================
+
+=== Data generation complete. N = 4000 ===
+       x              D_sharp          D_fuzzy       persist_sharp      credits_y1         cgpa_y1      
+ Min.   :-2.2489   Min.   :0.0000   Min.   :0.0000   Min.   :0.0000   Min.   : 0.4672   Min.   :0.9885  
+ 1st Qu.:-0.6384   1st Qu.:0.0000   1st Qu.:0.0000   1st Qu.:0.0000   1st Qu.:22.5181   1st Qu.:2.3795  
+ Median :-0.1999   Median :0.0000   Median :0.0000   Median :1.0000   Median :27.5412   Median :2.7076  
+ Mean   :-0.2593   Mean   :0.3718   Mean   :0.3478   Mean   :0.5597   Mean   :27.5324   Mean   :2.7032  
+ 3rd Qu.: 0.1963   3rd Qu.:1.0000   3rd Qu.:1.0000   3rd Qu.:1.0000   3rd Qu.:32.7543   3rd Qu.:3.0426  
+ Max.   : 0.7495   Max.   :1.0000   Max.   :1.0000   Max.   :1.0000   Max.   :51.4881   Max.   :4.0000  
+
+--- 10.2.2  Density Continuity Test (Cattaneo, Jansson & Ma 2020) ---
+
+Manipulation testing using local polynomial density estimation.
+
+Number of obs =       4000
+Model =               unrestricted
+Kernel =              triangular
+BW method =           estimated
+VCE method =          jackknife
+
+c = 0                 Left of c           Right of c          
+Number of obs         2513                1487                
+Eff. Number of obs    910                 873                 
+Order est. (p)        2                   2                   
+Order bias (q)        3                   3                   
+BW est. (h)           0.357               0.373               
+
+Method                T                   P > |T|             
+Robust                -0.5638             0.5729              
+
+
+P-values of binomial tests (H0: p=0.5).
+
+Window Length / 2          <c     >=c    P>|T|
+0.009                      29      20    0.2529
+0.018                      53      39    0.1750
+0.026                      77      61    0.2015
+0.035                      94      90    0.8250
+0.044                     118     109    0.5955
+0.053                     140     122    0.2936
+0.061                     159     140    0.2979
+0.070                     178     173    0.8310
+0.079                     210     201    0.6932
+0.088                     236     225    0.6414
+NULL
+   OK: fig10_2_rdd_density_test_R.png (93,776 bytes)
+   See the Robust row above for the preferred test statistic.
+
+--- Covariate balance ---
+   Variable           Coef(conv)  p(robust)       h*
+   -------------------------------------------------- 
+   female                -0.0234     0.6057    0.224
+   firstgen              -0.0154     0.7628    0.224
+   urm                   -0.0210     0.7547    0.247
+   act_score             -0.0197     0.7824    0.300
+   income_cat             0.2517     0.0422    0.132
+   -------------------------------------------------- 
+   None should be statistically significant under a valid RD.
+   Failing to detect a jump is not the same as establishing that these
+   characteristics are identical across the threshold: the tests are
+   local and therefore not highly powered.
+   If ONE covariate jumps, do not abandon the design on that alone:
+   with five tests at the .05 level, the chance that at least one
+   rejects by chance is about 23 percent. Check three things instead --
+   whether the jump survives other bandwidths and polynomial orders,
+   whether its h* is far narrower than the others (a narrow window is a
+   small effective sample, not evidence of sorting), and whether adding
+   the covariate moves the treatment estimate. A jump that vanishes
+   under respecification and leaves the estimate unchanged is noise;
+   one that persists and shifts the estimate is a threat to the design.
+
+--- 10.2.3  Binned scatterplots ---
+`geom_smooth()` using formula = 'y ~ x'
+`geom_smooth()` using formula = 'y ~ x'
+   OK: fig10_2_2_rdd_binscatter_persist_sharp_R.png (73,121 bytes)
+`geom_smooth()` using formula = 'y ~ x'
+`geom_smooth()` using formula = 'y ~ x'
+`geom_smooth()` using formula = 'y ~ x'
+`geom_smooth()` using formula = 'y ~ x'
+   OK: fig10_2_2_rdd_binscatter_credits_y1_R.png (67,967 bytes)
+`geom_smooth()` using formula = 'y ~ x'
+`geom_smooth()` using formula = 'y ~ x'
+`geom_smooth()` using formula = 'y ~ x'
+`geom_smooth()` using formula = 'y ~ x'
+   OK: fig10_2_2_rdd_binscatter_cgpa_y1_R.png (71,195 bytes)
+`geom_smooth()` using formula = 'y ~ x'
+`geom_smooth()` using formula = 'y ~ x'
+Binned scatterplots exported.
+
+=== 10.2.4: Sharp RD Estimates ===
+
+--- OLS full sample (biased benchmark) ---
+persist_sharp ~ D_sharp + x
+
+t test of coefficients:
+
+            Estimate Std. Error t value  Pr(>|t|)    
+(Intercept) 0.612440   0.014719 41.6088 < 2.2e-16 ***
+D_sharp     0.121192   0.021221  5.7109 1.205e-08 ***
+x           0.377004   0.014377 26.2233 < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+credits_y1 ~ D_sharp + x
+
+t test of coefficients:
+
+            Estimate Std. Error t value  Pr(>|t|)    
+(Intercept) 28.18597    0.16048 175.635 < 2.2e-16 ***
+D_sharp      3.05569    0.25518  11.975 < 2.2e-16 ***
+x            6.90226    0.21063  32.770 < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+--- Manual local linear (h = 0.50, triangular kernel) ---
+   persist_sharp      LATE =  0.1512  SE =  0.0376
+   credits_y1         LATE =  4.6070  SE =  0.4318
+   cgpa_y1            LATE =  0.1114  SE =  0.0350
+
+--- rdrobust (CCT optimal bandwidth) ---
+   Outcome                LATE   SE(conv)  p(robust)       h*
+   ---------------------------------------------------------- 
+   persist_sharp        0.1404     0.0502     0.0256    0.266
+   credits_y1           5.4000     0.6262     0.0000    0.213
+   cgpa_y1              0.0833     0.0518     0.2723    0.194
+   ---------------------------------------------------------- 
+
+--- rdrobust with covariates (Sharp RD) ---
+   Covariates: female firstgen urm act_score income_cat
+   Outcome                LATE   SE(conv)  p(robust)       h*
+   ---------------------------------------------------------- 
+   persist_sharp        0.1388     0.0505     0.0273    0.262
+   credits_y1           5.3886     0.6141     0.0000    0.214
+   cgpa_y1              0.0842     0.0509     0.2562    0.200
+   ---------------------------------------------------------- 
+   Point estimates should be stable relative to unadjusted rdrobust.
+   SE reduction reflects lower residual variance with covariates.
+
+=== 10.2.5: Bandwidth Sensitivity (persistence) ===
+Bandwidth sensitivity -- persistence
+    h   LATE    CI_lo  CI_hi
+ 0.15 0.1280 -0.03773 0.3405
+ 0.20 0.1286 -0.03215 0.2980
+ 0.25 0.1369 -0.02819 0.2694
+ 0.30 0.1444 -0.01335 0.2581
+ 0.40 0.1485  0.01640 0.2515
+ 0.50 0.1512  0.03590 0.2468
+ 0.60 0.1538  0.04612 0.2387
+ 0.75 0.1595  0.05570 0.2294
+ 1.00 0.1653  0.07090 0.2298
+   OK: fig10_2_3_rdd_bw_sensitivity_R.png (46,211 bytes)
+
+=== 10.2.6: Polynomial Order Sensitivity ===
+     p     LATE   SE(conv)  p(robust)       h*
+   ------------------------------------------------ 
+     1   0.1404     0.0502     0.0256    0.266
+     2   0.1338     0.0595     0.0625    0.407
+     3   0.1188     0.0807     0.1874    0.381
+   ------------------------------------------------ 
+   p = 1 (local linear) is the default and typically preferred.
+
+=== 10.2.7: Fuzzy RD (Imperfect Compliance) ===
+
+--- First stage: jump in take-up at cutoff ---
+   FS jump  =  0.5783   SE =  0.0454   p(robust) = 0.0000
+   h* =  0.302
+   Strong first stage: cutoff strongly predicts scholarship take-up.
+
+--- Reduced forms: cutoff → outcome (ITT) ---
+   Outcome                 ITT   SE(conv)  p(robust)       h*
+   ------------------------------------------------------------ 
+   persist_fuzzy        0.0397     0.0540     0.5082    0.225
+   credits_y1           5.4000     0.6262     0.0000    0.213
+   cgpa_y1              0.0833     0.0518     0.2723    0.194
+   ------------------------------------------------------------ 
+   ITT: local average effect of eligibility (not take-up) on outcome.
+
+--- Fuzzy LATE (rdrobust, fuzzy option) ---
+   Outcome                LATE   SE(conv)  p(robust)       h*
+   ------------------------------------------------------------ 
+   persist_fuzzy        0.0736     0.0793     0.4790    0.326
+   credits_y1           9.1107     1.1685     0.0000    0.270
+   cgpa_y1              0.1961     0.0729     0.0240    0.336
+   ------------------------------------------------------------ 
+   LATE: causal effect for compliers at the cutoff.
+   Compliers are a LATENT group: the first stage identifies their share
+   at the margin, not which students belong to it.  For credits_y1 and
+   cgpa_y1 the exclusion restriction fails by construction; read those
+   as Wald arithmetic, not a complier effect.
+   Robust CIs: Calonico, Cattaneo & Titiunik (2014, Econometrica).
+   h* selected by CCT MSERD criterion separately for each outcome.
+
+--- Covariate-adjusted Fuzzy LATE (rdrobust, covs) ---
+   Covariates: female firstgen urm act_score income_cat
+   Outcome                LATE   SE(conv)  p(robust)       h*
+   ------------------------------------------------------------ 
+   persist_fuzzy        0.0701     0.0781     0.5015    0.334
+   credits_y1           9.0392     1.1354     0.0000    0.281
+   cgpa_y1              0.1974     0.0717     0.0212    0.347
+   ------------------------------------------------------------ 
+   Wald estimator = RF / FS; covs() reduces outcome residual variance.
+   Point estimates stable relative to unadjusted fuzzy LATE above.
+
+--- Manual 2SLS (h = 0.50, triangular kernel) ---
+   Variables: in_bw2  tri_wt2  x_Ds2  (as in text Eq. 10.5)
+   Outcome                LATE         SE    p-value
+   ---------------------------------------------------- 
+   persist_fuzzy        0.0822     0.0683     0.2290
+   credits_y1           8.1847     0.9010     0.0000
+   cgpa_y1              0.1979     0.0641     0.0020
+   ---------------------------------------------------- 
+   2SLS uses fixed h = 0.50; rdrobust above uses MSE-optimal h*.
+   For publication use rdrobust fuzzy estimates. 2SLS is pedagogical.
+
+--- Consolidated Fuzzy RD Summary ---
+   ---------------------------------------------------------------------------- 
+   Outcome               FS jump   RF (ITT)  LATE(rdrobust)    p(LATE)
+   ---------------------------------------------------------------------------- 
+   persist_fuzzy          0.5783     0.0397          0.0736     0.4790
+   credits_y1             0.5783     5.4000          9.1107     0.0000
+   cgpa_y1                0.5783     0.0833          0.1961     0.0240
+   ---------------------------------------------------------------------------- 
+   FS: first-stage jump in D_fuzzy at the cutoff (same for all outcomes).
+   RF: rdrobust ITT at CCT MSE-optimal h* for each outcome.
+   LATE: Wald estimator = RF / FS via rdrobust fuzzy option.
+   NOTE: credits_y1 and cgpa_y1 use sharp DGP; fuzzy LATE shown
+         for pedagogical comparison. Prefer sharp estimates (§10.2.4).
+
+=== 10.2.8: Validity Checks ===
+
+--- Placebo cutoffs ---
+     Cutoff       LATE  p(robust)     Side
+   -------------------------------------------- 
+      -0.60    -0.1061     0.2098    below
+      -0.40     0.0801     0.3906    below
+      -0.20     0.0491     0.6165    below
+       0.20     0.0333     0.6580    above
+       0.40     0.0089     0.9118    above
+       0.60     0.1330     0.3387    above
+   -------------------------------------------- 
+
+--- Donut RD (exclude narrow band at cutoff) ---
+    Donut     LATE  p(robust)
+   ------------------------------ 
+     0.05   0.0740     0.5953
+     0.10  -0.3161     0.8575
+   ------------------------------ 
+   Note: interpret alongside bandwidth sensitivity (Section 10.2.5).
+   Precision loss at d = 0.10 does not imply a zero treatment effect.
+
+--- Covariate-augmented estimate ---
+   Augmented LATE =  0.1388  p(robust) = 0.0273
+
+--- Subgroup effects ---
+   Subgroup               LATE  p(robust)      n
+   ---------------------------------------------------- 
+   First-gen            0.1149     0.4589   1266
+   Continuing-gen       0.1256     0.0771   2734
+   Female               0.1412     0.0511   2133
+   Male                 0.1368     0.1976   1867
+   URM                  0.1991     0.0521   1090
+   Non-URM              0.1134     0.1204   2910
+   ---------------------------------------------------- 
+
+=== 10.2.9: Publication-Quality RD Plots ===
+   OK: fig10_2_4_rdd_plot_persistence_R.png (91,422 bytes)
+   OK: fig10_1_rdd_plot_credits_R.png (85,191 bytes)
+   OK: fig10_2_6_rdd_plot_cgpa_R.png (88,352 bytes)
+   OK: fig10_3_rdd_plot_firststage_R.png (82,280 bytes)
+   OK: fig10_2_8_rdd_plot_persist_fuzzy_R.png (91,830 bytes)
+   OK: fig10_4_fuzzy_late_credits_R.png (56,304 bytes)
+   Fig. 10.4: LATE =  9.111   robust bias-corrected 95% CI = [ 6.888, 12.337]
+All RD plots exported.
+
+=== 10.2.10: Summary of Sharp RD Estimates ===
+   ------------------------------------------------------------------------ 
+   Outcome                LATE   SE(conv)  95% CI (robust)            h*
+   ------------------------------------------------------------------------ 
+   persist_sharp        0.1404     0.0502  [  0.016,   0.252]   0.266
+   credits_y1           5.4000     0.6262  [  4.110,   7.012]   0.213
+   cgpa_y1              0.0833     0.0518  [ -0.052,   0.184]   0.194
+   ------------------------------------------------------------------------ 
+   Robust CIs: Calonico, Cattaneo & Titiunik (2014, Econometrica).
+   Kernel: triangular. Bandwidth selector: MSERD (MSE-optimal).
+   True simulated LATE (latent scale) = 0.10.
+   Implied binary persistence effect approx. 0.13-0.16 pp.
+
+=== Manuscript figures for Section 10.2 ===
+   OK: fig10_1_rdd_plot_credits_R.png (85,191 bytes)
+   OK: fig10_2_rdd_density_test_R.png (93,776 bytes)
+   OK: fig10_3_rdd_plot_firststage_R.png (82,280 bytes)
+   OK: fig10_4_fuzzy_late_credits_R.png (56,304 bytes)
+   Directory listed below is the one they were written to:
+   C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs 
+   fig10_1_rdd_plot_credits.png
+   fig10_1_rdd_plot_credits_R.png
+   fig10_10_mte_byarea_curve_R.png
+   fig10_10_mte_byarea_curve_Stata.png
+   fig10_11_mte_curve_R.png
+   fig10_11_mte_curve_Stata.png
+   fig10_11_mte_policy_regions_R.png
+   fig10_11_mte_policy_regions_Stata.png
+   fig10_12.png
+   fig10_12_mte_by_decile_R.png
+   fig10_12_mte_by_decile_Stata.png
+   fig10_12_R.png
+   fig10_13.png
+   fig10_13_mte_byarea_curve_R.png
+   fig10_13_mte_byarea_curve_Stata.png
+   fig10_13_R.png
+   fig10_14_mprte_by_intensity_R.png
+   fig10_14_mprte_by_intensity_Stata.png
+   fig10_15_mte_policy_regions_R.png
+   fig10_15_mte_policy_regions_Stata.png
+   fig10_16_mte_by_propensity_R.png
+   fig10_16_mte_by_propensity_Stata.png
+   fig10_2_1_rdd_density_test.png
+   fig10_2_1_rdd_density_test_R.png
+   fig10_2_2_rdd_binscatter_cgpa_y1.png
+   fig10_2_2_rdd_binscatter_cgpa_y1_R.png
+   fig10_2_2_rdd_binscatter_credits_y1.png
+   fig10_2_2_rdd_binscatter_credits_y1_R.png
+   fig10_2_2_rdd_binscatter_persist_sharp.png
+   fig10_2_2_rdd_binscatter_persist_sharp_R.png
+   fig10_2_3_rdd_bw_sensitivity.png
+   fig10_2_3_rdd_bw_sensitivity_R.png
+   fig10_2_4_rdd_plot_persistence.png
+   fig10_2_4_rdd_plot_persistence_R.png
+   fig10_2_5_rdd_plot_credits.png
+   fig10_2_5_rdd_plot_credits_R.png
+   fig10_2_6_rdd_plot_cgpa.png
+   fig10_2_6_rdd_plot_cgpa_R.png
+   fig10_2_7_rdd_plot_firststage.png
+   fig10_2_7_rdd_plot_firststage_R.png
+   fig10_2_8_rdd_plot_persist_fuzzy.png
+   fig10_2_8_rdd_plot_persist_fuzzy_R.png
+   fig10_2_9_fuzzy_late_comparison.png
+   fig10_2_9_fuzzy_late_comparison_R.png
+   fig10_2_fuzzy_late_credits.png
+   fig10_2_rdd_density_test.png
+   fig10_2_rdd_density_test_R.png
+   fig10_3_1_parallel_trends_R.png
+   fig10_3_1_parallel_trends_Stata.png
+   fig10_3_2_robustness_R.png
+   fig10_3_2_robustness_Stata.png
+   fig10_3_parallel_trends_R.png
+   fig10_3_rdd_plot_firststage.png
+   fig10_3_rdd_plot_firststage_R.png
+   fig10_4_1_lasso_comparison_R.png
+   fig10_4_1_lasso_comparison_Stata.png
+   fig10_4_fuzzy_late_credits.png
+   fig10_4_fuzzy_late_credits_R.png
+   fig10_4_scm_trends_R.png
+   fig10_5_1_scm_gap_R.png
+   fig10_5_1_scm_gap_Stata.png
+   fig10_5_2_scm_trends_R.png
+   fig10_5_2_scm_trends_Stata.png
+   fig10_5_parallel_trends_R.png
+   fig10_5_parallel_trends_Stata.png
+   fig10_6.png
+   fig10_6_1_sdid_R.png
+   fig10_6_event_study_R.png
+   fig10_6_R.png
+   fig10_6_scm_trends_R.png
+   fig10_6_scm_trends_Stata.png
+   fig10_7_1_event_study_R.png
+   fig10_7_1_event_study_Stata.png
+   fig10_7_2.png
+   fig10_7_2_csdid_R.png
+   fig10_7_2_csdid_Stata.png
+   fig10_7_2_R.png
+   fig10_7_3.png
+   fig10_7_4_etwfe_event_study_R.png
+   fig10_7_4_etwfe_event_study_Stata.png
+   fig10_7_R.png
+   fig10_7_sdid_trends_R.png
+   fig10_7_sdid_trends2018.png
+   fig10_7_staggered_es_R.png
+   fig10_7_staggered_es_Stata.png
+   fig10_7_trends2018.png
+   fig10_8_1_permutation_R.png
+   fig10_8_1_permutation_Stata.png
+   fig10_8_2_loo_R.png
+   fig10_8_2_loo_Stata.png
+   fig10_8_event_study_R.png
+   fig10_8_event_study_Stata.png
+   fig10_8_mte_curve_R.png
+   fig10_8_mte_curve_Stata.png
+   fig10_9_1_summary_R.png
+   fig10_9_1_summary_Stata.png
+   fig10_9_mte_by_propensity_R.png
+   fig10_9_mte_by_propensity_Stata.png
+   fig10_9_staggered_es_R.png
+   fig10_9_staggered_es_Stata.png
+   fig10_cate_forest.png
+   fig10_cate_interact.png
+
+
+=== RDD dataset saved  ->  C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/data/Example_10_2_1.rds / .csv ===
+=== Section 10.2 complete.                                         ===
+====================================================================== 
+ SECTIONS 10.3-10.9: Georgia DiD
+====================================================================== 
+G2;H2;Warningh: package ‘fixest’ was built under R version 4.5.3g
+G2;H2;Warningh: package ‘did’ was built under R version 4.5.3g
+G2;H2;Warningh: package ‘tidyr’ was built under R version 4.5.3g
+G2;H2;Warningh: package ‘Synth’ was built under R version 4.5.3g
+G3;##
+## Synth Package: Implements Synthetic Control Methods.
+
+gG3;## See https://web.stanford.edu/~jhain/synthpage.html for additional information.
+
+
+gG2;H2;Warningh: package ‘hdm’ was built under R version 4.5.3g
+R_code10_Georgia_DiD.R: version 2026-10-15a
+  out_root  = C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output 
+  graphs_dir= C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs 
+
+============================================================
+SECTION 10.3.1: DATA STRUCTURE AND VARIABLE CONSTRUCTION
+============================================================
+Cluster-robust df (G - 1) = 15
+Panel: N = 336, G = 16 states, T = 2001–2021
+
+============================================================
+SECTION 10.3.2: TWFE DiD ESTIMATION
+============================================================
+
+--- TWFE main estimate ---
+   DiD coef =  -0.0427   SE =  0.0183   p = 0.0340
+   Placebo DiD (2012) =  -0.0370   p = 0.1442
+   PASS: no pre-2018 treatment effect detected.
+
+--- DiD on alternative outcomes ---
+   Outcome              Coef       SE        p
+   ------------------------------------------------ 
+   lntotsup           0.1032   0.0262   0.0013
+   lnfinaid          -0.1242   0.1261   0.3404
+   lntuifee           0.2700   0.0525   0.0001
+   lnfte              0.0123   0.0208   0.5620
+   ------------------------------------------------ 
+
+============================================================
+SECTION 10.3.3: PARALLEL TRENDS
+============================================================
+   chkfig: OK     88,186 bytes   fig10_5_parallel_trends_R.png
+   fig10_5_parallel_trends_R.png exported
+
+--- Formal pre-trend test (linear trend interaction, fy < 2018) ---
+   Trend-interaction coef =  -0.0076   p = 0.0005
+   NOTE: p <= 0.10 — investigate pre-trend robustness.
+
+--- Joint lead tests (rank bound: G - 1 = 15) ---
+   15 restrictions (AT the rank bound, NOT usable): F = 598046.25, p = 4.545e-43
+   14 restrictions (binned F16_ga dropped): F = 90.78, p = 0.0000
+      RESULT: joint leads reject; pre-trend present.
+   chkfig: OK     93,960 bytes   fig10_8_event_study_R.png
+   fig10_8_event_study_R.png exported
+
+============================================================
+SECTION 10.3.4: ROBUSTNESS CHECKS
+============================================================
+   No controls: DiD =  0.1428   p = 0.0209
+   + State trends: DiD =  0.0170   p = 0.1933
+   Drop Delaware: DiD = -0.0520   p = 0.0080
+   2015-2021 window: DiD =  0.0057   p = 0.7921
+   chkfig: OK     42,323 bytes   fig10_3_2_robustness_R.png
+   fig10_3_2_robustness_R.png exported
+
+============================================================
+SECTION 10.4: LASSO-RESIDUALIZED DiD
+============================================================
+   Step 1: partialling out unit/year FEs
+   Step 2: double selection via rlasso
+   S1 (outcome equation): lntotsup lnfinaid lnfte
+   S2 (selection equation): (none)
+   Union (S1 U S2): lntotsup lnfinaid lnfte
+   Step 3: final TWFE with LASSO-selected controls
+
+--- LASSO-residualized DiD ---
+   DiD coef =  -0.0213   SE =  0.0152   p = 0.1820
+   TWFE baseline:  -0.0427   Difference:  0.0214
+   chkfig: OK     48,307 bytes   fig10_4_1_lasso_comparison_R.png
+   fig10_4_1_lasso_comparison_R.png exported
+
+============================================================
+SECTION 10.5: SYNTHETIC CONTROL METHOD (SCM)
+============================================================
+   Running synth (may take ~30 seconds)...
+   SCM inputs: 15 donors, 4 predictors (lntotsup lnfinaid lntuifee lnfte), 7 special predictors
+   synth converged. SCM average post-treatment gap:  0.0307
+   Pre-treatment RMSPE:  0.0323
+   Donor weights (non-zero only):
+     Florida               0.545
+     Texas                 0.074
+     South Carolina        0.070
+     North Carolina        0.053
+     Virginia              0.036
+     Louisiana             0.034
+     Kentucky              0.032
+     West Virginia         0.029
+     Tennessee             0.026
+     Alabama               0.025
+     Oklahoma              0.018
+     Maryland              0.016
+     Arkansas              0.015
+     Mississippi           0.015
+     Delaware              0.013
+     (sum)                 1.000
+   chkfig: OK     89,148 bytes   fig10_6_scm_trends_R.png
+   chkfig: OK     89,614 bytes   fig10_5_1_scm_gap_R.png
+   fig10_5_1_scm_gap + fig10_6_scm_trends_R.png exported
+
+============================================================
+SECTION 10.6: SYNTHETIC DiD (SDID)
+============================================================
+   Running synthdid (placebo SE)...
+   SDID ATT =  0.0338   SE =  0.0860   p = 0.6945
+   chkfig: OK     53,486 bytes   fig10_7_sdid_trends_R.png
+   fig10_7_sdid_trends_R.png exported
+
+============================================================
+SECTION 10.7: EVENT STUDY AND CALLAWAY-SANT'ANNA DiD
+============================================================
+   Running did::att_gt (CS-DiD, single cohort 2018)...
+G2;H2;Warningh in did_standardization(data, args) :
+  Some groups in your dataset have very few observations, which may cause estimation problems.
+  Check groups: 2018.g
+G2;H2;Warningh in att_gt(yname = "lngenop", tname = "fy", idname = "fips", gname = "gvar",  :
+  Not returning pre-test Wald statistic due to singular covariance matrixg
+   chkfig: OK     85,861 bytes   fig10_7_2_csdid_R.png
+   fig10_7_2_csdid_R.png exported
+   CS simple ATT = -0.0042   SE =  0.0345   p = 0.9034
+
+============================================================
+SECTION 10.7.3: MULTI-STATE STAGGERED ADOPTION
+============================================================
+   use_synthetic = TRUE — generating simulated staggered panel
+   Canonical vars — id:state_id  time:year  y:lngenop  gvar:first_treat
+   Naive TWFE (staggered): DiD = -0.0510   p = 0.0002
+G2;H2;Warningh in did_standardization(data, args) :
+  Some groups in your dataset have very few observations, which may cause estimation problems.
+  Check groups: 2014,2016,2018,0.g
+G2;H2;Warningh in att_gt(yname = s_y, tname = s_year, idname = s_id, gname = s_gvar,  :
+  Not returning pre-test Wald statistic due to singular covariance matrixg
+   chkfig: OK     85,899 bytes   fig10_9_staggered_es_R.png
+   fig10_9_staggered_es_R.png exported
+   CS simple ATT = -0.0827   SE =  0.0291
+   Cohort-specific ATTs:
+     Cohort 2014: ATT = -0.1314 (SE = 0.0447)
+     Cohort 2016: ATT = -0.0610 (SE = 0.0359)
+     Cohort 2018: ATT = -0.0053 (SE = 0.0413)
+
+============================================================
+SECTION 10.8.2: PERMUTATION INFERENCE
+============================================================
+   Running permutation test over 15 control states...
+
+--- Permutation test results ---
+   Actual DiD estimate:     -0.0427
+   Placebo mean (H0 ~ 0):    0.0010
+   Placebo SD:               0.0637
+   |Placebo| >= |actual|:   7 / 15
+   Permutation p-value:     0.4667
+   chkfig: OK     36,686 bytes   fig10_8_1_permutation_R.png
+   fig10_8_1_permutation_R.png exported
+
+============================================================
+SECTION 10.8.3: LEAVE-ONE-OUT SENSITIVITY
+============================================================
+   Running leave-one-out over 15 control states...
+
+--- Leave-one-out results ---
+   Baseline DiD:   -0.0427
+   LOO mean:       -0.0415
+   LOO range:      [-0.0520, -0.0338]
+   All same sign:  YES
+   chkfig: OK     63,127 bytes   fig10_8_2_loo_R.png
+   fig10_8_2_loo_R.png exported
+
+============================================================
+SECTION 10.9: RESULTS SUMMARY
+============================================================
+
+   ----------------------------------------------------------------------
+   Estimator                          Coef       SE        p
+   ----------------------------------------------------------------------
+   TWFE (baseline)                 -0.0427   0.0183   0.0340
+   TWFE placebo (2012)             -0.0370   0.0240   0.1442
+   TWFE no controls                 0.1428
+   TWFE + state trends              0.0170
+   TWFE drop Delaware              -0.0520
+   LASSO-residualized DiD          -0.0213   0.0152   0.1820
+   SDID                             0.0338   0.0860   0.6945
+   CS-DiD (single cohort)          -0.0042   0.0345
+   SCM (post-period avg)            0.0307
+   ----------------------------------------------------------------------
+   All estimates: log points. Outcome: lngenop. N=336, G=16.
+   results.csv saved
+   results_lasso.csv saved
+   results_combined.csv saved
+   chkfig: OK     35,748 bytes   fig10_9_1_summary_R.png
+   fig10_9_1_summary_R.png exported
+
+============================================================
+SECTIONS 10.3-10.9 COMPLETE
+============================================================
+  Figures exported to: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs
+  Data files: results.csv  results_lasso.csv  results_combined.csv
+
+  PRE-TREND EVIDENCE
+  Pre-2018 trend interaction = -0.0076 per year (p = 0.0005)
+  Parallel trends is rejected: Georgia was already diverging
+  from the comparison states before consolidation.
+
+  ESTIMATES THAT IMPOSE PARALLEL TRENDS
+  TWFE (baseline): DiD = -0.0427 (SE = 0.0183, p = 0.034)
+  LASSO-DiD: -0.0213 (p = 0.182) -- LASSO dropped 1 of 4 controls
+  (retained: lntotsup, lnfinaid, lnfte). Stata's lassopack rlasso retains all four,
+  so there the LASSO estimate is identical to TWFE (see Section 10.11.5).
+  Specifications that reach significance all impose this assumption.
+
+  ESTIMATES THAT RELAX PARALLEL TRENDS
+  SCM post-treatment gap   =  0.0307
+  SDID ATT                 =  0.0338
+  CS-DiD ATT               = -0.0042
+  TWFE + state trends      =  0.0170  (p = 0.1933)
+  All small and not significant, with differing signs --
+  the pattern expected if the true effect is near zero.
+
+  POWER
+  Permutation p = 0.467 (one treated state, 15 comparison states: low power).
+  LOO range [-0.0520, -0.0338] -- stable, but dropping a state does not relax parallel trends.
+  Placebo (2012): p = 0.144 -- tests for a break at one date, not a gradual pre-trend.
+
+  CONCLUSION
+  These data cannot detect an effect of consolidation on
+  operating expenditures. See Section 10.9.1.
+============================================================
+
+  FIGURE ROLL CALL (independent re-check of every export)
+   chkfig: OK     88,186 bytes   fig10_5_parallel_trends_R.png
+   chkfig: OK     93,960 bytes   fig10_8_event_study_R.png
+   chkfig: OK     42,323 bytes   fig10_3_2_robustness_R.png
+   chkfig: OK     48,307 bytes   fig10_4_1_lasso_comparison_R.png
+   chkfig: OK     89,148 bytes   fig10_6_scm_trends_R.png
+   chkfig: OK     89,614 bytes   fig10_5_1_scm_gap_R.png
+   chkfig: OK     53,486 bytes   fig10_7_sdid_trends_R.png
+   chkfig: OK     85,861 bytes   fig10_7_2_csdid_R.png
+   chkfig: OK     85,899 bytes   fig10_9_staggered_es_R.png
+   chkfig: OK     36,686 bytes   fig10_8_1_permutation_R.png
+   chkfig: OK     63,127 bytes   fig10_8_2_loo_R.png
+   chkfig: OK     35,748 bytes   fig10_9_1_summary_R.png
+
+  All PNGs currently in graphs_dir:
+   fig10_1_rdd_plot_credits.png
+   fig10_1_rdd_plot_credits_R.png
+   fig10_10_mte_byarea_curve_R.png
+   fig10_10_mte_byarea_curve_Stata.png
+   fig10_11_mte_curve_R.png
+   fig10_11_mte_curve_Stata.png
+   fig10_11_mte_policy_regions_R.png
+   fig10_11_mte_policy_regions_Stata.png
+   fig10_12.png
+   fig10_12_mte_by_decile_R.png
+   fig10_12_mte_by_decile_Stata.png
+   fig10_12_R.png
+   fig10_13.png
+   fig10_13_mte_byarea_curve_R.png
+   fig10_13_mte_byarea_curve_Stata.png
+   fig10_13_R.png
+   fig10_14_mprte_by_intensity_R.png
+   fig10_14_mprte_by_intensity_Stata.png
+   fig10_15_mte_policy_regions_R.png
+   fig10_15_mte_policy_regions_Stata.png
+   fig10_16_mte_by_propensity_R.png
+   fig10_16_mte_by_propensity_Stata.png
+   fig10_2_1_rdd_density_test.png
+   fig10_2_1_rdd_density_test_R.png
+   fig10_2_2_rdd_binscatter_cgpa_y1.png
+   fig10_2_2_rdd_binscatter_cgpa_y1_R.png
+   fig10_2_2_rdd_binscatter_credits_y1.png
+   fig10_2_2_rdd_binscatter_credits_y1_R.png
+   fig10_2_2_rdd_binscatter_persist_sharp.png
+   fig10_2_2_rdd_binscatter_persist_sharp_R.png
+   fig10_2_3_rdd_bw_sensitivity.png
+   fig10_2_3_rdd_bw_sensitivity_R.png
+   fig10_2_4_rdd_plot_persistence.png
+   fig10_2_4_rdd_plot_persistence_R.png
+   fig10_2_5_rdd_plot_credits.png
+   fig10_2_5_rdd_plot_credits_R.png
+   fig10_2_6_rdd_plot_cgpa.png
+   fig10_2_6_rdd_plot_cgpa_R.png
+   fig10_2_7_rdd_plot_firststage.png
+   fig10_2_7_rdd_plot_firststage_R.png
+   fig10_2_8_rdd_plot_persist_fuzzy.png
+   fig10_2_8_rdd_plot_persist_fuzzy_R.png
+   fig10_2_9_fuzzy_late_comparison.png
+   fig10_2_9_fuzzy_late_comparison_R.png
+   fig10_2_fuzzy_late_credits.png
+   fig10_2_rdd_density_test.png
+   fig10_2_rdd_density_test_R.png
+   fig10_3_1_parallel_trends_R.png
+   fig10_3_1_parallel_trends_Stata.png
+   fig10_3_2_robustness_R.png
+   fig10_3_2_robustness_Stata.png
+   fig10_3_parallel_trends_R.png
+   fig10_3_rdd_plot_firststage.png
+   fig10_3_rdd_plot_firststage_R.png
+   fig10_4_1_lasso_comparison_R.png
+   fig10_4_1_lasso_comparison_Stata.png
+   fig10_4_fuzzy_late_credits.png
+   fig10_4_fuzzy_late_credits_R.png
+   fig10_4_scm_trends_R.png
+   fig10_5_1_scm_gap_R.png
+   fig10_5_1_scm_gap_Stata.png
+   fig10_5_2_scm_trends_R.png
+   fig10_5_2_scm_trends_Stata.png
+   fig10_5_parallel_trends_R.png
+   fig10_5_parallel_trends_Stata.png
+   fig10_6.png
+   fig10_6_1_sdid_R.png
+   fig10_6_event_study_R.png
+   fig10_6_R.png
+   fig10_6_scm_trends_R.png
+   fig10_6_scm_trends_Stata.png
+   fig10_7_1_event_study_R.png
+   fig10_7_1_event_study_Stata.png
+   fig10_7_2.png
+   fig10_7_2_csdid_R.png
+   fig10_7_2_csdid_Stata.png
+   fig10_7_2_R.png
+   fig10_7_3.png
+   fig10_7_4_etwfe_event_study_R.png
+   fig10_7_4_etwfe_event_study_Stata.png
+   fig10_7_R.png
+   fig10_7_sdid_trends_R.png
+   fig10_7_sdid_trends2018.png
+   fig10_7_staggered_es_R.png
+   fig10_7_staggered_es_Stata.png
+   fig10_7_trends2018.png
+   fig10_8_1_permutation_R.png
+   fig10_8_1_permutation_Stata.png
+   fig10_8_2_loo_R.png
+   fig10_8_2_loo_Stata.png
+   fig10_8_event_study_R.png
+   fig10_8_event_study_Stata.png
+   fig10_8_mte_curve_R.png
+   fig10_8_mte_curve_Stata.png
+   fig10_9_1_summary_R.png
+   fig10_9_1_summary_Stata.png
+   fig10_9_mte_by_propensity_R.png
+   fig10_9_mte_by_propensity_Stata.png
+   fig10_9_staggered_es_R.png
+   fig10_9_staggered_es_Stata.png
+   fig10_cate_forest.png
+   fig10_cate_interact.png
+
+============================================================
+
+====================================================================== 
+ SECTION 10.7.4: Extended TWFE
+====================================================================== 
+G2;H2;Warningh: package ‘etwfe’ was built under R version 4.5.3g
+G2;H2;Warningh: package ‘marginaleffects’ was built under R version 4.5.3g
+R_code10_ETWFE.R: version 2026-09-23a
+  out_root  = C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output 
+  graphs_dir= C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs 
+
+=== Importing 48-state panel (Example_10_7_3.csv) ===
+Loaded: 1152 rows x 9 columns
+Columns: fips, state, state_abbrev, fy, totalstatesupport, totalfinancialaid, generalpublicoperations, nettuitionandfeerevenue, netfteenrollment
+After dropping missing log-values: 1149 rows
+Panel: 48 states, FY 2001-2024
+Cohort distribution:
+  gyear  n
+1     0 45
+2  2013  1
+3  2018  1
+4  2022  1
+
+=== ETWFE (no covariates, never-treated controls) ===
+df_model: 1149 rows used for both etwfe models
+OLS estimation, Dep. Var.: lngenop
+Observations: 1,149
+Fixed-effects: fips: 48,  fy: 24
+Standard-errors: Clustered (fips) 
+                              Estimate Std. Error   t value   Pr(>|t|)    
+.Dtreat:gyear::2013:fy::2001  0.128422   0.036041  3.563205 8.5295e-04 ***
+.Dtreat:gyear::2013:fy::2002  0.088160   0.031800  2.772293 7.9534e-03 ** 
+.Dtreat:gyear::2013:fy::2003  0.080358   0.029124  2.759215 8.2317e-03 ** 
+.Dtreat:gyear::2013:fy::2004  0.083076   0.026967  3.080639 3.4471e-03 ** 
+.Dtreat:gyear::2013:fy::2005  0.090486   0.026963  3.355899 1.5732e-03 ** 
+.Dtreat:gyear::2013:fy::2006  0.114179   0.024970  4.572562 3.5107e-05 ***
+.Dtreat:gyear::2013:fy::2007  0.099758   0.024693  4.039915 1.9646e-04 ***
+.Dtreat:gyear::2013:fy::2008  0.087539   0.021998  3.979415 2.3770e-04 ***
+.Dtreat:gyear::2013:fy::2009  0.045183   0.018838  2.398478 2.0485e-02 *  
+.Dtreat:gyear::2013:fy::2010 -0.070571   0.017512 -4.029915 2.0276e-04 ***
+.Dtreat:gyear::2013:fy::2011  0.031171   0.014243  2.188569 3.3632e-02 *  
+.Dtreat:gyear::2013:fy::2013  0.007420   0.008493  0.873708 3.8672e-01    
+.Dtreat:gyear::2013:fy::2014  0.028500   0.011379  2.504614 1.5785e-02 *  
+.Dtreat:gyear::2013:fy::2015  0.028658   0.017572  1.630886 1.0960e-01    
+.Dtreat:gyear::2013:fy::2016  0.063728   0.021387  2.979803 4.5546e-03 ** 
+.Dtreat:gyear::2013:fy::2017  0.093953   0.024185  3.884767 3.1952e-04 ***
+.Dtreat:gyear::2013:fy::2018  0.161116   0.027117  5.941508 3.2998e-07 ***
+.Dtreat:gyear::2013:fy::2019  0.179569   0.028375  6.328494 8.5517e-08 ***
+.Dtreat:gyear::2013:fy::2020  0.175408   0.029869  5.872674 4.1927e-07 ***
+.Dtreat:gyear::2013:fy::2021  0.093185   0.034122  2.730962 8.8639e-03 ** 
+.Dtreat:gyear::2013:fy::2022  0.144193   0.031082  4.639116 2.8172e-05 ***
+.Dtreat:gyear::2013:fy::2023  0.214967   0.036928  5.821289 5.0124e-07 ***
+.Dtreat:gyear::2013:fy::2024  0.179624   0.038367  4.681746 2.4456e-05 ***
+.Dtreat:gyear::2018:fy::2001  0.262660   0.039510  6.647902 2.7985e-08 ***
+.Dtreat:gyear::2018:fy::2002  0.271377   0.036531  7.428688 1.8356e-09 ***
+.Dtreat:gyear::2018:fy::2003  0.293152   0.034536  8.488403 4.8020e-11 ***
+.Dtreat:gyear::2018:fy::2004  0.253294   0.032985  7.679011 7.7059e-10 ***
+.Dtreat:gyear::2018:fy::2005  0.218635   0.031966  6.839709 1.4310e-08 ***
+.Dtreat:gyear::2018:fy::2006  0.144302   0.029131  4.953500 9.8428e-06 ***
+.Dtreat:gyear::2018:fy::2007  0.135547   0.030536  4.438951 5.4445e-05 ***
+.Dtreat:gyear::2018:fy::2008  0.105649   0.030172  3.501561 1.0251e-03 ** 
+.Dtreat:gyear::2018:fy::2009  0.179457   0.028018  6.405141 6.5415e-08 ***
+.Dtreat:gyear::2018:fy::2010  0.252069   0.029982  8.407270 6.3265e-11 ***
+.Dtreat:gyear::2018:fy::2011  0.260527   0.025934 10.045679 2.7640e-13 ***
+.Dtreat:gyear::2018:fy::2012  0.143513   0.024185  5.934008 3.3871e-07 ***
+.Dtreat:gyear::2018:fy::2013  0.161818   0.022185  7.293858 2.9337e-09 ***
+.Dtreat:gyear::2018:fy::2014  0.078482   0.017314  4.532811 4.0020e-05 ***
+.Dtreat:gyear::2018:fy::2015  0.102181   0.014602  6.997593 8.2425e-09 ***
+.Dtreat:gyear::2018:fy::2016  0.014424   0.008894  1.621704 1.1156e-01    
+.Dtreat:gyear::2018:fy::2018  0.028113   0.008293  3.389905 1.4246e-03 ** 
+.Dtreat:gyear::2018:fy::2019  0.039248   0.010357  3.789515 4.2901e-04 ***
+.Dtreat:gyear::2018:fy::2020  0.003849   0.012735  0.302233 7.6381e-01    
+.Dtreat:gyear::2018:fy::2021  0.039360   0.022359  1.760410 8.4845e-02 .  
+.Dtreat:gyear::2018:fy::2022  0.001501   0.016543  0.090712 9.2811e-01    
+.Dtreat:gyear::2018:fy::2023 -0.054228   0.025710 -2.109220 4.0280e-02 *  
+.Dtreat:gyear::2018:fy::2024 -0.084004   0.025386 -3.309025 1.8023e-03 ** 
+.Dtreat:gyear::2022:fy::2001  0.479503   0.046711 10.265263 1.3664e-13 ***
+.Dtreat:gyear::2022:fy::2002  0.455354   0.043782 10.400560 8.8791e-14 ***
+.Dtreat:gyear::2022:fy::2003  0.440480   0.040652 10.835445 2.2563e-14 ***
+.Dtreat:gyear::2022:fy::2004  0.411556   0.040446 10.175434 1.8215e-13 ***
+.Dtreat:gyear::2022:fy::2005  0.408739   0.039476 10.354131 1.0292e-13 ***
+.Dtreat:gyear::2022:fy::2006  0.362030   0.037359  9.690610 8.7434e-13 ***
+.Dtreat:gyear::2022:fy::2007  0.339867   0.038030  8.936705 1.0587e-11 ***
+.Dtreat:gyear::2022:fy::2008  0.283598   0.037728  7.516861 1.3515e-09 ***
+.Dtreat:gyear::2022:fy::2009  0.313819   0.036818  8.523565 4.2619e-11 ***
+.Dtreat:gyear::2022:fy::2010  0.226223   0.034673  6.524532 4.3086e-08 ***
+.Dtreat:gyear::2022:fy::2011  0.195381   0.033660  5.804609 5.3114e-07 ***
+.Dtreat:gyear::2022:fy::2012  0.007327   0.034122  0.214729 8.3091e-01    
+.Dtreat:gyear::2022:fy::2013 -0.001031   0.032030 -0.032196 9.7445e-01    
+.Dtreat:gyear::2022:fy::2014 -0.039711   0.027881 -1.424329 1.6096e-01    
+.Dtreat:gyear::2022:fy::2015 -0.031366   0.027939 -1.122664 2.6728e-01    
+.Dtreat:gyear::2022:fy::2016 -0.074157   0.025990 -2.853270 6.4152e-03 ** 
+.Dtreat:gyear::2022:fy::2017 -0.041358   0.022359 -1.849750 7.0643e-02 .  
+.Dtreat:gyear::2022:fy::2018 -0.019424   0.020739 -0.936615 3.5374e-01    
+.Dtreat:gyear::2022:fy::2019  0.010464   0.020563  0.508867 6.1323e-01    
+.Dtreat:gyear::2022:fy::2020 -0.006932   0.020446 -0.339043 7.3609e-01    
+.Dtreat:gyear::2022:fy::2022 -0.078370   0.021015 -3.729346 5.1596e-04 ***
+.Dtreat:gyear::2022:fy::2023 -0.053603   0.025726 -2.083634 4.2657e-02 *  
+.Dtreat:gyear::2022:fy::2024 -0.090178   0.027021 -3.337354 1.6603e-03 ** 
+... 3 variables were removed because of collinearity (.Dtreat:gyear::2013:fy::2012,
+.Dtreat:gyear::2018:fy::2017 and .Dtreat:gyear::2022:fy::2021)
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+RMSE: 0.120939     Adj. R2: 0.985436
+                 Within R2: 0.074635
+
+--- 4a: Overall ATT (simple average) ---
+
+ .Dtreat Estimate Std. Error    z Pr(>|z|)   S  2.5 % 97.5 %
+    TRUE    0.051      0.016 3.19  0.00142 9.5 0.0197 0.0823
+
+Term: .Dtreat
+Type: response
+Comparison: TRUE - FALSE
+
+
+--- 4a: Cohort-specific ATT ---
+
+ gyear Estimate Std. Error      z Pr(>|z|)    S   2.5 %  97.5 %
+  2013  0.11419     0.0228  5.011  < 0.001 20.8  0.0695  0.1589
+  2018 -0.00374     0.0141 -0.266  0.79051  0.3 -0.0313  0.0238
+  2022 -0.07405     0.0230 -3.219  0.00129  9.6 -0.1191 -0.0290
+
+Term: .Dtreat
+Type: response
+Comparison: TRUE - FALSE
+
+
+--- 4a: Event-study ATT ---
+
+ event Estimate Std. Error     z Pr(>|z|)    S  2.5 % 97.5 %
+   -21   0.4795     0.0467 10.27  < 0.001 79.7 0.3880  0.571
+   -20   0.4554     0.0438 10.40  < 0.001 81.7 0.3695  0.541
+   -19   0.4405     0.0407 10.84  < 0.001 88.5 0.3608  0.520
+   -18   0.4116     0.0404 10.18  < 0.001 78.4 0.3323  0.491
+   -17   0.3357     0.0364  9.22  < 0.001 64.9 0.2643  0.407
+--- 23 rows omitted. See ?print.marginaleffects ---
+     7   0.1754     0.0299  5.87  < 0.001 27.8 0.1169  0.234
+     8   0.0932     0.0341  2.73  0.00632  7.3 0.0263  0.160
+     9   0.1442     0.0311  4.64  < 0.001 18.1 0.0833  0.205
+    10   0.2150     0.0369  5.82  < 0.001 27.4 0.1426  0.287
+    11   0.1796     0.0384  4.68  < 0.001 18.4 0.1044  0.255
+Term: .Dtreat
+Type: response
+Comparison: TRUE - FALSE
+
+
+=== ETWFE (covariates, never-treated controls) ===
+OLS estimation, Dep. Var.: lngenop
+Observations: 1,149
+Fixed-effects: fips: 48,  fy: 24
+Standard-errors: Clustered (fips) 
+                              Estimate Std. Error   t value   Pr(>|t|)    
+lntotsup                      0.887750   0.086980 10.206339 1.6498e-13 ***
+lnfinaid                      0.008909   0.018215  0.489101 6.2705e-01    
+lntuifee                      0.009666   0.046818  0.206452 8.3733e-01    
+lnfte                         0.079970   0.118816  0.673051 5.0421e-01    
+gyear::2013:lntotsup         -0.646908   0.157255 -4.113753 1.5545e-04 ***
+gyear::2018:lntotsup          0.093631   0.401028  0.233477 8.1640e-01    
+gyear::2022:lntotsup         -0.834104   1.384539 -0.602442 5.4978e-01    
+gyear::2013:lnfinaid          2.177953   0.306638  7.102681 5.7117e-09 ***
+gyear::2018:lnfinaid          1.734055   0.675809  2.565894 1.3540e-02 *  
+gyear::2022:lnfinaid          0.993206   9.924719  0.100074 9.2071e-01    
+gyear::2013:lntuifee         -4.203555   0.660985 -6.359533 7.6724e-08 ***
+gyear::2018:lntuifee         -0.584758   0.550960 -1.061343 2.9396e-01    
+gyear::2022:lntuifee          0.024570  93.465636  0.000263 9.9979e-01    
+gyear::2013:lnfte            -3.586110   0.629747 -5.694523 7.7811e-07 ***
+gyear::2018:lnfte            -1.179664   0.298807 -3.947919 2.6237e-04 ***
+gyear::2022:lnfte             1.935837  76.503099  0.025304 9.7992e-01    
+fy::2002:lntotsup             0.029033   0.030725  0.944936 3.4952e-01    
+fy::2003:lntotsup             0.063751   0.046215  1.379438 1.7429e-01    
+fy::2004:lntotsup             0.068015   0.050623  1.343569 1.8554e-01    
+fy::2005:lntotsup             0.069260   0.058864  1.176604 2.4528e-01    
+fy::2006:lntotsup             0.084206   0.062461  1.348133 1.8408e-01    
+fy::2007:lntotsup             0.101317   0.067006  1.512063 1.3721e-01    
+fy::2008:lntotsup             0.083174   0.063267  1.314652 1.9501e-01    
+fy::2009:lntotsup             0.139053   0.082370  1.688148 9.8009e-02 .  
+fy::2010:lntotsup             0.207919   0.133511  1.557325 1.2610e-01    
+fy::2011:lntotsup             0.156153   0.105461  1.480669 1.4537e-01    
+fy::2012:lntotsup             0.070407   0.081053  0.868651 3.8945e-01    
+fy::2013:lntotsup             0.074561   0.085063  0.876532 3.8520e-01    
+fy::2014:lntotsup             0.074288   0.084434  0.879833 3.8343e-01    
+fy::2015:lntotsup             0.079198   0.092438  0.856768 3.9592e-01    
+fy::2016:lntotsup             0.081103   0.098243  0.825539 4.1324e-01    
+fy::2017:lntotsup             0.081566   0.096507  0.845181 4.0229e-01    
+fy::2018:lntotsup             0.087534   0.104975  0.833859 4.0858e-01    
+fy::2019:lntotsup             0.102578   0.099187  1.034186 3.0634e-01    
+fy::2020:lntotsup             0.103535   0.095441  1.084812 2.8354e-01    
+fy::2021:lntotsup             0.218118   0.134663  1.619734 1.1198e-01    
+fy::2022:lntotsup             0.108920   0.103183  1.055602 2.9655e-01    
+fy::2023:lntotsup             0.083976   0.123105  0.682147 4.9849e-01    
+fy::2024:lntotsup             0.056086   0.122111  0.459306 6.4813e-01    
+fy::2002:lnfinaid            -0.004940   0.004233 -1.166797 2.4918e-01    
+fy::2003:lnfinaid            -0.006633   0.009150 -0.724903 4.7211e-01    
+fy::2004:lnfinaid            -0.015120   0.011080 -1.364593 1.7888e-01    
+fy::2005:lnfinaid            -0.015669   0.012856 -1.218822 2.2899e-01    
+fy::2006:lnfinaid            -0.023377   0.015261 -1.531885 1.3225e-01    
+fy::2007:lnfinaid            -0.028181   0.016290 -1.730009 9.0191e-02 .  
+fy::2008:lnfinaid            -0.022721   0.014455 -1.571818 1.2270e-01    
+fy::2009:lnfinaid            -0.034913   0.020622 -1.693001 9.7075e-02 .  
+fy::2010:lnfinaid            -0.080133   0.033823 -2.369212 2.1986e-02 *  
+fy::2011:lnfinaid            -0.068865   0.034207 -2.013182 4.9843e-02 *  
+fy::2012:lnfinaid            -0.053850   0.021145 -2.546647 1.4211e-02 *  
+fy::2013:lnfinaid            -0.056506   0.021794 -2.592776 1.2650e-02 *  
+fy::2014:lnfinaid            -0.062194   0.021862 -2.844875 6.5608e-03 ** 
+fy::2015:lnfinaid            -0.061570   0.019698 -3.125668 3.0391e-03 ** 
+fy::2016:lnfinaid            -0.072415   0.023681 -3.057898 3.6722e-03 ** 
+fy::2017:lnfinaid            -0.072797   0.022590 -3.222528 2.3104e-03 ** 
+fy::2018:lnfinaid            -0.079060   0.024630 -3.209908 2.3950e-03 ** 
+fy::2019:lnfinaid            -0.086171   0.024554 -3.509370 1.0016e-03 ** 
+fy::2020:lnfinaid            -0.084276   0.026107 -3.228129 2.2738e-03 ** 
+fy::2021:lnfinaid            -0.118923   0.036625 -3.247025 2.1542e-03 ** 
+fy::2022:lnfinaid            -0.092539   0.023537 -3.931641 2.7608e-04 ***
+fy::2023:lnfinaid            -0.070685   0.022663 -3.118914 3.0973e-03 ** 
+fy::2024:lnfinaid            -0.061933   0.026285 -2.356210 2.2684e-02 *  
+fy::2002:lntuifee            -0.015036   0.012375 -1.214975 2.3044e-01    
+fy::2003:lntuifee            -0.018132   0.021145 -0.857499 3.9552e-01    
+fy::2004:lntuifee             0.003875   0.026251  0.147603 8.8329e-01    
+fy::2005:lntuifee             0.016090   0.026490  0.607418 5.4650e-01    
+fy::2006:lntuifee             0.015041   0.026773  0.561811 5.7691e-01    
+fy::2007:lntuifee             0.040106   0.033122  1.210868 2.3200e-01    
+fy::2008:lntuifee             0.024449   0.029316  0.833966 4.0852e-01    
+fy::2009:lntuifee             0.047496   0.030383  1.563252 1.2470e-01    
+fy::2010:lntuifee             0.065770   0.047396  1.387677 1.7178e-01    
+fy::2011:lntuifee             0.083643   0.043508  1.922494 6.0616e-02 .  
+fy::2012:lntuifee             0.011503   0.032540  0.353493 7.2530e-01    
+fy::2013:lntuifee             0.002033   0.036031  0.056414 9.5525e-01    
+fy::2014:lntuifee             0.015071   0.035511  0.424422 6.7319e-01    
+fy::2015:lntuifee            -0.016050   0.041679 -0.385092 7.0191e-01    
+fy::2016:lntuifee            -0.015737   0.050425 -0.312081 7.5636e-01    
+fy::2017:lntuifee            -0.021841   0.043779 -0.498896 6.2018e-01    
+fy::2018:lntuifee            -0.009090   0.050001 -0.181800 8.5652e-01    
+fy::2019:lntuifee            -0.016984   0.049346 -0.344179 7.3225e-01    
+fy::2020:lntuifee            -0.036651   0.041190 -0.889808 3.7810e-01    
+fy::2021:lntuifee            -0.040815   0.059430 -0.686784 4.9559e-01    
+fy::2022:lntuifee            -0.047131   0.051099 -0.922355 3.6105e-01    
+fy::2023:lntuifee             0.004033   0.049313  0.081793 9.3516e-01    
+fy::2024:lntuifee            -0.000072   0.048128 -0.001495 9.9881e-01    
+fy::2002:lnfte               -0.010480   0.026713 -0.392323 6.9659e-01    
+fy::2003:lnfte               -0.033565   0.048773 -0.688191 4.9472e-01    
+fy::2004:lnfte               -0.043602   0.054861 -0.794770 4.3074e-01    
+fy::2005:lnfte               -0.057697   0.060196 -0.958493 3.4272e-01    
+fy::2006:lnfte               -0.057537   0.059332 -0.969745 3.3714e-01    
+fy::2007:lnfte               -0.092011   0.063434 -1.450509 1.5356e-01    
+fy::2008:lnfte               -0.065358   0.060225 -1.085227 2.8336e-01    
+fy::2009:lnfte               -0.125380   0.072484 -1.729758 9.0237e-02 .  
+fy::2010:lnfte               -0.156588   0.109202 -1.433928 1.5821e-01    
+fy::2011:lnfte               -0.127972   0.096450 -1.326829 1.9098e-01    
+fy::2012:lnfte               -0.002766   0.083067 -0.033299 9.7358e-01    
+fy::2013:lnfte                0.001122   0.089391  0.012555 9.9004e-01    
+fy::2014:lnfte               -0.000759   0.084050 -0.009036 9.9283e-01    
+fy::2015:lnfte                0.031009   0.105776  0.293157 7.7069e-01    
+fy::2016:lnfte                0.050798   0.115269  0.440688 6.6146e-01    
+fy::2017:lnfte                0.055561   0.110188  0.504237 6.1645e-01    
+fy::2018:lnfte                0.047301   0.121579  0.389051 6.9900e-01    
+fy::2019:lnfte                0.046609   0.115728  0.402749 6.8896e-01    
+fy::2020:lnfte                0.061921   0.111473  0.555479 5.8120e-01    
+fy::2021:lnfte                0.024167   0.125037  0.193275 8.4758e-01    
+fy::2022:lnfte                0.092377   0.124949  0.739320 4.6339e-01    
+fy::2023:lnfte                0.040111   0.143639  0.279249 7.8128e-01    
+fy::2024:lnfte                0.051202   0.136389  0.375412 7.0904e-01    
+.Dtreat:gyear::2013:fy::2001 -5.905258   0.916986 -6.439857 5.7937e-08 ***
+.Dtreat:gyear::2013:fy::2002 -6.197426   0.949139 -6.529525 4.2340e-08 ***
+.Dtreat:gyear::2013:fy::2003 -6.120674   0.931919 -6.567820 3.7032e-08 ***
+.Dtreat:gyear::2013:fy::2004 -5.889210   0.893550 -6.590804 3.4172e-08 ***
+.Dtreat:gyear::2013:fy::2005 -5.494756   0.833396 -6.593211 3.3885e-08 ***
+.Dtreat:gyear::2013:fy::2006 -4.623615   0.706969 -6.540050 4.0810e-08 ***
+.Dtreat:gyear::2013:fy::2007 -4.252903   0.649597 -6.546988 3.9832e-08 ***
+.Dtreat:gyear::2013:fy::2008 -3.402524   0.527776 -6.446910 5.6525e-08 ***
+.Dtreat:gyear::2013:fy::2009 -2.860526   0.438525 -6.523067 4.3308e-08 ***
+.Dtreat:gyear::2013:fy::2010 -2.286650   0.342536 -6.675639 2.5398e-08 ***
+.Dtreat:gyear::2013:fy::2011 -1.908753   0.293831 -6.496083 4.7594e-08 ***
+.Dtreat:gyear::2013:fy::2013  0.269898   0.053196  5.073690 6.5540e-06 ***
+.Dtreat:gyear::2013:fy::2014  0.225165   0.051416  4.379281 6.6140e-05 ***
+.Dtreat:gyear::2013:fy::2015  0.247525   0.056501  4.380886 6.5796e-05 ***
+.Dtreat:gyear::2013:fy::2016  0.377747   0.072223  5.230303 3.8455e-06 ***
+.Dtreat:gyear::2013:fy::2017  0.442422   0.077824  5.684900 8.0448e-07 ***
+.Dtreat:gyear::2013:fy::2018  0.401370   0.063189  6.351871 7.8807e-08 ***
+.Dtreat:gyear::2013:fy::2019  0.260358   0.038734  6.721679 2.1620e-08 ***
+.Dtreat:gyear::2013:fy::2020  0.310465   0.048802  6.361777 7.6124e-08 ***
+.Dtreat:gyear::2018:fy::2001  0.783870   0.224322  3.494399 1.0471e-03 ** 
+.Dtreat:gyear::2018:fy::2002  0.818958   0.216034  3.790882 4.2721e-04 ***
+.Dtreat:gyear::2018:fy::2003  0.838533   0.208190  4.027723 2.0417e-04 ***
+.Dtreat:gyear::2018:fy::2004  0.781757   0.178605  4.377007 6.6631e-05 ***
+.Dtreat:gyear::2018:fy::2005  0.748681   0.162951  4.594519 3.2652e-05 ***
+.Dtreat:gyear::2018:fy::2006  0.519783   0.100665  5.163483 4.8298e-06 ***
+.Dtreat:gyear::2018:fy::2007  0.555894   0.103978  5.346279 2.5856e-06 ***
+.Dtreat:gyear::2018:fy::2008  0.283203   0.100900  2.806769 7.2610e-03 ** 
+.Dtreat:gyear::2018:fy::2009  0.361904   0.098478  3.674968 6.0891e-04 ***
+.Dtreat:gyear::2018:fy::2010  0.920544   0.197726  4.655664 2.6668e-05 ***
+.Dtreat:gyear::2018:fy::2011  0.441804   0.063874  6.916762 1.0932e-08 ***
+.Dtreat:gyear::2018:fy::2012  0.432615   0.087452  4.946889 1.0065e-05 ***
+.Dtreat:gyear::2018:fy::2013  0.347224   0.063888  5.434894 1.9070e-06 ***
+.Dtreat:gyear::2018:fy::2014  0.313177   0.084358  3.712497 5.4319e-04 ***
+.Dtreat:gyear::2018:fy::2015 -0.026481   0.060864 -0.435077 6.6550e-01    
+.Dtreat:gyear::2018:fy::2016  0.026717   0.010361  2.578639 1.3111e-02 *  
+.Dtreat:gyear::2018:fy::2018  0.017734   0.004294  4.130120 1.4756e-04 ***
+.Dtreat:gyear::2018:fy::2019 -0.024281   0.020184 -1.203006 2.3500e-01    
+.Dtreat:gyear::2018:fy::2020  0.015755   0.011193  1.407591 1.6583e-01    
+.Dtreat:gyear::2022:fy::2001  0.254242  64.274514  0.003956 9.9686e-01    
+.Dtreat:gyear::2022:fy::2002  0.204262  59.250547  0.003447 9.9726e-01    
+.Dtreat:gyear::2022:fy::2003  0.042900  69.227737  0.000620 9.9951e-01    
+.Dtreat:gyear::2022:fy::2004 -0.094532  57.449098 -0.001645 9.9869e-01    
+.Dtreat:gyear::2022:fy::2005 -0.090488  49.645846 -0.001823 9.9855e-01    
+.Dtreat:gyear::2022:fy::2006 -0.147652  42.368452 -0.003485 9.9723e-01    
+.Dtreat:gyear::2022:fy::2007 -0.282211  38.888508 -0.007257 9.9424e-01    
+.Dtreat:gyear::2022:fy::2008 -0.275654  33.018096 -0.008349 9.9337e-01    
+.Dtreat:gyear::2022:fy::2009 -0.261276  25.413723 -0.010281 9.9184e-01    
+.Dtreat:gyear::2022:fy::2010 -0.438742  18.944044 -0.023160 9.8162e-01    
+.Dtreat:gyear::2022:fy::2011 -0.433407  13.753139 -0.031513 9.7499e-01    
+.Dtreat:gyear::2022:fy::2012 -0.816647  30.476617 -0.026796 9.7874e-01    
+.Dtreat:gyear::2022:fy::2013 -0.754750  16.126822 -0.046801 9.6287e-01    
+.Dtreat:gyear::2022:fy::2014 -0.720784  12.234372 -0.058915 9.5327e-01    
+.Dtreat:gyear::2022:fy::2015 -0.562620   8.819035 -0.063796 9.4940e-01    
+.Dtreat:gyear::2022:fy::2016 -0.592880   6.544821 -0.090588 9.2821e-01    
+.Dtreat:gyear::2022:fy::2017 -0.465051   4.382152 -0.106124 9.1594e-01    
+.Dtreat:gyear::2022:fy::2018 -0.360421   2.421380 -0.148850 8.8231e-01    
+.Dtreat:gyear::2022:fy::2019 -0.105589   2.801095 -0.037696 9.7009e-01    
+.Dtreat:gyear::2022:fy::2020 -0.181689   0.370439 -0.490468 6.2608e-01    
+... 302 variables were removed because of collinearity (.Dtreat:gyear::2013:fy::2012,
+.Dtreat:gyear::2013:fy::2021 and 300 others [full set in $collin.var])
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+RMSE: 0.055862     Adj. R2: 0.996562
+                 Within R2: 0.802568
+
+--- 4b: Overall ATT (simple average) ---
+
+ .Dtreat Estimate Std. Error    z Pr(>|z|)    S  2.5 % 97.5 %
+    TRUE    0.116     0.0208 5.56   <0.001 25.2 0.0749  0.156
+
+Term: .Dtreat
+Type: response
+Comparison: TRUE - FALSE
+
+
+--- 4b: Cohort-specific ATT ---
+
+ gyear Estimate Std. Error     z Pr(>|z|)    S    2.5 %  97.5 %
+  2013  0.21125    0.03761 5.616   <0.001 25.6  0.13753 0.28497
+  2018  0.00132    0.00422 0.312    0.755  0.4 -0.00695 0.00958
+  2022  0.00000         NA    NA       NA   NA       NA      NA
+
+Term: .Dtreat
+Type: response
+Comparison: TRUE - FALSE
+
+
+--- 4b: Calendar-time ATT ---
+
+   fy Estimate Std. Error    z Pr(>|z|)    S  2.5 % 97.5 %
+ 2013    0.270     0.0532 5.07   <0.001 21.3 0.1656  0.374
+ 2014    0.225     0.0514 4.38   <0.001 16.4 0.1244  0.326
+ 2015    0.248     0.0565 4.38   <0.001 16.4 0.1368  0.358
+ 2016    0.378     0.0722 5.23   <0.001 22.5 0.2362  0.519
+ 2017    0.442     0.0778 5.68   <0.001 26.2 0.2899  0.595
+ 2018    0.210     0.0313 6.69   <0.001 35.4 0.1482  0.271
+ 2019    0.118     0.0240 4.93   <0.001 20.2 0.0711  0.165
+ 2020    0.163     0.0258 6.32   <0.001 31.8 0.1125  0.214
+ 2021    0.000         NA   NA       NA   NA     NA     NA
+ 2022    0.000         NA   NA       NA   NA     NA     NA
+ 2023    0.000         NA   NA       NA   NA     NA     NA
+ 2024    0.000         NA   NA       NA   NA     NA     NA
+
+Term: .Dtreat
+Type: response
+Comparison: TRUE - FALSE
+
+
+--- 4b: Event-study ATT ---
+
+ event Estimate Std. Error        z Pr(>|z|)    S    2.5 %  97.5 %
+   -21   0.2542    64.2745  0.00396    0.997  0.0 -125.721 126.230
+   -20   0.2043    59.2505  0.00345    0.997  0.0 -115.925 116.333
+   -19   0.0429    69.2277  0.00062    1.000  0.0 -135.641 135.727
+   -18  -0.0945    57.4491 -0.00165    0.999  0.0 -112.693 112.504
+   -17   0.3467    24.8081  0.01397    0.989  0.0  -48.276  48.970
+--- 23 rows omitted. See ?print.marginaleffects ---
+     7   0.3105     0.0488  6.36178   <0.001 32.2    0.215   0.406
+     8   0.0000         NA       NA       NA   NA       NA      NA
+     9   0.0000         NA       NA       NA   NA       NA      NA
+    10   0.0000         NA       NA       NA   NA       NA      NA
+    11   0.0000         NA       NA       NA   NA       NA      NA
+Term: .Dtreat
+Type: response
+Comparison: TRUE - FALSE
+
+
+fig10_7_4_etwfe_event_study_R.png exported to C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs
+
+========================================================================
+ETWFE ATT estimates: unconditional (4a) vs covariate-adjusted (4b)
+========================================================================
+  Row                          ATT(4a)    SE(4a)   ATT(4b)    SE(4b)
+  -----------------------------------------------------------------
+  Overall                       0.0510    0.0160    0.1156    0.0208
+  G2013_Georgia                 0.1142    0.0228    0.2112    0.0376
+  G2018_Wisconsin              -0.0037    0.0141    0.0013    0.0042
+  G2022_Pennsylvania           -0.0741    0.0230    0.0000        NA
+  -----------------------------------------------------------------
+  Never-treated controls; SEs clustered by state (fips).
+  Cols 1-2: no covariates. Cols 3-4: covariate-adjusted.
+  CAUTION: Cols 3-4 (4b) do NOT match the Stata jwdid hettype(cohort)
+  results for this design -- see INTERPRETATION block below for why.
+  G2022/Pennsylvania is inestimable here (collinearity); compare 4a
+  across languages, treat 4b as Stata-only for this application.
+
+tab10_7_etwfe.csv exported to C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/tables
+
+ETWFE / etwfe section complete.
+Figure: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/fig10_7_4_etwfe_event_study_R.png
+Table:  C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/tables/tab10_7_etwfe.csv
+====================================================================== 
+All figures saved as .png to: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs 
+
+Every R figure name ends in _R, so R output never overwrites the
+Stata figures that go into the manuscript.
+
+Figure inventory (all names end in _R):
+  RDD:         fig10_1_rdd_plot_credits   fig10_2_rdd_density_test
+               fig10_3_rdd_plot_firststage  fig10_4_fuzzy_late_credits
+               + fig10_2_2 binscatters, fig10_2_3 bandwidth,
+                 fig10_2_4, fig10_2_6, fig10_2_8 diagnostics
+  Georgia DiD: fig10_5_parallel_trends  fig10_6_scm_trends
+               fig10_7_sdid_trends      fig10_8_event_study
+               fig10_9_staggered_es
+               + fig10_3_2 robustness, fig10_4_1 lasso,
+                 fig10_5_1 scm gap, fig10_7_2 csdid,
+                 fig10_8_1 permutation, fig10_8_2 loo,
+                 fig10_9_1 summary
+  ETWFE:       fig10_7_4_etwfe_event_study
+Tables:  tab10_7_etwfe.csv, results.csv, results_lasso.csv,
+         results_combined.csv  -> C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/tables 
+Data:    Example_10_2_1.rds / .csv  -> C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/data 
+====================================================================== 
+Chapter 10 complete: 2026-10-15 15:25:23 
+====================================================================== 

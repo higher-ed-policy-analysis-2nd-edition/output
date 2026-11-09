@@ -1,0 +1,1959 @@
+-----------------------------------------------------------------------------------------------
+      name:  rdd_log
+       log:  C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/logs/RDD.log
+  log type:  text
+ opened on:  23 Sep 2026, 16:16:59
+
+. 
+. di as text "RDD.do: logging to $log_dir/RDD.log"
+RDD.do: logging to C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/logs/RDD.log
+
+. 
+. * ------------------------------------------------------------------------
+. * VERSION STAMP -- printed INSIDE the log on purpose.
+. * If a log does not show this line, an older copy of the script ran.  That
+. * is the fastest way to settle "did my edit take effect?" without diffing
+. * files.  Bump the date when the script changes.
+. * ------------------------------------------------------------------------
+. di as text "RDD.do: version 2026-08-19f"
+RDD.do: version 2026-08-19f
+
+. di as text "RDD.do: working directory = " c(pwd)
+RDD.do: working directory = C:\Users\marvi
+
+. di as text "RDD.do: out_root   = $out_root"
+RDD.do: out_root   = C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output
+
+. di as text "RDD.do: graphs_dir = $graphs_dir"
+RDD.do: graphs_dir = C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs
+
+. di as text "RDD.do: tables_dir = $tables_dir"
+RDD.do: tables_dir = C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/tables
+
+. di as text "RDD.do: log_dir    = $log_dir"
+RDD.do: log_dir    = C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/logs
+
+. 
+. di as text _n "========================================================"
+
+========================================================
+
+. di as text    "SECTION 10.2: REGRESSION DISCONTINUITY DESIGN"
+SECTION 10.2: REGRESSION DISCONTINUITY DESIGN
+
+. di as text    "========================================================"
+========================================================
+
+. 
+. *--------------------------------------------------------------------
+. * 10.2.1  Synthetic Data Generation
+. *--------------------------------------------------------------------
+. * Design notes
+. * ─────────────
+. *  N    = 4,000 first-time, full-time freshmen at a flagship
+. *           public university
+. *  X    = high-school GPA, 0–4.0 scale (running variable)
+. *           Exact truncated normal via CDF inversion: N(3.15, 0.72)
+. *           restricted to [1.0, 4.0]; yields mean ≈ 3.0, ~37% at or
+. *           above the 3.25 cutoff, no mass points at boundaries.
+. *  c    = 3.25  (institutional merit scholarship cutoff)
+. *  D    = scholarship receipt
+. *         Sharp:  D = 1 iff X >= 3.25
+. *         Fuzzy:  take-up probability jumps at c but is < 100%
+. *  True LATE on latent persistence index = 0.10
+. *  (Implied effect on binary persistence ≈ 0.13–0.16 pp, as
+. *   the probit-like transformation maps the latent effect onto
+. *   the binary outcome scale.)
+. *
+. *  Postsecondary baseline rates near c = 3.25 (HSLS:09-like):
+. *    Second-year persistence ≈ 62–65%
+. *    Year-1 credits earned   ≈ 28–30
+. *    Year-1 college GPA      ≈ 2.75–2.85
+. *
+. * IMPORTANT: After any DGP change, re-run Section 10.2.8 (placebo
+. * cutoffs) to confirm all six placebos are non-significant before
+. * finalizing for publication.
+. 
+. set seed 20260510
+
+. 
+. local N         4000
+
+. local cutoff    3.25
+
+. local true_late 0.10     // true LATE on latent persistence index
+
+. 
+. * -- Running variable ------------------------------------------------
+. * HS GPA: exact truncated normal via CDF inversion.
+. * Parameters: N(mu=3.15, sd=0.72) restricted to [lo=1.0, hi=4.0].
+. * This yields mean ≈ 3.0, SD ≈ 0.60, and approximately 37% of
+. * students at or above the 3.25 cutoff — consistent with HSLS:09.
+. *
+. * Why CDF inversion rather than draw-and-clip?
+. *   Drawing from rnormal() and clipping at 4.0 creates a mass point:
+. *   ~8% of draws from N(3.0,0.72) exceed 4.0 and pile up at exactly
+. *   x = 4.0. A single mass point carrying 8% of the above-cutoff
+. *   sample distorts the density test, placebo checks, and rdrobust
+. *   bandwidth selection. CDF inversion generates from the exact
+. *   truncated distribution with no mass points at either boundary.
+. *
+. * Method: u ~ Uniform[F(lo), F(hi)] -> x = F^{-1}(u)
+. 
+. clear
+
+. set obs `N'
+Number of observations (_N) was 0, now 4,000.
+
+. gen id = _n
+
+. 
+. local mu_gpa   3.15
+
+. local sd_gpa   0.72
+
+. local lo_gpa   1.00
+
+. local hi_gpa   4.00
+
+. local Fa_gpa = normal((`lo_gpa' - `mu_gpa') / `sd_gpa')
+
+. local Fb_gpa = normal((`hi_gpa' - `mu_gpa') / `sd_gpa')
+
+. 
+. gen double u_gpa  = `Fa_gpa' + runiform() * (`Fb_gpa' - `Fa_gpa')
+
+. gen double hs_gpa = invnormal(u_gpa) * `sd_gpa' + `mu_gpa'
+
+. drop u_gpa
+
+. 
+. * Centered running variable (x = 0 at the eligibility threshold)
+. gen double x = hs_gpa - `cutoff'
+
+. 
+. label variable hs_gpa "High-school GPA (0-4.0 scale)"
+
+. label variable x      "HS GPA centered at cutoff (c = 3.25)"
+
+. 
+. * -- Treatment assignment --------------------------------------------
+. gen byte D_sharp = (x >= 0)
+
+. 
+. * Fuzzy: imperfect compliance on both sides of the cutoff.
+. * Below cutoff: small baseline take-up (~5–14%).
+. * Above cutoff: high but incomplete take-up (~70–85%).
+. gen double pr_take_up = .
+(4,000 missing values generated)
+
+.     replace pr_take_up = 0.05 + 0.09 * (x + 2.25) / 2.25   if x <  0
+(2,535 real changes made)
+
+.     replace pr_take_up = 0.70 + 0.15 * min(x / 0.75, 1.0)  if x >= 0
+(1,465 real changes made)
+
+.     replace pr_take_up = min(pr_take_up, 0.92)
+(0 real changes made)
+
+.     replace pr_take_up = max(pr_take_up, 0.02)
+(0 real changes made)
+
+. 
+. gen byte D_fuzzy = (runiform() < pr_take_up)
+
+. 
+. label variable D_sharp "Scholarship received (sharp design)"
+
+. label variable D_fuzzy "Scholarship received (fuzzy design)"
+
+. 
+. * -- Pre-determined covariates (HSLS:09-calibrated) ------------------
+. gen byte   female     = (runiform() < 0.54)
+
+. gen byte   firstgen   = (runiform() < 0.32)
+
+. gen byte   urm        = (runiform() < 0.28)
+
+. gen int    act_score  = 18 + int(12 * runiform())
+
+. gen byte   income_cat = 1 + int(3 * runiform())
+
+.     replace income_cat = min(income_cat, 3)
+(0 real changes made)
+
+. 
+. label variable female     "Female"
+
+. label variable firstgen   "First-generation student"
+
+. label variable urm        "Underrepresented minority"
+
+. label variable act_score  "ACT composite score"
+
+. label variable income_cat "Income category (1=low, 3=high)"
+
+. 
+. * -- Outcomes --------------------------------------------------------
+. * mu0: latent persistence index, HSLS:09-calibrated.
+. * Intercept 0.58 reflects ~62% baseline persistence near c = 3.25.
+. 
+. gen double mu0 = 0.58 + 0.20 * x - 0.08 * x^2          ///
+>                + 0.03 * female  - 0.05 * firstgen        ///
+>                + 0.01 * (income_cat - 2)                 ///
+>                + rnormal(0, 0.18)
+
+. 
+. * (a) Sharp persistence (binary)
+. gen double Y1_s      = mu0 + `true_late' * D_sharp + rnormal(0, 0.12)
+
+.     replace Y1_s     = max(min(Y1_s, 1), 0)
+(368 real changes made)
+
+. gen byte   persist_sharp = (Y1_s > 0.50)
+
+. 
+. * (b) Fuzzy persistence (binary)
+. gen double Y1_f      = mu0 + `true_late' * D_fuzzy + rnormal(0, 0.12)
+
+.     replace Y1_f     = max(min(Y1_f, 1), 0)
+(328 real changes made)
+
+. gen byte   persist_fuzzy = (Y1_f > 0.50)
+
+. 
+. * (c) Year-1 credits earned (continuous)
+. gen double credits_y1 = 28 + 5.0 * x - 1.5 * x^2 + 4 * D_sharp ///
+>                        + rnormal(0, 5)
+
+.     replace credits_y1 = max(credits_y1, 0)
+(0 real changes made)
+
+. 
+. * (d) Year-1 college GPA (continuous)
+. gen double cgpa_y1   = 2.80 + 0.35 * x - 0.08 * x^2    ///
+>                       + 0.08 * D_sharp + rnormal(0, 0.40)
+
+.     replace cgpa_y1  = min(max(cgpa_y1, 0), 4.0)
+(5 real changes made)
+
+. 
+. label variable persist_sharp "Second-year persistence (sharp)"
+
+. label variable persist_fuzzy "Second-year persistence (fuzzy)"
+
+. label variable credits_y1    "Year-1 credits earned"
+
+. label variable cgpa_y1       "Year-1 college GPA"
+
+. 
+. drop Y1_s Y1_f mu0 pr_take_up
+
+. 
+. di as text _n "=== Data generation complete. N = " _N " ==="
+
+=== Data generation complete. N = 4000 ===
+
+. summarize x D_sharp D_fuzzy persist_sharp credits_y1 cgpa_y1
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+           x |      4,000   -.2498981    .5812911  -2.202301   .7492111
+     D_sharp |      4,000      .36625    .4818392          0          1
+     D_fuzzy |      4,000      .36525    .4815604          0          1
+persist_sh~p |      4,000      .55525    .4970002          0          1
+  credits_y1 |      4,000    27.67894     7.23762    1.94428   55.46378
+-------------+---------------------------------------------------------
+     cgpa_y1 |      4,000    2.699405    .4876385   .9877634          4
+
+. 
+. *--------------------------------------------------------------------
+. * 10.2.2  Density Continuity Test and Covariate Balance
+. *--------------------------------------------------------------------
+. 
+. di as text _n "--- 10.2.2  Density Continuity Test (Cattaneo, Jansson & Ma 2020) ---"
+
+--- 10.2.2  Density Continuity Test (Cattaneo, Jansson & Ma 2020) ---
+
+. *
+. * H0: density of x is continuous at c = 0 (no manipulation).
+. * Method: Cattaneo, Jansson & Ma (2020) local polynomial density
+. * estimator with bias-corrected robust inference (JASA, 115, 1393-1407).
+. *
+. * Preferred over McCrary (2008) here: rddensity selects a data-driven
+. * local bandwidth on each side of c so curvature away from the cutoff
+. * does not contaminate the test.
+. *
+. * Interpretation: look at the Robust row.
+. *   p > 0.05  → no statistical evidence of a discontinuity in the density
+. *               of the running variable at the cutoff.  That is CONSISTENT
+. *               WITH, but does not establish, the absence of precise
+. *               manipulation.  Here the data were generated without
+. *               sorting, so the test demonstrates the procedure rather
+. *               than certifying the design (chapter Section 10.2.1).
+. *   p ≤ 0.05  → evidence of sorting; investigate before proceeding.
+. 
+. * GRAYSCALE (Springer).  rddensity does NOT inherit -set scheme s2mono-
+. * for its own plot elements: it hardcodes red below the cutoff and blue
+. * above it for the fitted density, the confidence region and the
+. * histogram bars.  Those are set explicitly here through rddensity's own
+. * plot options, and the two sides are distinguished by LINE PATTERN
+. * (solid below, dashed above) rather than by color, so the figure still
+. * reads correctly in print.  legend(off) suppresses rddensity's internal
+. * series names (__00000G, __000005/__000006, __000004), which carry no
+. * information for the reader.
+. *
+. * NOTE() MUST BE A SINGLE STRING HERE.  A multi-line note -- note("line
+. * one" "line two") -- renders correctly in an ordinary twoway call, but
+. * rddensity passes graph_opt() through its own parser, which breaks every
+. * argument after the first into separate tokens: the 19 Aug 2026 export
+. * printed "Shaded / bands / are / 95% / confidence / regions." one word
+. * per line.  Keep it to one quoted string.
+. *
+. * Option names follow rddensity's help file:
+. *   esll_opt / eslr_opt  twoway line  options for the point estimates
+. *   cirl_opt / cirr_opt  twoway rarea options for the confidence regions
+. *   histl_opt / histr_opt  twoway bar options for the background histogram
+. * The l / r in each name is left / right of the cutoff.
+. 
+. rddensity x, c(0) plot                                                   ///
+>     esll_opt(lcolor(gs0) lpattern(solid) lwidth(medthick))               ///
+>     eslr_opt(lcolor(gs0) lpattern(dash)  lwidth(medthick))               ///
+>     cirl_opt(color(gs12))                                                ///
+>     cirr_opt(color(gs9))                                                 ///
+>     histl_opt(color(gs14) lcolor(gs8) lwidth(vthin))                     ///
+>     histr_opt(color(gs11) lcolor(gs8) lwidth(vthin))                     ///
+>     graph_opt(                                                            ///
+>         scheme(s2mono)                                                    ///
+>         title("Density Continuity Test (rddensity)")                     ///
+>         subtitle("Running variable: HS GPA centered at c = 3.25")        ///
+>         xtitle("HS GPA (centered at cutoff)") ytitle("Density")          ///
+>         xline(0, lcolor(gs0) lpattern(dash) lwidth(medthin))             ///
+>         legend(off)                                                       ///
+>         note("Solid line: below the cutoff; dashed line: above. Shaded bands are 95% confiden
+> ce regions."))
+Computing data-driven bandwidth selectors.
+
+RD Manipulation test using local polynomial density estimation.
+
+     c =     0.000 | Left of c  Right of c          Number of obs =         4000
+-------------------+----------------------          Model         = unrestricted
+     Number of obs |      2535        1465          BW method     =         comb
+Eff. Number of obs |       750         569          Kernel        =   triangular
+    Order est. (p) |         2           2          VCE method    =    jackknife
+    Order bias (q) |         3           3
+       BW est. (h) |     0.269       0.246
+
+Running variable: x.
+------------------------------------------
+            Method |      T          P>|T|
+-------------------+----------------------
+            Robust |   -0.8925      0.3721
+------------------------------------------
+
+P-values of binomial tests. (H0: prob = .5)
+-----------------------------------------------------
+ Window Length / 2 |       <c         >=c |     P>|T|
+-------------------+----------------------+----------
+             0.008 |       24          20 |    0.6516
+             0.015 |       51          39 |    0.2461
+             0.023 |       81          56 |    0.0399
+             0.031 |       96          78 |    0.1973
+             0.038 |      112          92 |    0.1833
+             0.046 |      127         110 |    0.2986
+             0.054 |      150         132 |    0.3114
+             0.061 |      182         146 |    0.0531
+             0.069 |      202         158 |    0.0233
+             0.077 |      223         175 |    0.0184
+-----------------------------------------------------
+
+. 
+. * MANUSCRIPT Fig. 10.2 — density continuity test.
+. graph export "$graphs_dir/fig10_2_rdd_density_test.png", replace width(1400)
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
+    10/Output/graphs/fig10_2_rdd_density_test.png saved as PNG format
+
+. chkfig "$graphs_dir/fig10_2_rdd_density_test.png"
+   OK: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/fig10_2_rdd_density_tes
+> t.png  (114804 bytes)
+
+. di as text "   Density test exported -> fig10_2_rdd_density_test.png"
+   Density test exported -> fig10_2_rdd_density_test.png
+
+. di as text "   See the Robust row above for the preferred test statistic."
+   See the Robust row above for the preferred test statistic.
+
+. 
+. * -- Covariate balance via rdrobust ----------------------------------
+. * All five covariates are pre-determined; none should show a jump at c = 3.25.
+. 
+. di as text _n "--- Covariate balance ---"
+
+--- Covariate balance ---
+
+. di as text    "   Variable        Coef(conv)   p(robust)   h*"
+   Variable        Coef(conv)   p(robust)   h*
+
+. di as text    "   {hline 52}"
+   ----------------------------------------------------
+
+. 
+. foreach v in female firstgen urm act_score income_cat {
+  2.     qui rdrobust `v' x, c(0) kernel(triangular) bwselect(mserd)
+  3.     di as text "   `v'" _col(20) %8.4f e(tau_cl) _col(32) %8.4f e(pv_rb) ///
+>                _col(44) %6.3f e(h_l)
+  4. }
+   female           -0.0030      0.9395     0.307
+   firstgen          0.0257      0.7411     0.271
+   urm               0.0845      0.1386     0.231
+   act_score         0.6809      0.1633     0.215
+   income_cat        0.1417      0.1822     0.235
+
+. 
+. di as text    "   {hline 52}"
+   ----------------------------------------------------
+
+. di as text    "   None should be statistically significant under a valid RD."
+   None should be statistically significant under a valid RD.
+
+. di as text    "   Failing to detect a jump is not the same as establishing that"
+   Failing to detect a jump is not the same as establishing that
+
+. di as text    "   these characteristics are identical across the threshold: the"
+   these characteristics are identical across the threshold: the
+
+. di as text    "   tests are local and therefore not highly powered."
+   tests are local and therefore not highly powered.
+
+. 
+. *--------------------------------------------------------------------
+. * 10.2.3  Binned Scatterplots (cmogram)
+. *--------------------------------------------------------------------
+. * NOTE: cmogram does not support scheme() inside graphopts();
+. *       apply via set scheme before the loop.
+. 
+. di as text _n "--- 10.2.3  Binned scatterplots ---"
+
+--- 10.2.3  Binned scatterplots ---
+
+. 
+. set scheme s2mono
+
+. 
+. foreach outcome in persist_sharp credits_y1 cgpa_y1 {
+  2.     qui cmogram `outcome' x, cut(0) scatter lineat(0)                    ///
+>         graphopts(                                                        ///
+>             title("RD Binscatter: `outcome'")                            ///
+>             xtitle("HS GPA centered at c = 3.25") ytitle("`outcome'")   ///
+>             xline(0, lcolor(gs0) lpattern(dash)))
+  3.     graph export "$graphs_dir/fig10_2_2_rdd_binscatter_`outcome'.png",  ///
+>         replace width(1400)
+  4. }
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
+    10/Output/graphs/fig10_2_2_rdd_binscatter_persist_sharp.png saved as PNG format
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
+    10/Output/graphs/fig10_2_2_rdd_binscatter_credits_y1.png saved as PNG format
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
+    10/Output/graphs/fig10_2_2_rdd_binscatter_cgpa_y1.png saved as PNG format
+
+. 
+. di as text _n "Binned scatterplots exported."
+
+Binned scatterplots exported.
+
+. 
+. *--------------------------------------------------------------------
+. * 10.2.4  Sharp RD Estimates
+. *--------------------------------------------------------------------
+. 
+. di as text _n "=== 10.2.4: Sharp RD Estimates ==="
+
+=== 10.2.4: Sharp RD Estimates ===
+
+. 
+. * -- Naive OLS (biased benchmark) -----------------------------------
+. * OLS on the full sample conflates the GPA-persistence gradient with
+. * the scholarship effect; illustrates why bandwidth restriction matters.
+. 
+. di as text _n "--- OLS full sample (biased benchmark) ---"
+
+--- OLS full sample (biased benchmark) ---
+
+. 
+. reg persist_sharp D_sharp x, robust
+
+Linear regression                               Number of obs     =      4,000
+                                                F(2, 3997)        =    1349.64
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.2867
+                                                Root MSE          =     .41987
+
+------------------------------------------------------------------------------
+             |               Robust
+persist_sh~p | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+     D_sharp |   .0967307   .0218549     4.43   0.000      .053883    .1395784
+           x |   .3933998    .015298    25.72   0.000     .3634071    .4233924
+       _cons |   .6181322   .0147232    41.98   0.000     .5892666    .6469978
+------------------------------------------------------------------------------
+
+. reg credits_y1    D_sharp x, robust
+
+Linear regression                               Number of obs     =      4,000
+                                                F(2, 3997)        =    1970.27
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.5153
+                                                Root MSE          =     5.0401
+
+------------------------------------------------------------------------------
+             |               Robust
+  credits_y1 | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+     D_sharp |   2.664015   .2552317    10.44   0.000     2.163619    3.164412
+           x |   7.131949   .2209662    32.28   0.000     6.698732    7.565166
+       _cons |   28.48551   .1584047   179.83   0.000     28.17494    28.79607
+------------------------------------------------------------------------------
+
+. 
+. * -- Manual local linear with triangular kernel ---------------------
+. * Kernel weight: w_i = (1 - |x_i|/h) for |x_i| <= h, else 0.
+. * Separate slopes each side via the interaction term x_D.
+. * h = 0.50 used here for exposition; Section 10.2.5 examines
+. * sensitivity across the full bandwidth grid.
+. 
+. local h_manual = 0.50
+
+. 
+. gen byte   in_bw  = (abs(x) <= `h_manual')
+
+. gen double tri_wt = (1 - abs(x) / `h_manual') * in_bw
+
+. gen double x_D    = x * D_sharp
+
+. 
+. di as text _n "--- Manual local linear (h = `h_manual', triangular kernel) ---"
+
+--- Manual local linear (h = .5, triangular kernel) ---
+
+. 
+. foreach outcome in persist_sharp credits_y1 cgpa_y1 {
+  2.     reg `outcome' D_sharp x x_D [aw = tri_wt] if in_bw, robust
+  3.     di as text "   `outcome':  LATE = " %7.4f _b[D_sharp]  ///
+>                "  SE = " %7.4f _se[D_sharp]
+  4. }
+(sum of wgt is 1,241.1778786162)
+
+Linear regression                               Number of obs     =      2,343
+                                                F(3, 2339)        =      65.14
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.0675
+                                                Root MSE          =     .44783
+
+------------------------------------------------------------------------------
+             |               Robust
+persist_sh~p | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+     D_sharp |   .1461028     .03914     3.73   0.000     .0693501    .2228555
+           x |   .3687541   .1217575     3.03   0.002     .1299903     .607518
+         x_D |  -.1920691   .1639094    -1.17   0.241     -.513492    .1293538
+       _cons |   .6383687   .0286602    22.27   0.000     .5821667    .6945707
+------------------------------------------------------------------------------
+   persist_sharp:  LATE =  0.1461  SE =  0.0391
+(sum of wgt is 1,241.1778786162)
+
+Linear regression                               Number of obs     =      2,343
+                                                F(3, 2339)        =     263.45
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.2429
+                                                Root MSE          =     4.9082
+
+------------------------------------------------------------------------------
+             |               Robust
+  credits_y1 | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+     D_sharp |   3.352702   .4128916     8.12   0.000      2.54303    4.162373
+           x |   6.780388   1.229398     5.52   0.000     4.369565    9.191211
+         x_D |  -.7799395   1.769489    -0.44   0.659    -4.249869     2.68999
+       _cons |   28.39381   .2849276    99.65   0.000     27.83507    28.95255
+------------------------------------------------------------------------------
+   credits_y1:  LATE =  3.3527  SE =  0.4129
+(sum of wgt is 1,241.1778786162)
+
+Linear regression                               Number of obs     =      2,343
+                                                F(3, 2339)        =      63.34
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.0602
+                                                Root MSE          =     .40518
+
+------------------------------------------------------------------------------
+             |               Robust
+     cgpa_y1 | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+     D_sharp |   .0794071   .0364486     2.18   0.029     .0079321    .1508821
+           x |   .4121072   .1003168     4.11   0.000     .2153881    .6088263
+         x_D |  -.1324503   .1505656    -0.88   0.379    -.4277063    .1628057
+       _cons |    2.80102    .023714   118.12   0.000     2.754518    2.847523
+------------------------------------------------------------------------------
+   cgpa_y1:  LATE =  0.0794  SE =  0.0364
+
+. 
+. drop in_bw tri_wt x_D
+
+. 
+. * -- rdrobust: CCT MSE-optimal bandwidth ----------------------------
+. * rdrobust selects the MSE-optimal bandwidth (MSERD) and computes
+. * bias-corrected robust CIs following Calonico, Cattaneo & Titiunik
+. * (2014, Econometrica).
+. 
+. di as text _n "--- rdrobust (CCT optimal bandwidth) ---"
+
+--- rdrobust (CCT optimal bandwidth) ---
+
+. di as text    "   Outcome           LATE     SE(conv)  p(robust)  h*"
+   Outcome           LATE     SE(conv)  p(robust)  h*
+
+. di as text    "   {hline 58}"
+   ----------------------------------------------------------
+
+. 
+. foreach outcome in persist_sharp credits_y1 cgpa_y1 {
+  2.     qui rdrobust `outcome' x, c(0) kernel(triangular) bwselect(mserd) all
+  3.     di as text "   `outcome'" _col(22) %7.4f e(tau_cl)       ///
+>                _col(31) %8.4f e(se_tau_cl)                   ///
+>                _col(41) %9.4f e(pv_rb)                       ///
+>                _col(53) %6.3f e(h_l)
+  4. }
+   persist_sharp      0.1497    0.0571     0.0377    0.246
+   credits_y1         3.2999    0.5762     0.0000    0.224
+   cgpa_y1            0.0355    0.0523     0.7340    0.245
+
+. 
+. di as text    "   {hline 58}"
+   ----------------------------------------------------------
+
+. 
+. * -- Covariate-adjusted rdrobust (Sharp RD) -------------------------
+. * Under local randomisation, adding pre-determined covariates via
+. * covs() leaves the point estimate unchanged but reduces residual
+. * variance and tightens the confidence interval. Compare with the
+. * unadjusted estimates above to confirm balance (Section 10.2.2).
+. * Covariates: female firstgen urm act_score income_cat.
+. 
+. di as text _n "--- rdrobust with covariates (Sharp RD) ---"
+
+--- rdrobust with covariates (Sharp RD) ---
+
+. di as text    "   Covariates: female firstgen urm act_score income_cat"
+   Covariates: female firstgen urm act_score income_cat
+
+. di as text    "   Outcome           LATE     SE(conv)  p(robust)  h*"
+   Outcome           LATE     SE(conv)  p(robust)  h*
+
+. di as text    "   {hline 58}"
+   ----------------------------------------------------------
+
+. 
+. foreach outcome in persist_sharp credits_y1 cgpa_y1 {
+  2.     qui rdrobust `outcome' x, c(0) kernel(triangular) bwselect(mserd) ///
+>         covs(female firstgen urm act_score income_cat) all
+  3.     di as text "   `outcome'" _col(22) %7.4f e(tau_cl)       ///
+>                _col(31) %8.4f e(se_tau_cl)                   ///
+>                _col(41) %9.4f e(pv_rb)                       ///
+>                _col(53) %6.3f e(h_l)
+  4. }
+   persist_sharp      0.1488    0.0563     0.0387    0.244
+   credits_y1         3.3710    0.5717     0.0000    0.225
+   cgpa_y1            0.0437    0.0512     0.6244    0.253
+
+. 
+. di as text    "   {hline 58}"
+   ----------------------------------------------------------
+
+. di as text    "   Point estimates should be stable relative to unadjusted rdrobust."
+   Point estimates should be stable relative to unadjusted rdrobust.
+
+. di as text    "   SE reduction reflects lower residual variance with covariates."
+   SE reduction reflects lower residual variance with covariates.
+
+. 
+. *--------------------------------------------------------------------
+. * 10.2.5  Bandwidth Sensitivity
+. *--------------------------------------------------------------------
+. 
+. di as text _n "=== 10.2.5: Bandwidth Sensitivity (persistence) ==="
+
+=== 10.2.5: Bandwidth Sensitivity (persistence) ===
+
+. 
+. local bw_list "0.15 0.20 0.25 0.30 0.40 0.50 0.60 0.75 1.00"
+
+. local nrow    = wordcount("`bw_list'")
+
+. 
+. matrix BW = J(`nrow', 4, .)
+
+. local r = 0
+
+. 
+. foreach h of local bw_list {
+  2.     local ++r
+  3.     qui rdrobust persist_sharp x, c(0) h(`h') kernel(triangular)
+  4.     matrix BW[`r', 1] = `h'
+  5.     matrix BW[`r', 2] = e(tau_cl)
+  6.     matrix BW[`r', 3] = e(ci_l_rb)
+  7.     matrix BW[`r', 4] = e(ci_r_rb)
+  8. }
+WARNING: bandwidth h greater than the range of the data.
+WARNING: bandwidth b greater than the range of the data.
+WARNING: bandwidth h greater than the range of the data.
+WARNING: bandwidth b greater than the range of the data.
+
+. 
+. matrix colnames BW = h LATE CI_lo CI_hi
+
+. matlist BW, format(%8.4f) title("Bandwidth sensitivity -- persistence")
+
+Bandwidth sensitivity -- persistence
+
+             |        h      LATE     CI_lo     CI_hi 
+-------------+---------------------------------------
+          r1 |   0.1500    0.1465   -0.0432    0.3723 
+          r2 |   0.2000    0.1530   -0.0269    0.3341 
+          r3 |   0.2500    0.1503   -0.0088    0.3154 
+          r4 |   0.3000    0.1583   -0.0051    0.2913 
+          r5 |   0.4000    0.1615    0.0260    0.2829 
+          r6 |   0.5000    0.1461    0.0595    0.2895 
+          r7 |   0.6000    0.1386    0.0615    0.2713 
+          r8 |   0.7500    0.1329    0.0635    0.2520 
+          r9 |   1.0000    0.1310    0.0584    0.2288 
+
+. 
+. preserve
+
+.     clear
+
+.     svmat BW, names(col)
+number of observations will be reset to 9
+Press any key to continue, or Break to abort
+Number of observations (_N) was 0, now 9.
+
+. 
+.     twoway                                                          ///
+>         (rcap CI_lo CI_hi h, lcolor(gs10) lwidth(medthin))         ///
+>         (scatter LATE h, mcolor(gs0) msize(medlarge) msymbol(D))   ///
+>         (function y = 0, range(0.10 1.05)                          ///
+>              lcolor(gs0) lpattern(dash) lwidth(medthin)),           ///
+>         legend(off)                                                 ///
+>         xtitle("Bandwidth (HS GPA units)")                         ///
+>         ytitle("Estimated LATE (pp)")                              ///
+>         title("Bandwidth Sensitivity -- Sharp RD")                 ///
+>         subtitle("Outcome: Second-Year Persistence, c = 3.25")     ///
+>         scheme(s2mono)
+
+. 
+.     graph export "$graphs_dir/fig10_2_3_rdd_bw_sensitivity.png", replace width(1400)
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
+    10/Output/graphs/fig10_2_3_rdd_bw_sensitivity.png saved as PNG format
+
+. restore
+
+. 
+. di as text "Bandwidth sensitivity plot exported -> fig10_2_3_rdd_bw_sensitivity.png"
+Bandwidth sensitivity plot exported -> fig10_2_3_rdd_bw_sensitivity.png
+
+. 
+. *--------------------------------------------------------------------
+. * 10.2.6  Polynomial Order Sensitivity
+. *--------------------------------------------------------------------
+. 
+. di as text _n "=== 10.2.6: Polynomial Order Sensitivity ==="
+
+=== 10.2.6: Polynomial Order Sensitivity ===
+
+. di as text    "   p   LATE      SE(conv)  p(robust)   h*"
+   p   LATE      SE(conv)  p(robust)   h*
+
+. di as text    "   {hline 48}"
+   ------------------------------------------------
+
+. 
+. forvalues p = 1/3 {
+  2.     qui rdrobust persist_sharp x, c(0) p(`p') kernel(triangular) bwselect(mserd)
+  3.     di as text "   `p'   " %7.4f e(tau_cl)   ///
+>                "   " %7.4f e(se_tau_cl)       ///
+>                "   " %7.4f e(pv_rb)           ///
+>                "   " %6.3f e(h_l)
+  4. }
+   1    0.1497    0.0571    0.0377    0.246
+   2    0.1440    0.0709    0.1049    0.341
+   3    0.1541    0.0945    0.0978    0.328
+
+. 
+. di as text    "   {hline 48}"
+   ------------------------------------------------
+
+. di as text    "   p = 1 (local linear) is the default and typically preferred."
+   p = 1 (local linear) is the default and typically preferred.
+
+. 
+. *--------------------------------------------------------------------
+. * 10.2.7  Fuzzy RD
+. *--------------------------------------------------------------------
+. * Three-step procedure for each outcome:
+. *   1. First stage    D_sharp → D_fuzzy (common to all outcomes)
+. *   2. Reduced forms  ITT jump at cutoff for each outcome
+. *   3. Fuzzy LATE     rdrobust (Wald/2SLS via fuzzy option)
+. *                     Manual 2SLS  (h = 0.50, triangular kernel)
+. *
+. * Outcomes examined
+. *   persist_fuzzy   Second-year persistence (binary, fuzzy DGP)
+. *   credits_y1      Year-1 credits earned   (continuous, ~28–32 cr)
+. *   cgpa_y1         Year-1 college GPA      (continuous, 0–4 scale)
+. *
+. * Manual 2SLS variable names operationalise Eq. 10.5 (fuzzy Wald
+. * estimand) in the manuscript:
+. *   in_bw2  = bandwidth indicator  (|x| ≤ 0.50)
+. *   tri_wt2 = triangular kernel weight
+. *   x_Ds2   = slope interaction     (x × D_sharp)
+. *
+. * v2: all three outcomes looped through every step; consolidated
+. *     summary table added.
+. 
+. di as text _n "=== 10.2.7: Fuzzy RD (Imperfect Compliance) ==="
+
+=== 10.2.7: Fuzzy RD (Imperfect Compliance) ===
+
+. 
+. * INSTRUMENT-VALIDITY ASSUMPTIONS (manuscript Section 10.2.2 states these
+. * four; reading the cutoff as an instrument requires all of them)
+. *   1. Continuity of potential outcomes in x at c, and no precise sorting
+. *      across c.  Probed by the density test in Section 10.2.2 above.
+. *   2. A discontinuous first stage: Pr(D = 1) must jump at c.  Estimated
+. *      immediately below; it is the denominator of Eq. 10.5.
+. *   3. Exclusion: crossing c affects the outcome ONLY through take-up.
+. *      VIOLATED BY CONSTRUCTION here for credits_y1 and cgpa_y1, which
+. *      are generated from D_sharp — see the caveat in the header.
+. *   4. Monotonicity: crossing c moves students into treatment, never out
+. *      of it (no defiers).  The complier reading of the LATE rests on it.
+. *
+. * ── First stage: jump in scholarship take-up at cutoff ───────────
+. * D_sharp (eligibility) is a strong, binary predictor of D_fuzzy
+. * (actual take-up). One first stage serves all three outcomes since
+. * the instrument and first-stage equation are the same throughout.
+. 
+. di as text _n "--- First stage: jump in take-up at cutoff ---"
+
+--- First stage: jump in take-up at cutoff ---
+
+. 
+. rdrobust D_fuzzy x, c(0) kernel(triangular) bwselect(mserd) all
+
+Sharp RD estimates using local polynomial regression.
+
+      Cutoff c = 0 | Left of c  Right of c            Number of obs =       4000
+-------------------+----------------------            BW type       =      mserd
+     Number of obs |      2535        1465            Kernel        = Triangular
+Eff. Number of obs |       643         529            VCE method    =         NN
+    Order est. (p) |         1           1
+    Order bias (q) |         2           2
+       BW est. (h) |     0.229       0.229
+       BW bias (b) |     0.348       0.348
+         rho (h/b) |     0.659       0.659
+
+Outcome: D_fuzzy. Running variable: x.
+--------------------------------------------------------------------------------
+            Method |   Coef.    Std. Err.    z     P>|z|    [95% Conf. Interval]
+-------------------+------------------------------------------------------------
+      Conventional |  .50509     .05334   9.4694   0.000    .400543      .609628
+    Bias-corrected |  .49612     .05334   9.3012   0.000    .391573      .600657
+            Robust |  .49612     .06341   7.8238   0.000    .371832      .620398
+--------------------------------------------------------------------------------
+
+. 
+. local fs_late = e(tau_cl)
+
+. local fs_se   = e(se_tau_cl)
+
+. local fs_p    = e(pv_rb)
+
+. local fs_h    = e(h_l)
+
+. 
+. di as text "   FS jump  = " %7.4f `fs_late' ///
+>            "   SE = " %7.4f `fs_se' ///
+>            "   p(robust) = " %6.4f `fs_p'
+   FS jump  =  0.5051   SE =  0.0533   p(robust) = 0.0000
+
+. di as text "   h* = " %6.3f `fs_h'
+   h* =  0.229
+
+. di as text "   Strong first stage: cutoff strongly predicts scholarship take-up."
+   Strong first stage: cutoff strongly predicts scholarship take-up.
+
+. 
+. * ── Reduced forms: ITT effect at cutoff for each outcome ─────────
+. * The reduced form is the intent-to-treat (ITT) effect of eligibility
+. * (crossing c = 3.25) on each outcome, estimated via rdrobust on the
+. * full sharp running-variable design. LATE = RF / FS.
+. 
+. di as text _n "--- Reduced forms: cutoff → outcome (ITT) ---"
+
+--- Reduced forms: cutoff → outcome (ITT) ---
+
+. di as text    "   Outcome            ITT      SE(conv)  p(robust)   h*"
+   Outcome            ITT      SE(conv)  p(robust)   h*
+
+. di as text    "   {hline 60}"
+   ------------------------------------------------------------
+
+. 
+. foreach outcome in persist_fuzzy credits_y1 cgpa_y1 {
+  2.     qui rdrobust `outcome' x, c(0) kernel(triangular) bwselect(mserd) all
+  3.     local rf_`outcome'_b  = e(tau_cl)
+  4.     local rf_`outcome'_se = e(se_tau_cl)
+  5.     local rf_`outcome'_p  = e(pv_rb)
+  6.     local rf_`outcome'_h  = e(h_l)
+  7.     di as text "   `outcome'" _col(23) %7.4f e(tau_cl)   ///
+>                _col(32) %8.4f e(se_tau_cl)               ///
+>                _col(43) %9.4f e(pv_rb)                   ///
+>                _col(55) %6.3f e(h_l)
+  8. }
+   persist_fuzzy       0.0657    0.0478      0.2459    0.327
+   credits_y1          3.2999    0.5762      0.0000    0.224
+   cgpa_y1             0.0355    0.0523      0.7340    0.245
+
+. 
+. di as text    "   {hline 60}"
+   ------------------------------------------------------------
+
+. di as text    "   ITT: local average effect of eligibility (not take-up) on outcome."
+   ITT: local average effect of eligibility (not take-up) on outcome.
+
+. 
+. * ── Fuzzy LATE via rdrobust ──────────────────────────────────────
+. * Wald estimator: LATE = RF / FS  (CCT bias-corrected, robust CI).
+. * Identifies the causal effect for compliers — students induced to
+. * take up the scholarship by crossing the GPA cutoff.
+. 
+. di as text _n "--- Fuzzy LATE (rdrobust, fuzzy option) ---"
+
+--- Fuzzy LATE (rdrobust, fuzzy option) ---
+
+. di as text    "   Outcome            LATE     SE(conv)  p(robust)   h*"
+   Outcome            LATE     SE(conv)  p(robust)   h*
+
+. di as text    "   {hline 60}"
+   ------------------------------------------------------------
+
+. 
+. foreach outcome in persist_fuzzy credits_y1 cgpa_y1 {
+  2.     qui rdrobust `outcome' x, c(0) fuzzy(D_fuzzy) ///
+>         kernel(triangular) bwselect(mserd) all
+  3.     local fl_`outcome'_b  = e(tau_cl)
+  4.     local fl_`outcome'_se = e(se_tau_cl)
+  5.     local fl_`outcome'_p  = e(pv_rb)
+  6.     local fl_`outcome'_h  = e(h_l)
+  7.     * Robust bias-corrected CI bounds.  Stored because Fig. 10.4 plots them;
+.     * the loop is -qui-, so they are otherwise unrecoverable from the log.
+.     local fl_`outcome'_lo = e(ci_l_rb)
+  8.     local fl_`outcome'_hi = e(ci_r_rb)
+  9.     di as text "   `outcome'" _col(23) %7.4f e(tau_cl)   ///
+>                _col(32) %8.4f e(se_tau_cl)               ///
+>                _col(43) %9.4f e(pv_rb)                   ///
+>                _col(55) %6.3f e(h_l)
+ 10. }
+   persist_fuzzy       0.1391    0.1138      0.2928    0.218
+   credits_y1          6.4145    1.4134      0.0004    0.213
+   cgpa_y1             0.0622    0.1056      0.8766    0.237
+
+. 
+. di as text    "   {hline 60}"
+   ------------------------------------------------------------
+
+. di as text    "   LATE: causal effect for compliers at the cutoff."
+   LATE: causal effect for compliers at the cutoff.
+
+. di as text    "   Compliers are a LATENT group: the first stage identifies their"
+   Compliers are a LATENT group: the first stage identifies their
+
+. di as text    "   share at the margin, not which students belong to it."
+   share at the margin, not which students belong to it.
+
+. di as text    "   For credits_y1 / cgpa_y1 the exclusion restriction fails by"
+   For credits_y1 / cgpa_y1 the exclusion restriction fails by
+
+. di as text    "   construction; read those as Wald arithmetic, not a complier effect."
+   construction; read those as Wald arithmetic, not a complier effect.
+
+. di as text    "   Robust CIs: Calonico, Cattaneo & Titiunik (2014, Econometrica)."
+   Robust CIs: Calonico, Cattaneo & Titiunik (2014, Econometrica).
+
+. di as text    "   h* selected by CCT MSERD criterion separately for each outcome."
+   h* selected by CCT MSERD criterion separately for each outcome.
+
+. 
+. * ── Covariate-adjusted Fuzzy LATE ────────────────────────────────
+. * Same five covariates as the sharp adjusted model (Section 10.2.4).
+. * covs() tightens SEs without shifting the Wald estimator under
+. * local randomisation. Compare with unadjusted fuzzy LATE above
+. * to verify stability of the point estimates.
+. 
+. di as text _n "--- Covariate-adjusted Fuzzy LATE (rdrobust, covs) ---"
+
+--- Covariate-adjusted Fuzzy LATE (rdrobust, covs) ---
+
+. di as text    "   Covariates: female firstgen urm act_score income_cat"
+   Covariates: female firstgen urm act_score income_cat
+
+. di as text    "   Outcome            LATE     SE(conv)  p(robust)   h*"
+   Outcome            LATE     SE(conv)  p(robust)   h*
+
+. di as text    "   {hline 60}"
+   ------------------------------------------------------------
+
+. 
+. foreach outcome in persist_fuzzy credits_y1 cgpa_y1 {
+  2.     qui rdrobust `outcome' x, c(0) fuzzy(D_fuzzy)              ///
+>         kernel(triangular) bwselect(mserd)                     ///
+>         covs(female firstgen urm act_score income_cat) all
+  3.     local flc_`outcome'_b  = e(tau_cl)
+  4.     local flc_`outcome'_se = e(se_tau_cl)
+  5.     local flc_`outcome'_p  = e(pv_rb)
+  6.     local flc_`outcome'_h  = e(h_l)
+  7.     di as text "   `outcome'" _col(23) %7.4f e(tau_cl)   ///
+>                _col(32) %8.4f e(se_tau_cl)               ///
+>                _col(43) %9.4f e(pv_rb)                   ///
+>                _col(55) %6.3f e(h_l)
+  8. }
+   persist_fuzzy       0.1311    0.1095      0.3161    0.215
+   credits_y1          6.4624    1.3911      0.0002    0.213
+   cgpa_y1             0.0686    0.1042      0.8305    0.234
+
+. 
+. di as text    "   {hline 60}"
+   ------------------------------------------------------------
+
+. di as text    "   Wald estimator = RF / FS; covs() reduces outcome residual variance."
+   Wald estimator = RF / FS; covs() reduces outcome residual variance.
+
+. di as text    "   Point estimates stable relative to unadjusted fuzzy LATE above."
+   Point estimates stable relative to unadjusted fuzzy LATE above.
+
+. 
+. * ── Manual 2SLS (h = 0.50, triangular kernel) ────────────────────
+. * Pedagogical bridge from IV/2SLS (Chapters 6–7) to rdrobust fuzzy.
+. * Variable names operationalise Eq. 10.5 (fuzzy Wald estimand):
+. *
+. *   gen byte   in_bw2  = (abs(x) <= 0.50)
+. *   gen double tri_wt2 = (1 - abs(x) / 0.50) * in_bw2
+. *   gen double x_Ds2   = x * D_sharp
+. *
+. *   ivregress 2sls Y (D_fuzzy = D_sharp) x x_Ds2 [aw=tri_wt2] if in_bw2, robust
+. *
+. * Example for credits_y1:
+. *   ivregress 2sls credits_y1 (D_fuzzy = D_sharp) x x_Ds2 ///
+> *       [aw = tri_wt2] if in_bw2, robust
+. *
+. * Instruments D_fuzzy with D_sharp; separate slopes on each side of
+. * the cutoff via the x_Ds2 interaction. Constant h = 0.50 GPA units.
+. 
+. di as text _n "--- Manual 2SLS (h = 0.50, triangular kernel) ---"
+
+--- Manual 2SLS (h = 0.50, triangular kernel) ---
+
+. di as text    "   Variables: in_bw2  tri_wt2  x_Ds2  (as in text Eq. 10.5)"
+   Variables: in_bw2  tri_wt2  x_Ds2  (as in text Eq. 10.5)
+
+. di as text    "   Outcome            LATE     SE       p-value"
+   Outcome            LATE     SE       p-value
+
+. di as text    "   {hline 52}"
+   ----------------------------------------------------
+
+. 
+. local h2 = 0.50
+
+. 
+. gen byte   in_bw2  = (abs(x) <= `h2')
+
+. gen double tri_wt2 = (1 - abs(x) / `h2') * in_bw2
+
+. gen double x_Ds2   = x * D_sharp
+
+. 
+. foreach outcome in persist_fuzzy credits_y1 cgpa_y1 {
+  2.     ivregress 2sls `outcome' (D_fuzzy = D_sharp) x x_Ds2 ///
+>         [aw = tri_wt2] if in_bw2, robust
+  3.     local iv_`outcome'_b  = _b[D_fuzzy]
+  4.     local iv_`outcome'_se = _se[D_fuzzy]
+  5.     local iv_`outcome'_p  = 2 * normal(-abs(`iv_`outcome'_b' / `iv_`outcome'_se'))
+  6.     di as text "   `outcome'" _col(23) %7.4f `iv_`outcome'_b' ///
+>                _col(32) %8.4f `iv_`outcome'_se'               ///
+>                _col(42) %7.4f `iv_`outcome'_p'
+  7. }
+(sum of wgt is   1.2412e+03)
+
+Instrumental-variables 2SLS regression            Number of obs   =      2,343
+                                                  Wald chi2(3)    =     169.45
+                                                  Prob > chi2     =     0.0000
+                                                  R-squared       =     0.0696
+                                                  Root MSE        =     .44095
+
+------------------------------------------------------------------------------
+             |               Robust
+persist_fu~y | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+     D_fuzzy |   .1219242   .0725614     1.68   0.093    -.0202936    .2641419
+           x |   .4427352   .1199425     3.69   0.000     .2076522    .6778182
+       x_Ds2 |  -.1519632    .161567    -0.94   0.347    -.4686287    .1647023
+       _cons |    .665922   .0369867    18.00   0.000     .5934295    .7384145
+------------------------------------------------------------------------------
+Endogenous: D_fuzzy
+Exogenous:  x x_Ds2 D_sharp
+   persist_fuzzy       0.1219    0.0726   0.0929
+(sum of wgt is   1.2412e+03)
+
+Instrumental-variables 2SLS regression            Number of obs   =      2,343
+                                                  Wald chi2(3)    =     657.24
+                                                  Prob > chi2     =     0.0000
+                                                  R-squared       =     0.0615
+                                                  Root MSE        =     5.4599
+
+------------------------------------------------------------------------------
+             |               Robust
+  credits_y1 | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+     D_fuzzy |   6.297846   .8877607     7.09   0.000     4.557867    8.037825
+           x |   6.645884   1.373143     4.84   0.000     3.954574    9.337194
+       x_Ds2 |  -2.666963   2.045438    -1.30   0.192    -6.675948    1.342021
+       _cons |   27.38847   .4249855    64.45   0.000     26.55552    28.22143
+------------------------------------------------------------------------------
+Endogenous: D_fuzzy
+Exogenous:  x x_Ds2 D_sharp
+   credits_y1          6.2978    0.8878   0.0000
+(sum of wgt is   1.2412e+03)
+
+Instrumental-variables 2SLS regression            Number of obs   =      2,343
+                                                  Wald chi2(3)    =     185.79
+                                                  Prob > chi2     =     0.0000
+                                                  R-squared       =     0.0421
+                                                  Root MSE        =     .40872
+
+------------------------------------------------------------------------------
+             |               Robust
+     cgpa_y1 | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+     D_fuzzy |   .1491615   .0689283     2.16   0.030     .0140644    .2842585
+           x |   .4089215   .1014705     4.03   0.000     .2100431       .6078
+       x_Ds2 |  -.1771436   .1559359    -1.14   0.256    -.4827722    .1284851
+       _cons |   2.777209   .0321266    86.45   0.000     2.714243    2.840176
+------------------------------------------------------------------------------
+Endogenous: D_fuzzy
+Exogenous:  x x_Ds2 D_sharp
+   cgpa_y1             0.1492    0.0689   0.0305
+
+. 
+. drop in_bw2 tri_wt2 x_Ds2
+
+. 
+. di as text    "   {hline 52}"
+   ----------------------------------------------------
+
+. di as text    "   2SLS uses fixed h = 0.50; rdrobust above uses MSE-optimal h*."
+   2SLS uses fixed h = 0.50; rdrobust above uses MSE-optimal h*.
+
+. di as text    "   For publication use rdrobust fuzzy estimates. 2SLS is pedagogical."
+   For publication use rdrobust fuzzy estimates. 2SLS is pedagogical.
+
+. 
+. * ── Consolidated fuzzy summary table ─────────────────────────────
+. di as text _n "--- Consolidated Fuzzy RD Summary ---"
+
+--- Consolidated Fuzzy RD Summary ---
+
+. di as text    "   {hline 76}"
+   ----------------------------------------------------------------------------
+
+. di as text    "   Outcome           FS jump    RF (ITT)   LATE(rdrobust)  p(LATE)"
+   Outcome           FS jump    RF (ITT)   LATE(rdrobust)  p(LATE)
+
+. di as text    "   {hline 76}"
+   ----------------------------------------------------------------------------
+
+. 
+. foreach outcome in persist_fuzzy credits_y1 cgpa_y1 {
+  2.     di as text "   `outcome'" _col(23) %6.4f `fs_late'          ///
+>                _col(32)       %7.4f   `rf_`outcome'_b'          ///
+>                _col(42)       %7.4f   `fl_`outcome'_b'          ///
+>                _col(53)       %8.4f   `fl_`outcome'_p'
+  3. }
+   persist_fuzzy      0.5051    0.0657    0.1391      0.2928
+   credits_y1         0.5051    3.2999    6.4145      0.0004
+   cgpa_y1            0.5051    0.0355    0.0622      0.8766
+
+. 
+. di as text    "   {hline 76}"
+   ----------------------------------------------------------------------------
+
+. di as text    "   FS: first-stage jump in D_fuzzy at the cutoff (same for all outcomes)."
+   FS: first-stage jump in D_fuzzy at the cutoff (same for all outcomes).
+
+. di as text    "   RF: rdrobust ITT at CCT MSE-optimal h* for each outcome."
+   RF: rdrobust ITT at CCT MSE-optimal h* for each outcome.
+
+. di as text    "   LATE: Wald estimator = RF / FS via rdrobust fuzzy option."
+   LATE: Wald estimator = RF / FS via rdrobust fuzzy option.
+
+. di as text    "   NOTE: credits_y1 and cgpa_y1 use sharp DGP; fuzzy LATE shown"
+   NOTE: credits_y1 and cgpa_y1 use sharp DGP; fuzzy LATE shown
+
+. di as text    "         for pedagogical comparison. Prefer sharp estimates (§10.2.4)."
+         for pedagogical comparison. Prefer sharp estimates (§10.2.4).
+
+. 
+. *--------------------------------------------------------------------
+. * 10.2.8  Validity Checks
+. *--------------------------------------------------------------------
+. 
+. di as text _n "=== 10.2.8: Validity Checks ==="
+
+=== 10.2.8: Validity Checks ===
+
+. 
+. * -- Placebo cutoffs -------------------------------------------------
+. * Under a valid RD, rdrobust should detect no discontinuity at
+. * artificially imposed cutoffs away from c = 3.25.
+. * Three below, three above the true cutoff.
+. *
+. * With alpha = 0.05 and six simultaneous tests, one false positive is
+. * consistent with the null (Bonferroni threshold = 0.008).
+. * Flag p < 0.05 for inspection; flag p < 0.008 as a concern.
+. 
+. di as text _n "--- Placebo cutoffs ---"
+
+--- Placebo cutoffs ---
+
+. di as text    "   Cutoff    LATE      p(robust)   Side"
+   Cutoff    LATE      p(robust)   Side
+
+. di as text    "   {hline 44}"
+   --------------------------------------------
+
+. 
+. foreach c in -0.60 -0.40 -0.20 {
+  2.     qui rdrobust persist_sharp x if x < 0, c(`c') ///
+>         kernel(triangular) bwselect(mserd)
+  3.     di as text "    `c'     " %7.4f e(tau_cl) "   " %6.4f e(pv_rb) "     below"
+  4. }
+    -0.60      0.2400   0.0085     below
+    -0.40     -0.0893   0.2719     below
+    -0.20     -0.0979   0.3524     below
+
+. foreach c in 0.20 0.40 0.60 {
+  2.     qui rdrobust persist_sharp x if x > 0, c(`c') ///
+>         kernel(triangular) bwselect(mserd)
+  3.     di as text "    +`c'    " %7.4f e(tau_cl) "   " %6.4f e(pv_rb) "     above"
+  4. }
+    +0.20    -0.0808   0.5566     above
+    +0.40    -0.1051   0.1379     above
+    +0.60     0.0224   0.7712     above
+
+. 
+. di as text    "   {hline 44}"
+   --------------------------------------------
+
+. 
+. * -- Donut RD --------------------------------------------------------
+. * Excludes a narrow band at the cutoff; stable estimates corroborate
+. * the baseline. Capped at d = 0.10 — at d = 0.15 the above-cutoff
+. * range shrinks to 0.60 GPA units and MSE-optimal BW extrapolates
+. * through the gap, producing unstable estimates for a binary outcome.
+. 
+. di as text _n "--- Donut RD (exclude narrow band at cutoff) ---"
+
+--- Donut RD (exclude narrow band at cutoff) ---
+
+. di as text    "   Donut   LATE      p(robust)"
+   Donut   LATE      p(robust)
+
+. di as text    "   {hline 30}"
+   ------------------------------
+
+. 
+. foreach d in 0.05 0.10 {
+  2.     qui rdrobust persist_sharp x if abs(x) > `d', c(0) ///
+>         kernel(triangular) bwselect(mserd)
+  3.     di as text "    `d'    " %7.4f e(tau_cl) "   " %6.4f e(pv_rb)
+  4. }
+    0.05     0.2374   0.0707
+    0.10     0.1970   0.1894
+
+. 
+. di as text    "   {hline 30}"
+   ------------------------------
+
+. di as text    "   Note: interpret alongside bandwidth sensitivity (Section 10.2.5)."
+   Note: interpret alongside bandwidth sensitivity (Section 10.2.5).
+
+. di as text    "   Precision loss at d = 0.10 does not imply a zero treatment effect."
+   Precision loss at d = 0.10 does not imply a zero treatment effect.
+
+. 
+. * -- Covariate-augmented rdrobust -----------------------------------
+. * Adding pre-determined covariates should not shift the RD estimate
+. * materially if balance holds (Section 10.2.2).
+. 
+. di as text _n "--- Covariate-augmented estimate ---"
+
+--- Covariate-augmented estimate ---
+
+. 
+. rdrobust persist_sharp x, c(0) kernel(triangular) bwselect(mserd) ///
+>     covs(female firstgen act_score income_cat urm) all
+
+Covariate-adjusted Sharp RD estimates using local polynomial regression.
+
+      Cutoff c = 0 | Left of c  Right of c            Number of obs =       4000
+-------------------+----------------------            BW type       =      mserd
+     Number of obs |      2535        1465            Kernel        = Triangular
+Eff. Number of obs |       679         563            VCE method    =         NN
+    Order est. (p) |         1           1
+    Order bias (q) |         2           2
+       BW est. (h) |     0.244       0.244
+       BW bias (b) |     0.372       0.372
+         rho (h/b) |     0.655       0.655
+
+Outcome: persist_sharp. Running variable: x.
+--------------------------------------------------------------------------------
+            Method |   Coef.    Std. Err.    z     P>|z|    [95% Conf. Interval]
+-------------------+------------------------------------------------------------
+      Conventional |  .14882     .05634   2.6413   0.008    .038387      .259252
+    Bias-corrected |  .13931     .05634   2.4724   0.013    .028876       .24974
+            Robust |  .13931     .06737   2.0678   0.039    .007263      .271353
+--------------------------------------------------------------------------------
+Covariate-adjusted estimates. Additional covariates included: 5
+
+. 
+. di as text "   Augmented LATE = " %7.4f e(tau_cl) ///
+>            "  p(robust) = " %6.4f e(pv_rb)
+   Augmented LATE =  0.1488  p(robust) = 0.0387
+
+. 
+. * -- Subgroup heterogeneity -----------------------------------------
+. * Interpret with caution: subgroup samples are smaller and less precise.
+. 
+. di as text _n "--- Subgroup effects ---"
+
+--- Subgroup effects ---
+
+. di as text    "   Subgroup            LATE      p(robust)   n"
+   Subgroup            LATE      p(robust)   n
+
+. di as text    "   {hline 52}"
+   ----------------------------------------------------
+
+. 
+. foreach fg in 1 0 {
+  2.     local lbl = cond(`fg' == 1, "First-gen       ", "Continuing-gen  ")
+  3.     qui count if firstgen == `fg'
+  4.     local n_sub = r(N)
+  5.     qui rdrobust persist_sharp x if firstgen == `fg', ///
+>         c(0) kernel(triangular) bwselect(mserd)
+  6.     di as text "   `lbl'" %7.4f e(tau_cl) "   " %6.4f e(pv_rb) "   " `n_sub'
+  7. }
+   First-gen        0.1718   0.1622   1272
+   Continuing-gen   0.1538   0.0539   2728
+
+. 
+. foreach f in 1 0 {
+  2.     local lbl = cond(`f' == 1, "Female          ", "Male            ")
+  3.     qui count if female == `f'
+  4.     local n_sub = r(N)
+  5.     qui rdrobust persist_sharp x if female == `f', ///
+>         c(0) kernel(triangular) bwselect(mserd)
+  6.     di as text "   `lbl'" %7.4f e(tau_cl) "   " %6.4f e(pv_rb) "   " `n_sub'
+  7. }
+   Female           0.1528   0.1414   2144
+   Male             0.1356   0.1004   1856
+
+. 
+. foreach r_grp in 1 0 {
+  2.     local lbl = cond(`r_grp' == 1, "URM             ", "Non-URM         ")
+  3.     qui count if urm == `r_grp'
+  4.     local n_sub = r(N)
+  5.     qui rdrobust persist_sharp x if urm == `r_grp', ///
+>         c(0) kernel(triangular) bwselect(mserd)
+  6.     di as text "   `lbl'" %7.4f e(tau_cl) "   " %6.4f e(pv_rb) "   " `n_sub'
+  7. }
+   URM              0.0756   0.4091   1157
+   Non-URM          0.1595   0.1104   2843
+
+. 
+. di as text    "   {hline 52}"
+   ----------------------------------------------------
+
+. 
+. *--------------------------------------------------------------------
+. * 10.2.9  Publication-Quality RD Plots (rdplot)
+. *--------------------------------------------------------------------
+. 
+. di as text _n "=== 10.2.9: Publication-Quality RD Plots ==="
+
+=== 10.2.9: Publication-Quality RD Plots ===
+
+. 
+. rdplot persist_sharp x, c(0) nbins(30 30)                              ///
+>     graph_options(                                                      ///
+>         title("Effect of Institutional Merit Scholarship on"           ///
+>               "Second-Year Persistence")                               ///
+>         subtitle("Sharp RD -- HS GPA cutoff c = 3.25")                ///
+>         xtitle("High-School GPA (centered at cutoff)")                 ///
+>         ytitle("Second-Year Persistence Rate")                         ///
+>         xline(0, lcolor(gs0) lpattern(dash) lwidth(medthin))          ///
+>         legend(off) scheme(s2mono)                                     ///
+>         note("Circles = bin means; lines = local polynomial fit."     ///
+>              "Bins selected by IMSE-minimizing method (Calonico et al., 2015)."))
+
+RD Plot with RD plot with manually set number of bins.
+
+         Cutoff c = 0 | Left of c  Right of c        Number of obs  =       4000
+----------------------+----------------------        Kernel         =    Uniform
+        Number of obs |      2535        1465
+   Eff. Number of obs |      2535        1465
+  Order poly. fit (p) |         4           4
+     BW poly. fit (h) |     2.202       0.749
+ Number of bins scale |     1.000       1.000
+
+Outcome: persist_sharp. Running variable: x.
+---------------------------------------------
+                      | Left of c  Right of c
+----------------------+----------------------
+        Bins selected |        30          30
+   Average bin length |     0.073       0.025
+    Median bin length |     0.073       0.025
+----------------------+----------------------
+    IMSE-optimal bins |        15           5
+  Mimicking Var. bins |       112          60
+----------------------+----------------------
+Rel. to IMSE-optimal: | 
+        Implied scale |     2.000       6.000
+    WIMSE var. weight |     0.111       0.005
+    WIMSE bias weight |     0.889       0.995
+---------------------------------------------
+
+
+. 
+. graph export "$graphs_dir/fig10_2_4_rdd_plot_persistence.png", replace width(1400)
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
+    10/Output/graphs/fig10_2_4_rdd_plot_persistence.png saved as PNG format
+
+. 
+. rdplot credits_y1 x, c(0) nbins(30 30)                                 ///
+>     graph_options(                                                      ///
+>         title("Effect of Institutional Merit Scholarship on"           ///
+>               "Year-1 Credits Earned")                                 ///
+>         subtitle("Sharp RD -- HS GPA cutoff c = 3.25")                ///
+>         xtitle("High-School GPA (centered at cutoff)")                 ///
+>         ytitle("Year-1 Credits Earned")                                ///
+>         xline(0, lcolor(gs0) lpattern(dash) lwidth(medthin))          ///
+>         legend(off) scheme(s2mono))
+
+RD Plot with RD plot with manually set number of bins.
+
+         Cutoff c = 0 | Left of c  Right of c        Number of obs  =       4000
+----------------------+----------------------        Kernel         =    Uniform
+        Number of obs |      2535        1465
+   Eff. Number of obs |      2535        1465
+  Order poly. fit (p) |         4           4
+     BW poly. fit (h) |     2.202       0.749
+ Number of bins scale |     1.000       1.000
+
+Outcome: credits_y1. Running variable: x.
+---------------------------------------------
+                      | Left of c  Right of c
+----------------------+----------------------
+        Bins selected |        30          30
+   Average bin length |     0.073       0.025
+    Median bin length |     0.073       0.025
+----------------------+----------------------
+    IMSE-optimal bins |        16           5
+  Mimicking Var. bins |        73          55
+----------------------+----------------------
+Rel. to IMSE-optimal: | 
+        Implied scale |     1.875       6.000
+    WIMSE var. weight |     0.132       0.005
+    WIMSE bias weight |     0.868       0.995
+---------------------------------------------
+
+
+. 
+. * MANUSCRIPT Fig. 10.1 — sharp RDD effect on credits earned.
+. graph export "$graphs_dir/fig10_1_rdd_plot_credits.png", replace width(1400)
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
+    10/Output/graphs/fig10_1_rdd_plot_credits.png saved as PNG format
+
+. chkfig "$graphs_dir/fig10_1_rdd_plot_credits.png"
+   OK: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/fig10_1_rdd_plot_credit
+> s.png  (95314 bytes)
+
+. 
+. rdplot cgpa_y1 x, c(0) nbins(30 30)                                    ///
+>     graph_options(                                                      ///
+>         title("Effect of Institutional Merit Scholarship on"           ///
+>               "Year-1 College GPA")                                    ///
+>         subtitle("Sharp RD -- HS GPA cutoff c = 3.25")                ///
+>         xtitle("High-School GPA (centered at cutoff)")                 ///
+>         ytitle("Year-1 College GPA")                                   ///
+>         xline(0, lcolor(gs0) lpattern(dash) lwidth(medthin))          ///
+>         legend(off) scheme(s2mono))
+
+RD Plot with RD plot with manually set number of bins.
+
+         Cutoff c = 0 | Left of c  Right of c        Number of obs  =       4000
+----------------------+----------------------        Kernel         =    Uniform
+        Number of obs |      2535        1465
+   Eff. Number of obs |      2535        1465
+  Order poly. fit (p) |         4           4
+     BW poly. fit (h) |     2.202       0.749
+ Number of bins scale |     1.000       1.000
+
+Outcome: cgpa_y1. Running variable: x.
+---------------------------------------------
+                      | Left of c  Right of c
+----------------------+----------------------
+        Bins selected |        30          30
+   Average bin length |     0.073       0.025
+    Median bin length |     0.073       0.025
+----------------------+----------------------
+    IMSE-optimal bins |        15           6
+  Mimicking Var. bins |        83          61
+----------------------+----------------------
+Rel. to IMSE-optimal: | 
+        Implied scale |     2.000       5.000
+    WIMSE var. weight |     0.111       0.008
+    WIMSE bias weight |     0.889       0.992
+---------------------------------------------
+
+
+. 
+. graph export "$graphs_dir/fig10_2_6_rdd_plot_cgpa.png", replace width(1400)
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
+    10/Output/graphs/fig10_2_6_rdd_plot_cgpa.png saved as PNG format
+
+. 
+. rdplot D_fuzzy x, c(0) nbins(30 30)                                    ///
+>     graph_options(                                                      ///
+>         title("First Stage: Scholarship Take-Up at GPA Cutoff")        ///
+>         subtitle("Fuzzy RD -- jump in take-up probability at c = 3.25") ///
+>         xtitle("High-School GPA (centered at cutoff)")                 ///
+>         ytitle("P(Scholarship Received)")                              ///
+>         xline(0, lcolor(gs0) lpattern(dash) lwidth(medthin))          ///
+>         legend(off) scheme(s2mono))
+
+RD Plot with RD plot with manually set number of bins.
+
+         Cutoff c = 0 | Left of c  Right of c        Number of obs  =       4000
+----------------------+----------------------        Kernel         =    Uniform
+        Number of obs |      2535        1465
+   Eff. Number of obs |      2535        1465
+  Order poly. fit (p) |         4           4
+     BW poly. fit (h) |     2.202       0.749
+ Number of bins scale |     1.000       1.000
+
+Outcome: D_fuzzy. Running variable: x.
+---------------------------------------------
+                      | Left of c  Right of c
+----------------------+----------------------
+        Bins selected |        30          30
+   Average bin length |     0.073       0.025
+    Median bin length |     0.073       0.025
+----------------------+----------------------
+    IMSE-optimal bins |         4           6
+  Mimicking Var. bins |        58          59
+----------------------+----------------------
+Rel. to IMSE-optimal: | 
+        Implied scale |     7.500       5.000
+    WIMSE var. weight |     0.002       0.008
+    WIMSE bias weight |     0.998       0.992
+---------------------------------------------
+
+
+. 
+. * MANUSCRIPT Fig. 10.3 — first stage, jump in take-up at the cutoff.
+. graph export "$graphs_dir/fig10_3_rdd_plot_firststage.png", replace width(1400)
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
+    10/Output/graphs/fig10_3_rdd_plot_firststage.png saved as PNG format
+
+. chkfig "$graphs_dir/fig10_3_rdd_plot_firststage.png"
+   OK: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/fig10_3_rdd_plot_firsts
+> tage.png  (93837 bytes)
+
+. 
+. * -- fig10_2_8: Fuzzy outcome (persist_fuzzy) rdplot ---------------
+. * Shows the discontinuity in the fuzzy persistence outcome; compare
+. * with fig10_2_4 (sharp) to see how imperfect compliance attenuates
+. * the visible jump.
+. 
+. rdplot persist_fuzzy x, c(0) nbins(30 30)                             ///
+>     graph_options(                                                     ///
+>         title("Fuzzy RD: Second-Year Persistence (Fuzzy Outcome)")    ///
+>         subtitle("Fuzzy RD — imperfect compliance around c = 3.25")  ///
+>         xtitle("High-School GPA (centered at cutoff)")                ///
+>         ytitle("P(Second-Year Persistence)")                          ///
+>         xline(0, lcolor(gs0) lpattern(dash) lwidth(medthin))         ///
+>         legend(off) scheme(s2mono)                                    ///
+>         note("Compare fig10_2_4 (sharp): attenuated jump reflects"   ///
+>              "imperfect compliance. Fuzzy LATE = RF/FS recovers LATE."))
+
+RD Plot with RD plot with manually set number of bins.
+
+         Cutoff c = 0 | Left of c  Right of c        Number of obs  =       4000
+----------------------+----------------------        Kernel         =    Uniform
+        Number of obs |      2535        1465
+   Eff. Number of obs |      2535        1465
+  Order poly. fit (p) |         4           4
+     BW poly. fit (h) |     2.202       0.749
+ Number of bins scale |     1.000       1.000
+
+Outcome: persist_fuzzy. Running variable: x.
+---------------------------------------------
+                      | Left of c  Right of c
+----------------------+----------------------
+        Bins selected |        30          30
+   Average bin length |     0.073       0.025
+    Median bin length |     0.073       0.025
+----------------------+----------------------
+    IMSE-optimal bins |        15           6
+  Mimicking Var. bins |       106          67
+----------------------+----------------------
+Rel. to IMSE-optimal: | 
+        Implied scale |     2.000       5.000
+    WIMSE var. weight |     0.111       0.008
+    WIMSE bias weight |     0.889       0.992
+---------------------------------------------
+
+
+. 
+. graph export "$graphs_dir/fig10_2_8_rdd_plot_persist_fuzzy.png", replace width(1400)
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
+    10/Output/graphs/fig10_2_8_rdd_plot_persist_fuzzy.png saved as PNG format
+
+. 
+. * -- fig10_4: Fuzzy LATE for credits_y1 (rdrobust) ------------------
+. * MANUSCRIPT Fig. 10.4. Forest-plot style: point estimate and 95% CI
+. * for the fuzzy LATE for credits earned in year 1. Plots the rdrobust
+. * fuzzy estimate at the MSE-optimal bandwidth (6.4145, h* = 0.213),
+. * NOT the fixed-bandwidth 2SLS estimate (6.2978, h = 0.50) that the
+. * manuscript reports alongside it.
+. *
+. * WHICH INTERVAL: set -ci_type- to robust or conventional.
+. *   robust        e(ci_l_rb), e(ci_r_rb) -- rdrobust's bias-corrected
+. *                 interval.  This is what the chapter's inference rests
+. *                 on (p-values throughout Section 10.2 are e(pv_rb)), and
+. *                 what the Section 10.2.10 summary table prints.  It is
+. *                 NOT centered on the conventional point estimate,
+. *                 because it centers on the bias-corrected one -- so the
+. *                 diamond will sit off-centre in the interval.  That is
+. *                 correct, not a plotting error.
+. *   conventional  b +/- 1.96*SE.  Symmetric and easier to read, but it is
+. *                 not the interval any reported p-value comes from.
+. local ci_type robust
+
+. 
+. * ZERO ON THE AXIS: the chapter's prose for this figure says the interval
+. * "does not cross zero", so zero must be visible.  Two things are needed.
+. * -xscale(range(0 ...))- forces the axis to include it; and the reference
+. * line is drawn with -pci-, NOT -xline()-.  With -rcap ..., horizontal-
+. * the axes are swapped, and the -xline(0)- that used to sit here silently
+. * drew nothing in every run through 19 Aug 2026.  -pci- takes explicit
+. * (y1 x1 y2 x2) coordinates and is immune to the swap.
+. 
+. preserve
+
+.     clear
+
+.     set obs 1
+Number of observations (_N) was 0, now 1.
+
+.     gen j       = _n
+
+.     gen b       = .
+(1 missing value generated)
+
+.     gen lo      = .
+(1 missing value generated)
+
+.     gen hi      = .
+(1 missing value generated)
+
+. 
+.     replace b  = `fl_credits_y1_b'                                    in 1
+(1 real change made)
+
+.     if "`ci_type'" == "robust" {
+.         replace lo = `fl_credits_y1_lo'                               in 1
+(1 real change made)
+.         replace hi = `fl_credits_y1_hi'                               in 1
+(1 real change made)
+.         local ci_label "robust bias-corrected 95% CI"
+.     }
+
+.     else {
+.         replace lo = `fl_credits_y1_b' - 1.96 * `fl_credits_y1_se'  in 1
+.         replace hi = `fl_credits_y1_b' + 1.96 * `fl_credits_y1_se'  in 1
+.         local ci_label "conventional 95% CI"
+.     }
+
+. 
+.     * Upper end of the x axis: round the interval's top up to the next
+.     * whole unit, with a minimum of 10 so the figure keeps a stable shape.
+.     * The lower end is -0.4 rather than 0 so the dashed zero line stands
+.     * clear of the plot frame instead of sitting on top of it; the first
+.     * x label is still 0.
+.     local xmax = max(10, ceil(hi[1]) + 1)
+
+. 
+.     twoway ///
+>         (pci 0.6 0 1.4 0, lpattern(dash) lcolor(gs8) lwidth(medthin))  ///
+>         (rcap lo hi j, horizontal lcolor(gs0) lwidth(medium))          ///
+>         (scatter j b,  mcolor(gs0) msymbol(D) msize(large)),           ///
+>         xscale(range(-0.4 `xmax'))                                     ///
+>         xlabel(0(2)`xmax')                                             ///
+>         yscale(range(0.5 1.5))                                         ///
+>         ylabel(1 "Credits Y1 (cr-hrs)",                                ///
+>                angle(0) labsize(small))                                ///
+>         xtitle("Fuzzy LATE (rdrobust, CCT MSE-optimal h*)")            ///
+>         ytitle("") legend(off) scheme(s2mono)                          ///
+>         title("Fuzzy RD: LATE for First-Year Credits")                 ///
+>         subtitle("Point estimate with `ci_label'")                     ///
+>         note("Wald ratio: reduced form / first stage."                 ///
+>              "credits_y1 is generated from D_sharp, so this is Wald"   ///
+>              "arithmetic rather than a complier effect (Sec. 10.2.3)." ///
+>              "rdrobust fuzzy option, kernel(triangular), bwselect(mserd).") ///
+>         name(fig10_4, replace)
+
+. 
+.     graph export "$graphs_dir/fig10_4_fuzzy_late_credits.png", replace width(1400)
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
+    10/Output/graphs/fig10_4_fuzzy_late_credits.png saved as PNG format
+
+.     chkfig "$graphs_dir/fig10_4_fuzzy_late_credits.png"
+   OK: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/fig10_4_fuzzy_late_cred
+> its.png  (88086 bytes)
+
+. 
+.     di as text "   Fig. 10.4: LATE = " %6.3f b[1] ///
+>                "   `ci_label' = [" %6.3f lo[1] ", " %6.3f hi[1] "]"
+   Fig. 10.4: LATE =  6.414   robust bias-corrected 95% CI = [ 2.725,  9.421]
+
+. restore
+
+. 
+. di as text "All RD plots exported."
+All RD plots exported.
+
+. 
+. *--------------------------------------------------------------------
+. * 10.2.10  Summary Table and Dataset Save
+. *--------------------------------------------------------------------
+. 
+. di as text _n "=== 10.2.10: Summary of Sharp RD Estimates ==="
+
+=== 10.2.10: Summary of Sharp RD Estimates ===
+
+. di as text    "   {hline 72}"
+   ------------------------------------------------------------------------
+
+. di as text    "   Outcome           LATE     SE(conv)  95% CI (robust)     h*"
+   Outcome           LATE     SE(conv)  95% CI (robust)     h*
+
+. di as text    "   {hline 72}"
+   ------------------------------------------------------------------------
+
+. 
+. foreach outcome in persist_sharp credits_y1 cgpa_y1 {
+  2.     qui rdrobust `outcome' x, c(0) kernel(triangular) bwselect(mserd) all
+  3.     local lo = string(round(e(ci_l_rb), 0.001), "%7.3f")
+  4.     local hi = string(round(e(ci_r_rb), 0.001), "%7.3f")
+  5.     di as text "   `outcome'" _col(22) %7.4f e(tau_cl)       ///
+>                _col(32) %8.4f e(se_tau_cl)                   ///
+>                _col(44) "[" "`lo'" ", " "`hi'" "]"           ///
+>                _col(66) %5.3f e(h_l)
+  6. }
+   persist_sharp      0.1497     0.0571    [0.008, 0.276]        0.246
+   credits_y1         3.2999     0.5762    [1.881, 4.554]        0.224
+   cgpa_y1            0.0355     0.0523    [-0.099, 0.140]       0.245
+
+. 
+. di as text    "   {hline 72}"
+   ------------------------------------------------------------------------
+
+. di as text    "   Robust CIs: Calonico, Cattaneo & Titiunik (2014, Econometrica)."
+   Robust CIs: Calonico, Cattaneo & Titiunik (2014, Econometrica).
+
+. di as text    "   Kernel: triangular. Bandwidth selector: MSERD (MSE-optimal)."
+   Kernel: triangular. Bandwidth selector: MSERD (MSE-optimal).
+
+. di as text    "   True simulated LATE (latent scale) = `true_late'."
+   True simulated LATE (latent scale) = 0.10.
+
+. di as text    "   Implied binary persistence effect approx. 0.13-0.16 pp."
+   Implied binary persistence effect approx. 0.13-0.16 pp.
+
+. 
+. compress
+  variable id was float now int
+  variable act_score was int now byte
+  (12,000 bytes saved)
+
+. * Synthetic dataset goes to $out_root/data, not the current directory.
+. * Filename matches the chapter's data-availability section, which tells
+. * readers the repository file for Section 10.2 is Example_10_2_1.dta.
+. capture mkdir "$out_root/data"
+
+. save "$out_root/data/Example_10_2_1.dta", replace
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/data/Example_10_2_1.dta saved
+
+. 
+. * Roll call: re-confirm the four manuscript figures at the end of the run,
+. * so one block in the log answers "did Section 10.2 produce its figures?"
+. di as text _n "=== Manuscript figures for Section 10.2 ==="
+
+=== Manuscript figures for Section 10.2 ===
+
+. foreach f in fig10_1_rdd_plot_credits fig10_2_rdd_density_test ///
+>              fig10_3_rdd_plot_firststage fig10_4_fuzzy_late_credits {
+  2.     chkfig "$graphs_dir/`f'.png"
+  3. }
+   OK: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/fig10_1_rdd_plot_credit
+> s.png  (95314 bytes)
+   OK: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/fig10_2_rdd_density_tes
+> t.png  (114804 bytes)
+   OK: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/fig10_3_rdd_plot_firsts
+> tage.png  (93837 bytes)
+   OK: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs/fig10_4_fuzzy_late_cred
+> its.png  (88086 bytes)
+
+. di as text "   Directory listed below is the one they were written to:"
+   Directory listed below is the one they were written to:
+
+. di as text "   $graphs_dir"
+   C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/graphs
+
+. capture noisily dir "$graphs_dir/fig10_*.png"
+  58.6k   6/13/26 18:58  fig10_10_mte_byarea_curve_R.png
+  99.1k   6/26/26 19:17  fig10_10_mte_byarea_curve_Stata.png
+  49.9k   5/15/26  1:39  fig10_11_mte_curve_R.png
+  67.4k   6/08/26 11:19  fig10_11_mte_curve_Stata.png
+  55.4k   6/13/26 18:58  fig10_11_mte_policy_regions_R.png
+  66.7k   6/26/26 19:17  fig10_11_mte_policy_regions_Stata.png
+ 154.6k   6/30/26 10:17  fig10_12.png      
+  57.0k   6/13/26 18:58  fig10_12_mte_by_decile_R.png
+  69.5k   6/26/26 19:17  fig10_12_mte_by_decile_Stata.png
+  65.1k   6/29/26 22:05  fig10_12_R.png    
+ 152.3k   6/30/26 10:17  fig10_13.png      
+  65.6k   5/15/26  1:39  fig10_13_mte_byarea_curve_R.png
+  90.9k   6/08/26 11:19  fig10_13_mte_byarea_curve_Stata.png
+  65.0k   6/29/26 21:45  fig10_13_R.png    
+  36.2k   6/13/26 18:58  fig10_14_mprte_by_intensity_R.png
+  61.3k   6/26/26 19:17  fig10_14_mprte_by_intensity_Stata.png
+  47.7k   5/15/26  1:39  fig10_15_mte_policy_regions_R.png
+  66.7k   6/08/26 11:19  fig10_15_mte_policy_regions_Stata.png
+  43.7k   5/15/26  1:39  fig10_16_mte_by_propensity_R.png
+  76.2k   6/08/26 11:19  fig10_16_mte_by_propensity_Stata.png
+  93.1k   9/23/26 16:17  fig10_1_rdd_plot_credits.png
+  83.2k   9/23/26 15:28  fig10_1_rdd_plot_credits_R.png
+ 139.2k   8/11/26 16:36  fig10_2_1_rdd_density_test.png
+  65.8k   5/15/26  1:35  fig10_2_1_rdd_density_test_R.png
+  66.6k   9/23/26 16:17  fig10_2_2_rdd_binscatter_cgpa_y1.png
+  69.5k   9/23/26 15:28  fig10_2_2_rdd_binscatter_cgpa_y1_R.png
+  65.9k   9/23/26 16:17  fig10_2_2_rdd_binscatter_credits_y1.png
+  66.4k   9/23/26 15:28  fig10_2_2_rdd_binscatter_credits_y1_R.png
+  69.9k   9/23/26 16:17  fig10_2_2_rdd_binscatter_persist_sharp.png
+  71.4k   9/23/26 15:28  fig10_2_2_rdd_binscatter_persist_sharp_R.png
+  76.1k   9/23/26 16:17  fig10_2_3_rdd_bw_sensitivity.png
+  45.1k   9/23/26 15:28  fig10_2_3_rdd_bw_sensitivity_R.png
+ 108.1k   9/23/26 16:17  fig10_2_4_rdd_plot_persistence.png
+  89.3k   9/23/26 15:28  fig10_2_4_rdd_plot_persistence_R.png
+  93.1k   6/08/26 11:16  fig10_2_5_rdd_plot_credits.png
+  62.7k   5/15/26  1:35  fig10_2_5_rdd_plot_credits_R.png
+  91.7k   9/23/26 16:17  fig10_2_6_rdd_plot_cgpa.png
+  86.3k   9/23/26 15:28  fig10_2_6_rdd_plot_cgpa_R.png
+  91.6k   8/11/26 16:37  fig10_2_7_rdd_plot_firststage.png
+  61.0k   5/15/26  1:35  fig10_2_7_rdd_plot_firststage_R.png
+ 105.0k   9/23/26 16:17  fig10_2_8_rdd_plot_persist_fuzzy.png
+  89.7k   9/23/26 15:28  fig10_2_8_rdd_plot_persist_fuzzy_R.png
+  80.3k   6/04/26 14:36  fig10_2_9_fuzzy_late_comparison.png
+  46.4k   5/15/26  1:35  fig10_2_9_fuzzy_late_comparison_R.png
+  69.6k   8/11/26 16:37  fig10_2_fuzzy_late_credits.png
+ 112.1k   9/23/26 16:17  fig10_2_rdd_density_test.png
+  91.6k   9/23/26 15:28  fig10_2_rdd_density_test_R.png
+  68.9k   5/15/26  1:35  fig10_3_1_parallel_trends_R.png
+  84.6k   6/08/26 11:16  fig10_3_1_parallel_trends_Stata.png
+  41.3k   9/23/26 15:28  fig10_3_2_robustness_R.png
+  57.6k   9/23/26 16:09  fig10_3_2_robustness_Stata.png
+  86.1k   8/20/26 22:23  fig10_3_parallel_trends_R.png
+  91.6k   9/23/26 16:17  fig10_3_rdd_plot_firststage.png
+  80.4k   9/23/26 15:28  fig10_3_rdd_plot_firststage_R.png
+  47.2k   9/23/26 15:28  fig10_4_1_lasso_comparison_R.png
+  59.5k   9/23/26 16:09  fig10_4_1_lasso_comparison_Stata.png
+  86.0k   9/23/26 16:17  fig10_4_fuzzy_late_credits.png
+  55.0k   9/23/26 15:28  fig10_4_fuzzy_late_credits_R.png
+  87.1k   8/20/26 22:23  fig10_4_scm_trends_R.png
+  87.5k   9/23/26 15:28  fig10_5_1_scm_gap_R.png
+  94.2k   9/23/26 16:09  fig10_5_1_scm_gap_Stata.png
+  72.5k   5/15/26  1:36  fig10_5_2_scm_trends_R.png
+  87.7k   6/04/26 14:36  fig10_5_2_scm_trends_Stata.png
+  86.1k   9/23/26 15:28  fig10_5_parallel_trends_R.png
+  84.6k   9/23/26 16:09  fig10_5_parallel_trends_Stata.png
+ 164.0k   6/30/26 10:31  fig10_6.png       
+  49.6k   5/15/26  1:36  fig10_6_1_sdid_R.png
+  91.8k   8/20/26 22:23  fig10_6_event_study_R.png
+  54.9k   6/29/26 22:01  fig10_6_R.png     
+  87.1k   9/23/26 15:28  fig10_6_scm_trends_R.png
+  87.7k   9/23/26 16:09  fig10_6_scm_trends_Stata.png
+  75.4k   5/15/26  1:35  fig10_7_1_event_study_R.png
+  89.8k   6/08/26 11:16  fig10_7_1_event_study_Stata.png
+ 164.0k   6/08/26 15:50  fig10_7_2.png     
+  83.8k   9/23/26 15:29  fig10_7_2_csdid_R.png
+  66.3k   9/23/26 16:10  fig10_7_2_csdid_Stata.png
+  64.3k   6/12/26 21:06  fig10_7_2_R.png   
+ 164.0k   6/30/26 14:08  fig10_7_3.png     
+  54.9k   9/23/26 15:32  fig10_7_4_etwfe_event_study_R.png
+ 164.0k   9/23/26 16:10  fig10_7_4_etwfe_event_study_Stata.png
+  54.9k   9/22/26 18:01  fig10_7_R.png     
+  32.3k   9/23/26 16:09  fig10_7_sdid_trends2018.png
+  52.2k   9/23/26 15:29  fig10_7_sdid_trends_R.png
+  82.5k   8/20/26 22:23  fig10_7_staggered_es_R.png
+  63.5k   8/11/26 17:41  fig10_7_staggered_es_Stata.png
+  32.3k   8/15/26 12:36  fig10_7_trends2018.png
+  35.8k   9/23/26 15:29  fig10_8_1_permutation_R.png
+  54.7k   9/23/26 16:10  fig10_8_1_permutation_Stata.png
+  61.6k   9/23/26 15:29  fig10_8_2_loo_R.png
+  81.9k   9/23/26 16:10  fig10_8_2_loo_Stata.png
+  91.8k   9/23/26 15:28  fig10_8_event_study_R.png
+  89.8k   9/23/26 16:09  fig10_8_event_study_Stata.png
+  60.0k   6/13/26 18:58  fig10_8_mte_curve_R.png
+  73.1k   6/26/26 19:17  fig10_8_mte_curve_Stata.png
+  34.9k   9/23/26 15:29  fig10_9_1_summary_R.png
+  54.1k   9/23/26 16:10  fig10_9_1_summary_Stata.png
+  53.0k   6/13/26 18:58  fig10_9_mte_by_propensity_R.png
+  86.3k   6/26/26 19:17  fig10_9_mte_by_propensity_Stata.png
+  83.9k   9/23/26 15:29  fig10_9_staggered_es_R.png
+  64.9k   9/23/26 16:10  fig10_9_staggered_es_Stata.png
+ 108.0k   6/26/26 19:46  fig10_cate_forest.png
+  91.7k   6/26/26 19:46  fig10_cate_interact.png
+
+. 
+. di as text _n "=== RDD dataset saved -> $out_root/data/Example_10_2_1.dta ==="
+
+=== RDD dataset saved -> C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 10/Output/data/Example
+> _10_2_1.dta ===
+
+. di as text    "=== Section 10.2 complete.                                 ==="
+=== Section 10.2 complete.                                 ===
+
+. 
+. * Close the named log opened at the top.  -capture- so that re-running the
+. * script, or a master driver that has already closed it, is harmless.
+. capture log close rdd_log
