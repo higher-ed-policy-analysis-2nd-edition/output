@@ -1,0 +1,964 @@
+------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  C:\\Users\\marvi\\Dropbox\\Book\\2nd Edition\\Chapter 9\\Output\\logs\\Chapter9_Sta
+> ta_output.log
+  log type:  text
+ opened on:  30 Mar 2026, 15:22:27
+. }
+
+. else {
+.     global graphs_dir "Output/graphs"
+.     capture mkdir "Output"
+.     capture mkdir "Output/graphs"
+.     capture mkdir "Output/logs"
+.     log using "Output/logs/Chapter9_Stata_output.log", replace text
+. }
+
+. 
+. di "Chapter 9 log opened: " c(current_date) " " c(current_time)
+Chapter 9 log opened: 30 Mar 2026 15:22:27
+
+. di "Graphs directory: $graphs_dir"
+Graphs directory: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 9/Output/graphs
+
+. *=======================================================
+. * Heterogeneous Coefficient Regression with DCCE and MG
+. * Estimators Using Macro Panel Data
+. *=======================================================
+. 
+. clear all
+
+. 
+. * Access the time series dataset using the copy and use
+. * commands
+. copy "https://raw.githubusercontent.com/higher-ed-policy-analysis-2nd-edition/data/main/ch9/Ex
+> ample_9_3_1.dta" ///
+>      "Example_9_3_1.dta", replace
+
+. use "Example_9_3_1.dta", clear
+
+. 
+. *=======================================================
+. * Section 9.6: Demonstration of HCR with DCCE and MG
+. * Estimators
+. *=======================================================
+. 
+. * Variables in the dataset:
+. * lny1 = log of state appropriations to higher education
+. * lnx1 = log of net tuition revenue
+. * lnx2 = log of full-time equivalent students
+. * lnx3 = log of per capita income
+. 
+. * label variables
+. lab var lny1 "Log of State Appropriations"
+
+. lab var lnx1 "Log of Tuition & Fee Revenue"
+
+. lab var lnx2 "Log of FTE Enrollment"
+
+. lab var lnx3 "Log of State Per Capita Income"
+
+. 
+. *=======================================================
+. * Section 9.6.1: Macroeconomic Panel Data
+. * Create Figure 9.1: Trends in Log of Appropriations by
+. * State
+. *=======================================================
+. twoway (line lny1 FY), by(state) ///
+>    xlabel(1980 (12) 2024,labsize(small)) ///
+>    ytitle(Log of State Appropriations) ///
+>    xtitle(Fiscal Year)
+
+. graph export "$graphs_dir/fig9_1_lny1_by_state_Stata.png", replace width(1200)
+(file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
+    9/Output/graphs/fig9_1_lny1_by_state_Stata.png not found)
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
+    9/Output/graphs/fig9_1_lny1_by_state_Stata.png saved as PNG format
+
+. *=======================================================
+. * Create Figure 9.2: Trends in Log of Per Capita Income * by State
+. *=======================================================
+. twoway (line lnx3 FY), by(state) ///
+>   xlabel(1980 (12) 2024, labsize(small)) ///
+>   ytitle(Log of Per Capita Income) xtitle(Fiscal Year)
+
+. graph export "$graphs_dir/fig9_2_lnx3_by_state_Stata.png", replace width(1200)
+(file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
+    9/Output/graphs/fig9_2_lnx3_by_state_Stata.png not found)
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter
+    9/Output/graphs/fig9_2_lnx3_by_state_Stata.png saved as PNG format
+
+. *=======================================================
+. * Section 9.6.2: Tests for Nonstationary Data
+. *=======================================================
+. /* Use the Stata routine xtpurt, with test options
+>  proposed by Herwartz and
+>    Siedenburg (2008), Demetrescu and Hanck (2012), and
+>    Herwartz et al. (2019). In the three test options,the
+>  null hypothesis is that the panels (i.e., states)
+>  contain non-stationary data
+>   or unit roots.
+> */
+. * xtpurt with test options proposed by Herwartz and Siedenburg (hs)
+. xtpurt lny1, test(hs)
+
+Herwartz and Siedenburg (2008) unit-root test for lny1
+-------------------------------------------------------
+Ho: Panels contain unit roots               Number of panels  =     48
+Ha: Panels are stationary                   Number of periods =     45
+                                            After rebalancing =     40
+
+Constant:   Included                        Prewhitening: BIC
+Time trend: Not included                    Lag orders:   min=0 max=4
+------------------------------------------------------------------------------
+ Name               Statistic      p-value
+------------------------------------------------------------------------------
+ t_hs                  3.1353       0.9991
+------------------------------------------------------------------------------
+
+. xtpurt lnx1, test(hs)
+
+Herwartz and Siedenburg (2008) unit-root test for lnx1
+-------------------------------------------------------
+Ho: Panels contain unit roots               Number of panels  =     48
+Ha: Panels are stationary                   Number of periods =     45
+                                            After rebalancing =     40
+
+Constant:   Included                        Prewhitening: BIC
+Time trend: Not included                    Lag orders:   min=0 max=4
+------------------------------------------------------------------------------
+ Name               Statistic      p-value
+------------------------------------------------------------------------------
+ t_hs                  3.4490       0.9997
+------------------------------------------------------------------------------
+
+. xtpurt lnx2, test(hs)
+
+Herwartz and Siedenburg (2008) unit-root test for lnx2
+-------------------------------------------------------
+Ho: Panels contain unit roots               Number of panels  =     48
+Ha: Panels are stationary                   Number of periods =     45
+                                            After rebalancing =     41
+
+Constant:   Included                        Prewhitening: BIC
+Time trend: Not included                    Lag orders:   min=0 max=3
+------------------------------------------------------------------------------
+ Name               Statistic      p-value
+------------------------------------------------------------------------------
+ t_hs                  0.5937       0.7236
+------------------------------------------------------------------------------
+
+. xtpurt lnx3, test(hs)
+
+Herwartz and Siedenburg (2008) unit-root test for lnx3
+-------------------------------------------------------
+Ho: Panels contain unit roots               Number of panels  =     48
+Ha: Panels are stationary                   Number of periods =     45
+                                            After rebalancing =     40
+
+Constant:   Included                        Prewhitening: BIC
+Time trend: Not included                    Lag orders:   min=1 max=4
+------------------------------------------------------------------------------
+ Name               Statistic      p-value
+------------------------------------------------------------------------------
+ t_hs                  1.1172       0.8680
+------------------------------------------------------------------------------
+
+. 
+. * xtpurt with test options proposed by Demetrescu and Hanck (dh)
+. xtpurt lny1, test(dh)
+
+Demetrescou and Hanck (2012) unit-root test for lny1
+-----------------------------------------------------
+Ho: Panels contain unit roots               Number of panels  =     48
+Ha: Panels are stationary                   Number of periods =     45
+                                            After rebalancing =     40
+
+Constant:   Included                        Prewhitening: BIC
+Time trend: Not included                    Lag orders:   min=0 max=4
+------------------------------------------------------------------------------
+ Name               Statistic      p-value
+------------------------------------------------------------------------------
+ t_dh                  3.9105       1.0000
+------------------------------------------------------------------------------
+
+. xtpurt lnx1, test(dh)
+
+Demetrescou and Hanck (2012) unit-root test for lnx1
+-----------------------------------------------------
+Ho: Panels contain unit roots               Number of panels  =     48
+Ha: Panels are stationary                   Number of periods =     45
+                                            After rebalancing =     40
+
+Constant:   Included                        Prewhitening: BIC
+Time trend: Not included                    Lag orders:   min=0 max=4
+------------------------------------------------------------------------------
+ Name               Statistic      p-value
+------------------------------------------------------------------------------
+ t_dh                  3.8814       0.9999
+------------------------------------------------------------------------------
+
+. xtpurt lnx2, test(dh)
+
+Demetrescou and Hanck (2012) unit-root test for lnx2
+-----------------------------------------------------
+Ho: Panels contain unit roots               Number of panels  =     48
+Ha: Panels are stationary                   Number of periods =     45
+                                            After rebalancing =     41
+
+Constant:   Included                        Prewhitening: BIC
+Time trend: Not included                    Lag orders:   min=0 max=3
+------------------------------------------------------------------------------
+ Name               Statistic      p-value
+------------------------------------------------------------------------------
+ t_dh                  1.0635       0.8562
+------------------------------------------------------------------------------
+
+. xtpurt lnx3, test(dh)
+
+Demetrescou and Hanck (2012) unit-root test for lnx3
+-----------------------------------------------------
+Ho: Panels contain unit roots               Number of panels  =     48
+Ha: Panels are stationary                   Number of periods =     45
+                                            After rebalancing =     40
+
+Constant:   Included                        Prewhitening: BIC
+Time trend: Not included                    Lag orders:   min=1 max=4
+------------------------------------------------------------------------------
+ Name               Statistic      p-value
+------------------------------------------------------------------------------
+ t_dh                  0.9802       0.8365
+------------------------------------------------------------------------------
+
+. 
+. * xtpurt with test options proposed by Herwartz, Maxand, and Walle (hmw)
+. xtpurt lny1, test(hmw) trend
+
+Herwartz et al. (2017) unit-root test for lny1
+-----------------------------------------------
+Ho: Panels contain unit roots               Number of panels  =     48
+Ha: Panels are stationary                   Number of periods =     45
+                                            After rebalancing =     41
+
+Constant:   Included                        Prewhitening: BIC
+Time trend: Included                        Lag orders:   min=0 max=3
+------------------------------------------------------------------------------
+ Name               Statistic      p-value
+------------------------------------------------------------------------------
+ t_hmw                 0.0381       0.5152
+------------------------------------------------------------------------------
+
+. xtpurt lnx1, test(hmw) trend
+
+Herwartz et al. (2017) unit-root test for lnx1
+-----------------------------------------------
+Ho: Panels contain unit roots               Number of panels  =     48
+Ha: Panels are stationary                   Number of periods =     45
+                                            After rebalancing =     41
+
+Constant:   Included                        Prewhitening: BIC
+Time trend: Included                        Lag orders:   min=0 max=3
+------------------------------------------------------------------------------
+ Name               Statistic      p-value
+------------------------------------------------------------------------------
+ t_hmw                 2.1029       0.9823
+------------------------------------------------------------------------------
+
+. xtpurt lnx2, test(hmw) trend
+
+Herwartz et al. (2017) unit-root test for lnx2
+-----------------------------------------------
+Ho: Panels contain unit roots               Number of panels  =     48
+Ha: Panels are stationary                   Number of periods =     45
+                                            After rebalancing =     41
+
+Constant:   Included                        Prewhitening: BIC
+Time trend: Included                        Lag orders:   min=0 max=3
+------------------------------------------------------------------------------
+ Name               Statistic      p-value
+------------------------------------------------------------------------------
+ t_hmw                 1.8181       0.9655
+------------------------------------------------------------------------------
+
+. xtpurt lnx3, test(hmw) trend
+
+Herwartz et al. (2017) unit-root test for lnx3
+-----------------------------------------------
+Ho: Panels contain unit roots               Number of panels  =     48
+Ha: Panels are stationary                   Number of periods =     45
+                                            After rebalancing =     43
+
+Constant:   Included                        Prewhitening: BIC
+Time trend: Included                        Lag orders:   min=0 max=1
+------------------------------------------------------------------------------
+ Name               Statistic      p-value
+------------------------------------------------------------------------------
+ t_hmw                 1.1887       0.8827
+------------------------------------------------------------------------------
+
+. 
+. * xtpurt with all test options with first-differences (d)
+. 
+. * create first-differences
+. gen dlny1 = D.lny1
+(48 missing values generated)
+
+. gen dlnx1 = D.lnx1
+(48 missing values generated)
+
+. gen dlnx2 = D.lnx2
+(48 missing values generated)
+
+. gen dlnx3 = D.lnx3
+(48 missing values generated)
+
+. 
+. xtpurt dlny1, test(all)
+
+All methods unit-root test for dlny1
+-------------------------------------
+Ho: Panels contain unit roots               Number of panels  =     48
+Ha: Panels are stationary                   Number of periods =     44
+                                            After rebalancing =     39
+
+Constant:   Included                        Prewhitening: BIC
+Time trend: Not included                    Lag orders:   min=0 max=4
+------------------------------------------------------------------------------
+ Name               Statistic      p-value
+------------------------------------------------------------------------------
+ t_hs                 -3.3373       0.0004
+ t_dh                 -3.3681       0.0004
+------------------------------------------------------------------------------
+
+. xtpurt dlnx1, test(all)
+
+All methods unit-root test for dlnx1
+-------------------------------------
+Ho: Panels contain unit roots               Number of panels  =     48
+Ha: Panels are stationary                   Number of periods =     44
+                                            After rebalancing =     39
+
+Constant:   Included                        Prewhitening: BIC
+Time trend: Not included                    Lag orders:   min=0 max=4
+------------------------------------------------------------------------------
+ Name               Statistic      p-value
+------------------------------------------------------------------------------
+ t_hs                 -4.3716       0.0000
+ t_dh                 -4.5049       0.0000
+------------------------------------------------------------------------------
+
+. xtpurt dlnx2, test(all)
+
+All methods unit-root test for dlnx2
+-------------------------------------
+Ho: Panels contain unit roots               Number of panels  =     48
+Ha: Panels are stationary                   Number of periods =     44
+                                            After rebalancing =     39
+
+Constant:   Included                        Prewhitening: BIC
+Time trend: Not included                    Lag orders:   min=0 max=4
+------------------------------------------------------------------------------
+ Name               Statistic      p-value
+------------------------------------------------------------------------------
+ t_hs                 -3.3447       0.0004
+ t_dh                 -3.0497       0.0011
+------------------------------------------------------------------------------
+
+. xtpurt dlnx3, test(all)
+
+All methods unit-root test for dlnx3
+-------------------------------------
+Ho: Panels contain unit roots               Number of panels  =     48
+Ha: Panels are stationary                   Number of periods =     44
+                                            After rebalancing =     40
+
+Constant:   Included                        Prewhitening: BIC
+Time trend: Not included                    Lag orders:   min=0 max=3
+------------------------------------------------------------------------------
+ Name               Statistic      p-value
+------------------------------------------------------------------------------
+ t_hs                 -2.2530       0.0121
+ t_dh                 -1.7220       0.0425
+------------------------------------------------------------------------------
+
+. 
+. *=======================================================
+. * Section 9.6.3: Tests for Cointegration
+. *=======================================================
+. 
+. /* Test for no cointegration with and without demeaning 
+>    (first subtracting the cross-sectional averages from the series) the data
+> */
+. * Kao test for cointegration
+. xtcointtest kao lny1 lnx1 lnx2 lnx3
+
+Kao test for cointegration
+--------------------------
+H0: No cointegration                        Number of panels       =     48
+Ha: All panels are cointegrated             Number of periods      =     43
+
+Cointegrating vector: Same
+Panel means:          Included              Kernel:           Bartlett
+Time trend:           Not included          Lags:             2.35 (Newey–West)
+AR parameter:         Same                  Augmented lags:   1 
+------------------------------------------------------------------------------
+                                            Statistic         p-value
+------------------------------------------------------------------------------
+ Modified Dickey–Fuller t                    -6.1325          0.0000
+ Dickey–Fuller t                             -4.7197          0.0000
+ Augmented Dickey–Fuller t                   -3.7980          0.0001
+ Unadjusted modified Dickey–Fuller t         -8.1410          0.0000
+ Unadjusted Dickey–Fuller t                  -5.4871          0.0000
+------------------------------------------------------------------------------
+
+. xtcointtest kao lny1 lnx1 lnx2 lnx3, demean
+
+Kao test for cointegration
+--------------------------
+H0: No cointegration                        Number of panels       =     48
+Ha: All panels are cointegrated             Number of periods      =     43
+
+Cointegrating vector: Same
+Panel means:          Included              Kernel:           Bartlett
+Time trend:           Not included          Lags:             2.04 (Newey–West)
+AR parameter:         Same                  Augmented lags:   1 
+
+Cross-sectional means removed
+------------------------------------------------------------------------------
+                                            Statistic         p-value
+------------------------------------------------------------------------------
+ Modified Dickey–Fuller t                    -4.1550          0.0000
+ Dickey–Fuller t                             -3.0606          0.0011
+ Augmented Dickey–Fuller t                   -1.3555          0.0876
+ Unadjusted modified Dickey–Fuller t         -7.8632          0.0000
+ Unadjusted Dickey–Fuller t                  -4.7031          0.0000
+------------------------------------------------------------------------------
+
+. 
+. * Pedroni test for cointegration
+. xtcointtest pedroni lny1 lnx1 lnx2 lnx3
+
+Pedroni test for cointegration
+------------------------------
+H0: No cointegration                        Number of panels       =     48
+Ha: All panels are cointegrated             Number of periods      =     44
+
+Cointegrating vector: Panel specific
+Panel means:          Included              Kernel:           Bartlett
+Time trend:           Not included          Lags:             0.00 (Newey–West)
+AR parameter:         Panel specific        Augmented lags:   1 
+------------------------------------------------------------------------------
+                                            Statistic         p-value
+------------------------------------------------------------------------------
+ Modified Phillips–Perron t                  -1.3412          0.0899
+ Phillips–Perron t                           -5.6525          0.0000
+ Augmented Dickey–Fuller t                   -6.5799          0.0000
+------------------------------------------------------------------------------
+
+. xtcointtest pedroni lny1 lnx1 lnx2 lnx3, demean
+
+Pedroni test for cointegration
+------------------------------
+H0: No cointegration                        Number of panels       =     48
+Ha: All panels are cointegrated             Number of periods      =     44
+
+Cointegrating vector: Panel specific
+Panel means:          Included              Kernel:           Bartlett
+Time trend:           Not included          Lags:             2.00 (Newey–West)
+AR parameter:         Panel specific        Augmented lags:   1 
+
+Cross-sectional means removed
+------------------------------------------------------------------------------
+                                            Statistic         p-value
+------------------------------------------------------------------------------
+ Modified Phillips–Perron t                  -1.8165          0.0346
+ Phillips–Perron t                           -5.5749          0.0000
+ Augmented Dickey–Fuller t                   -4.8121          0.0000
+------------------------------------------------------------------------------
+
+. 
+. * Westerlund test for cointegration
+. xtcointtest westerlund lny1 lnx1 lnx2 lnx3
+
+Westerlund test for cointegration
+---------------------------------
+H0: No cointegration                        Number of panels       =     48
+Ha: Some panels are cointegrated            Number of periods      =     45
+
+Cointegrating vector: Panel specific
+Panel means:          Included
+Time trend:           Not included
+AR parameter:         Panel specific
+------------------------------------------------------------------------------
+                                            Statistic         p-value
+------------------------------------------------------------------------------
+ Variance ratio                              -3.1622          0.0008
+------------------------------------------------------------------------------
+
+. xtcointtest westerlund lny1 lnx1 lnx2 lnx3, demean
+
+Westerlund test for cointegration
+---------------------------------
+H0: No cointegration                        Number of panels       =     48
+Ha: Some panels are cointegrated            Number of periods      =     45
+
+Cointegrating vector: Panel specific
+Panel means:          Included
+Time trend:           Not included
+AR parameter:         Panel specific
+
+Cross-sectional means removed
+------------------------------------------------------------------------------
+                                            Statistic         p-value
+------------------------------------------------------------------------------
+ Variance ratio                              -0.7266          0.2337
+------------------------------------------------------------------------------
+
+. 
+. /* ECM-based cointegration test, developed by Westerlund 2007), that is robust
+>    to structural breaks in the intercept and slope of the cointegrated
+>    regression, serial correlation, and heteroscedasticity.
+> */
+. xtwest lny1 lnx1 lnx2 lnx3, constant lags(0 3)
+
+Calculating Westerlund ECM panel cointegration tests..........
+
+Results for H0: no cointegration
+With 48 series and 3 covariates
+Average AIC selected lag length: .75
+Average AIC selected lead length: 0
+
+-----------------------------------------------+
+ Statistic |   Value   |  Z-value  |  P-value  |
+-----------+-----------+-----------+-----------|
+     Gt    |   -3.228  |   -7.314  |   0.000   |
+     Ga    |  -19.453  |   -8.358  |   0.000   |
+     Pt    |  -22.348  |   -8.556  |   0.000   |
+     Pa    |  -18.144  |  -11.289  |   0.000   |
+-----------------------------------------------+
+
+. 
+. *=======================================================
+. * Section 9.6.4: Tests for Cross-Sectional Independence
+. *=======================================================
+. 
+. /* Tests using Stata user-written routine xtcdf
+>    (Wursten 2017) for cross-sectional independence,
+>    using updated version
+> */
+. ssc install xtcdf, replace
+checking xtcdf consistency and verifying not already installed...
+all files already exist and are up to date.
+
+. xtcdf lny1 lnx1 lnx2 lnx3
+
+xtcd test on variables lny1 lnx1 lnx2 lnx3
+Panelvar: fips
+Timevar: FY
+------------------------------------------------------------------------------+
+    Variable    |  CD-test   p-value   average joint T | mean ρ   mean abs(ρ) |
+----------------+--------------------------------------+----------------------|
+      lny1      +  215.048    0.000         45.00      +  0.95       0.95     | 
+      lnx1      +  220.892    0.000         45.00      +  0.98       0.98     | 
+      lnx2      +  189.882    0.000         45.00      +  0.84       0.86     | 
+      lnx3      +  224.384    0.000         45.00      +  1.00       1.00     | 
+------------------------------------------------------------------------------+
+ Notes: Under the null hypothesis of cross-section independence, CD ~ N(0,1)
+        P-values close to zero indicate data are correlated across panel groups.
+
+. 
+. *=======================================================
+. * Section 9.6.5: Test of Homogeneous Coefficients
+. *=======================================================
+. 
+. /* Test of homogeneous coefficients utilizing the Stata user-written xthst
+>    (Ditzen and Bersvendsen 2020) routine
+> */
+. ssc install xthst, replace
+checking xthst consistency and verifying not already installed...
+all files already exist and are up to date.
+
+. 
+. * Test with first-differenced variables
+. xthst D1.lny1 D1.L1.lny1 D1.lnx1 D1.lnx2 D1.lnx3, ///
+>   hac whitening
+Testing for slope heterogeneity
+(Blomquist, Westerlund. 2013. Economic Letters)
+H0: slope coefficients are homogenous
+-------------------------------------
+         Delta          p-value
+          3.671           0.000
+ adj.     3.957           0.000
+-------------------------------------
+HAC Kernel: bartlett 
+with average bandwith 3
+Variables partialled out: constant
+
+. 
+. * Test with levels variables
+. xthst lny1 L1.lny1 lnx1 lnx2 lnx3, hac whitening
+Testing for slope heterogeneity
+(Blomquist, Westerlund. 2013. Economic Letters)
+H0: slope coefficients are homogenous
+-------------------------------------
+         Delta          p-value
+         12.970           0.000
+ adj.    13.956           0.000
+-------------------------------------
+HAC Kernel: bartlett 
+with average bandwith 3
+Variables partialled out: constant
+
+. 
+. *=======================================================
+. * Section 9.6.6: Results of the HCR with DCCE and MG
+. * Estimators
+. *=======================================================
+. 
+. /* HCR with DCCE and MG estimators using the Stata-user written xtdcce2
+>   (Ditzen 2018b)
+> * search xtdcce2, all
+> * click on st0536, then install or type:
+> * net install st0536.pkg, replace
+> * Run an autoregressive model with distributed lags (ARDLs) of (1 1 1) and
+> * cross-sectional lags (3 3 3 3) within an ECM framework
+> */
+. xtdcce2 D1.lny1 L1.D1.lny1 L1.D1.lnx1 L1.D1.lnx2 ///
+>   L1.D1.lnx3, reportc ///
+>   cr(_all) cr_lags(3 3 3 3) lr(L1.lny1 lnx1 lnx2 ///
+>   lnx3) lr_options(ardl)
+(Dynamic) Common Correlated Effects Estimator - Mean Group (CS-ARDL)
+
+Panel Variable (i): fips                         Number of obs     =       1920
+Time Variable (t): FY                            Number of groups  =         48
+
+Degrees of freedom per group:                    Obs per group:    
+ without cross-sectional avg. min   = 31                       min =         40
+                              max   = 31                       avg =         40
+ with cross-sectional avg.    min   = 15                       max =         40
+                              max   = 15
+Number of                                        F(1200, 720)      =       1.06
+ cross-sectional lags               3 to 3       Prob > F          =       0.18
+ variables in mean group regression = 432        R-squared         =       0.36
+ variables partialled out           = 768        R-squared (MG)    =       0.56
+                                                 Root MSE          =       0.05
+                                                 CD Statistic      =      -2.75
+                                                    p-value        =     0.0059
+-------------------------------------------------------------------------------
+         D.lny1|     Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+---------------+---------------------------------------------------------------
+ Short Run Est.|
+---------------+---------------------------------------------------------------
+   Mean Group: |
+        LD.lny1|  .0868345   .0442795    1.96    0.050      .0000483   .1736208
+        LD.lnx1|  .0505417   .0562617    0.90    0.369     -.0597292   .1608126
+        LD.lnx2| -.1756531    .124394   -1.41    0.158     -.4194608   .0681546
+        LD.lnx3| -.0264265   .1834508   -0.14    0.885     -.3859834   .3331304
+          _cons| -.7104847   2.266301   -0.31    0.754     -5.152354   3.731384
+         L.lny1| -.8422002   .0589661  -14.28    0.000     -.9577717  -.7266287
+           lnx1| -.2295522   .0512736   -4.48    0.000     -.3300465  -.1290578
+           lnx2|  .3045464   .1180728    2.58    0.010      .0731281   .5359648
+           lnx3|  .5594864   .1881447    2.97    0.003      .1907295   .9282432
+---------------+---------------------------------------------------------------
+ Adjust. Term  |
+---------------+---------------------------------------------------------------
+   Mean Group: |
+        lr_lny1|   -1.8422   .0589661  -31.24    0.000     -1.957772  -1.726629
+---------------+---------------------------------------------------------------
+ Long Run Est. |
+---------------+---------------------------------------------------------------
+   Mean Group: |
+       lr__cons| -.2047925   1.273987   -0.16    0.872      -2.70176   2.292175
+        lr_lnx1| -.1345614   .0361033   -3.73    0.000     -.2053225  -.0638003
+        lr_lnx2|     .1547   .0642646    2.41    0.016      .0287437   .2806562
+        lr_lnx3|  .3239968   .1066906    3.04    0.002       .114887   .5331066
+-------------------------------------------------------------------------------
+Mean Group Variables: LD.lny1 LD.lnx1 LD.lnx2 LD.lnx3 _cons
+Cross Sectional Averaged Variables:  lny1(3) lnx1(3) lnx2(3) lnx3(3)
+Long Run Variables:  lr__cons lr_lnx1 lr_lnx2 lr_lnx3
+Adjustment variable(s): lr_lny1 (L.lny1)
+
+. 
+. * Pesaran (2015) test for weak cross-sectional dependence
+. xtcd2
+Residuals calculated using  predict, residuals from xtdcce2.
+
+Testing for weak cross-sectional dependence (CSD)
+   H0: weak cross-section dependence
+   H1: strong cross-section dependence
+------------------------------------------------------------------------
+               |    CD            CDw           CDw+          CD*
+---------------+--------------------------------------------------------
+residuals      |    -2.75        0.82       1106.51         -1.97
+               |  (0.006)     (0.414)       (0.000)       (0.049)
+------------------------------------------------------------------------
+p-values in parenthesis.
+References
+  CD:        Pesaran (2015, 2021)
+  CDw:       Juodis, Reese (2021)
+  CDw+:      CDw with power enhancement from Fan et al. (2015)
+  CD*:       Pesaran, Xie (2021) with 4 PC(s)
+
+. 
+. * Run xtdcce2 with the options lr(xtpmg) and exponent
+. xtdcce2 D1.lny1 L1.D1.lny1 L1.D1.lnx1 L1.D1.lnx2 ///
+>   L1.D1.lnx3, reportc ///
+>   cr(_all) cr_lags(3 3 3 3) ///
+>   lr(L1.lny1 lnx1 lnx2 lnx3) ///
+>   lr_options(xtpmg) exponent
+(Dynamic) Common Correlated Effects Estimator - Mean Group (CS-ECM)
+
+Panel Variable (i): fips                         Number of obs     =       1920
+Time Variable (t): FY                            Number of groups  =         48
+
+Degrees of freedom per group:                    Obs per group:    
+ without cross-sectional avg. min   = 31                       min =         40
+                              max   = 31                       avg =         40
+ with cross-sectional avg.    min   = 15                       max =         40
+                              max   = 15
+Number of                                        F(1200, 720)      =       1.06
+ cross-sectional lags               3 to 3       Prob > F          =       0.18
+ variables in mean group regression = 432        R-squared         =       0.36
+ variables partialled out           = 768        R-squared (MG)    =       0.56
+                                                 Root MSE          =       0.05
+                                                 CD Statistic      =      -2.75
+                                                    p-value        =     0.0059
+-------------------------------------------------------------------------------
+         D.lny1|     Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+---------------+---------------------------------------------------------------
+ Short Run Est.|
+---------------+---------------------------------------------------------------
+   Mean Group: |
+        LD.lny1|  .0868345   .0442795    1.96    0.050      .0000483   .1736208
+        LD.lnx1|  .0505417   .0562617    0.90    0.369     -.0597292   .1608126
+        LD.lnx2| -.1756531    .124394   -1.41    0.158     -.4194608   .0681546
+        LD.lnx3| -.0264265   .1834508   -0.14    0.885     -.3859834   .3331304
+---------------+---------------------------------------------------------------
+ Adjust. Term  |
+---------------+---------------------------------------------------------------
+   Mean Group: |
+             ec| -.8422002   .0589661  -14.28    0.000     -.9577717  -.7266287
+---------------+---------------------------------------------------------------
+ Long Run Est. |
+---------------+---------------------------------------------------------------
+   Mean Group: |
+           lnx1| -.4856684   .2293777   -2.12    0.034     -.9352404  -.0360963
+           lnx2|  .4030758   .2336824    1.72    0.085     -.0549333   .8610848
+           lnx3|  1.236796   .5012362    2.47    0.014      .2543908   2.219201
+          _cons|  1.317089   7.485194    0.18    0.860     -13.35362    15.9878
+-------------------------------------------------------------------------------
+Mean Group Variables: LD.lny1 LD.lnx1 LD.lnx2 LD.lnx3 _cons
+Cross Sectional Averaged Variables:  lny1(3) lnx1(3) lnx2(3) lnx3(3)
+Long Run Variables:  lnx1 lnx2 lnx3 _cons
+Cointegration variable(s): ec
+
+Estimation of Cross-Sectional Exponent (alpha)
+--------------------------------------------------------------
+       variable|     alpha   Std. Err.    [95% Conf. Interval]
+---------------+----------------------------------------------
+      residuals|  .5512878   .0133395     .5251429    .5774326
+--------------------------------------------------------------
+0.5 <= alpha < 1 implies strong cross sectional dependence.
+SE and CI bootstrapped with 100 repetitions.
+
+
+. 
+. /* If we want to see the estimates for the individual states, then we include
+>    the option showindividual.
+> */
+. xtdcce2 D1.lny1 L1.D1.lny1 L1.D1.lnx1 L1.D1.lnx2 ///
+>    L1.D1.lnx3, reportc cr(_all) cr_lags(1 3 3 3) ///
+>    lr(L1.lny1 lnx1 lnx2 lnx3) lr_options(ardl)///
+option / not allowed
+r(198);
+
+.    exponent showin
+command exponent is unrecognized
+r(199);
+
+. 
+. /*  
+> ========================================================
+> * Additional Analysis Options
+> ========================================================
+> 
+> /* Alternative specifications with different cross-sectional lags 2 cross-sectional lags
+> xtdcce2 D1.lny1 L1.D1.lny1 L1.D1.lnx1 L1.D1.lnx2 ///
+>    L1.D1.lnx3, reportc cr(_all) cr_lags(2 2 2 2) ///
+>    lr(L1.lny1 lnx1 lnx2 lnx3) lr_options(ardl)
+> 
+> 4 cross-sectional lags
+> xtdcce2 D1.lny1 L1.D1.lny1 L1.D1.lnx1 L1.D1.lnx2 ///
+>    L1.D1.lnx3, reportc cr(_all) cr_lags(4 4 4 4)///
+>    lr(L1.lny1 lnx1 lnx2 lnx3) lr_options(ardl)
+> */
+>     
+> clear all
+> 
+> * Close log
+> capture log close
+> 
+> exit
+> 
+> *=======================================================
+> * END OF CHAPTER 9 CODE
+> *=======================================================
+> 
+> /* Notes:
+>  - The script follows the organization and structure of Chapter 8
+>  - Cross-sectional lags of (3 3 3 3) are used to account for 
+>    cross-sectional dependence
+>  - ARDL specification (1 1 1) is used for short-run dynamics
+>  - ECM framework allows for estimation of both short-run and 
+>    long-run coefficients
+>  - MG estimator provides average coefficients across states
+>  - DCCE estimator accounts for cross-sectional dependence
+>  - The showindividual option provides state-specific estimates
+> */
+
+end of do-file
+
+. xtnumfac
+varlist required
+r(100);
+
+. help xtnumfac
+
+. xtnumfac lny1, stan(5) detail
+
+Statistics for number of common factors in lny1
+   Number of obs        =     2160                    Obs per group     =    
+>    45
+   Number of groups     =       48                    Number of variables=   
+>      1
+
+-----------------------------------------------------------------------------
+> -----------
+ # factors |      PC_{p1}     PC_{p2}     PC_{p3}     IC_{p1}     IC_{p2}    
+>  IC_{p3}
+-----------+-----------------------------------------------------------------
+> -----------
+     0     |      1.000       1.000       1.000       0.000       0.000      
+>  0.000 
+     1     |      0.564       0.567       0.558      -0.465      -0.436      
+> -0.515 
+     2     |      0.427       0.433       0.416      -0.651      -0.594      
+> -0.753 
+     3     |      0.339       0.348       0.322      -0.817      -0.731      
+> -0.969 
+     4     |      0.297       0.309       0.274      -0.896      -0.782      
+> -1.099 
+     5     |      0.265       0.281       0.237      -0.977      -0.835      
+> -1.231 
+     6     |      0.246       0.264       0.212      -1.040      -0.870      
+> -1.345 
+     7     |      0.235       0.257       0.196      -1.081      -0.882      
+> -1.437 
+     8     |      0.228*      0.253*      0.183*     -1.131*     -0.903*     
+> -1.537*
+-----------------------------------------------------------------------------
+> -----------
+-----------------------------------------------------------------------------
+> -----------
+ # factors |      ER          GR          GOL
+-----------+-----------------------------------------------------------------
+> -----------
+     0     |      0.582       0.389       0.240 
+     1     |      2.985*      1.863*     -0.060*
+     2     |      1.464       1.071      -0.108 
+     3     |      1.816       1.401      -0.154 
+     4     |      1.228       0.989      -0.165 
+     5     |      1.346       1.093      -0.177 
+     6     |      1.359       1.126      -0.186 
+     7     |      1.142       0.954      -0.189 
+     8     |      1.204       1.001      -0.193 
+-----------------------------------------------------------------------------
+> -----------
+8 factors maximally considered.
+PC_{p1},...,IC_{p3} from Bai and Ng (2002)
+ER, GR from Ahn and Horenstein (2013)
+ED from Onatski (2010)
+GOL from Gagliardini, Ossola, Scaillet (2019)
+
+. 
+. 
+. xtnumfac lny1, stan(5) detail
+
+Statistics for number of common factors in lny1
+   Number of obs        =     2160                    Obs per group     =       45
+   Number of groups     =       48                    Number of variables=        1
+
+----------------------------------------------------------------------------------------
+ # factors |      PC_{p1}     PC_{p2}     PC_{p3}     IC_{p1}     IC_{p2}     IC_{p3}
+-----------+----------------------------------------------------------------------------
+     0     |      1.000       1.000       1.000       0.000       0.000       0.000 
+     1     |      0.564       0.567       0.558      -0.465      -0.436      -0.515 
+     2     |      0.427       0.433       0.416      -0.651      -0.594      -0.753 
+     3     |      0.339       0.348       0.322      -0.817      -0.731      -0.969 
+     4     |      0.297       0.309       0.274      -0.896      -0.782      -1.099 
+     5     |      0.265       0.281       0.237      -0.977      -0.835      -1.231 
+     6     |      0.246       0.264       0.212      -1.040      -0.870      -1.345 
+     7     |      0.235       0.257       0.196      -1.081      -0.882      -1.437 
+     8     |      0.228*      0.253*      0.183*     -1.131*     -0.903*     -1.537*
+----------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------
+ # factors |      ER          GR          GOL
+-----------+----------------------------------------------------------------------------
+     0     |      0.582       0.389       0.240 
+     1     |      2.985*      1.863*     -0.060*
+     2     |      1.464       1.071      -0.108 
+     3     |      1.816       1.401      -0.154 
+     4     |      1.228       0.989      -0.165 
+     5     |      1.346       1.093      -0.177 
+     6     |      1.359       1.126      -0.186 
+     7     |      1.142       0.954      -0.189 
+     8     |      1.204       1.001      -0.193 
+----------------------------------------------------------------------------------------
+8 factors maximally considered.
+PC_{p1},...,IC_{p3} from Bai and Ng (2002)
+ER, GR from Ahn and Horenstein (2013)
+ED from Onatski (2010)
+GOL from Gagliardini, Ossola, Scaillet (2019)
+
+. help xtcse2
+
+. xtcse2 D1.lny1 L1.D1.lny1 L1.D1.lnx1 L1.D1.lnx2
+type mismatch
+r(109);
+
+. xtcse2 lny1 L1.lny1 L1.lnx1 L1.lnx2
+type mismatch
+r(109);
+
+. xtcse2 dlny1 dlnx1 dlnx2 dlnx3
+type mismatch
+r(109);
+
+. 
+
+. do "C:\Users\marvi\Dropbox\Book\2nd Edition\Chapter 10\Syntax\Stata\Stata_code10b_v12.do", nos
+> top
+
+. ********************************************************************************
+. * MTE and MPRTE Analysis: Effect of Master's Degree on Salary Outcomes
+. * Chapter 10 - Marginal Treatment Effects
+. *
+. * Instrument: State-Funded Graduate Assistantship (GA) Dollar Amount
+. *
+. * Based on synthetic data mirroring NCES B&B Longitudinal Study characteristics
+. * and higher education finance literature (Titus 2007; Bound, Lovenheim &
+. * Turner 2010; Zhang 2005; Ehrenberg et al. 2007)
+. *
+. * Author: Marvin A. Titus
+. * Date: December 2025 (revised March 2026)
+. * Purpose: Demonstrate MTE/MPRTE framework for textbook Chapter 10
+. *
+. * Data Source: Synthetic dataset mirroring NCES B&B
+. * (local copy: Example_7_5_3_updated.dta)
+. *
+. * Note: Because a synthetic dataset is used in this application, the
+. * results are intended to illustrate MTE/MPRTE estimation methods and
+. * should not be viewed as having policy implications.
+. ********************************************************************************
+. 
+. capture log close          /* close any stale log silently */

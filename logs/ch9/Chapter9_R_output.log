@@ -1,0 +1,468 @@
+Chapter 9 log opened: 30 Mar 2026 19:56:15 
+Graphs directory:     C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 9/Output/graphs 
+
+
+*=======================================================
+* SECTION 9.6: Heterogeneous Coefficient Regression with
+*              DCCE and MG Estimators Using Macro Panel Data
+*=======================================================
+
+  Variables: state_abbrev, fips, state, FY, appro, tuitfee, fte, state_name, per_capita_income, state_abbr, y1, x1, x2, x3, lny1, lnx1, lnx2, lnx3, lny1_lnx1, lny1_lnx2, lny1_lnx3, lnx1_lnx2, lnx1_lnx3, lnx2_lnx3, lny1_2, lnx1_2, lnx2_2, lnx3_2 
+  Observations: 2160 
+  States: 48 
+  Fiscal years: 1980 to 2024 
+
+  Panel declared: state (entity) × FY (time)
+
+*=======================================================
+* Section 9.6.1: Macroeconomic Panel Data
+*=======================================================
+
+. twoway (line lny1 FY), by(state)  [Fig. 9.1]
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 9/Output/graphs/fig9_1_lny1_by_state_R.png saved as PNG format
+
+. twoway (line lnx3 FY), by(state)  [Fig. 9.2]
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 9/Output/graphs/fig9_2_lnx3_by_state_R.png saved as PNG format
+
+*=======================================================
+* Section 9.6.2: Tests for Nonstationary Data
+*=======================================================
+
+. xtpurt lny1 lnx1 lnx2 lnx3, test(hs)
+  [R equivalent: Im-Pesaran-Shin (2003) panel unit root test — plm::purtest()]
+  H0: All panels contain a unit root
+
+--- Levels: intercept only (Herwartz-Siedenburg / Demetrescu-Hanck equivalent) ---
+
+. xtpurt lny1, test(hs) / test(dh)
+  Variable: Log State Appropriations
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  as.formula(paste(v, "~ 1"))
+Wtbar = -2.5337, p-value = 0.005643
+alternative hypothesis: stationarity
+
+
+. xtpurt lnx1, test(hs) / test(dh)
+  Variable: Log Tuition Revenue
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  as.formula(paste(v, "~ 1"))
+Wtbar = -7.878, p-value = 1.663e-15
+alternative hypothesis: stationarity
+
+
+. xtpurt lnx2, test(hs) / test(dh)
+  Variable: Log FTE Enrollment
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  as.formula(paste(v, "~ 1"))
+Wtbar = 0.19938, p-value = 0.579
+alternative hypothesis: stationarity
+
+
+. xtpurt lnx3, test(hs) / test(dh)
+  Variable: Log Per Capita Income
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  as.formula(paste(v, "~ 1"))
+Wtbar = -6.8653, p-value = 3.317e-12
+alternative hypothesis: stationarity
+
+
+--- Levels with trend (Herwartz-Maxand-Walle equivalent) ---
+
+. xtpurt lny1, test(hmw) trend
+  Variable: Log State Appropriations
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  as.formula(paste(v, "~ 1"))
+Wtbar = -2.5337, p-value = 0.005643
+alternative hypothesis: stationarity
+
+
+. xtpurt lnx1, test(hmw) trend
+  Variable: Log Tuition Revenue
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  as.formula(paste(v, "~ 1"))
+Wtbar = -7.878, p-value = 1.663e-15
+alternative hypothesis: stationarity
+
+
+. xtpurt lnx2, test(hmw) trend
+  Variable: Log FTE Enrollment
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  as.formula(paste(v, "~ 1"))
+Wtbar = 0.19938, p-value = 0.579
+alternative hypothesis: stationarity
+
+
+. xtpurt lnx3, test(hmw) trend
+  Variable: Log Per Capita Income
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  as.formula(paste(v, "~ 1"))
+Wtbar = -6.8653, p-value = 3.317e-12
+alternative hypothesis: stationarity
+
+
+--- First differences: xtpurt dlny1 / dlnx1 / dlnx2 / dlnx3, test(all) ---
+
+. xtpurt dlny1, test(all)
+  Variable: ΔLog State Appropriations
+  [purtest error: NAs are not allowed when na.rm=FALSE ]
+
+. xtpurt dlnx1, test(all)
+  Variable: ΔLog Tuition Revenue
+  [purtest error: NAs are not allowed when na.rm=FALSE ]
+
+. xtpurt dlnx2, test(all)
+  Variable: ΔLog FTE Enrollment
+  [purtest error: NAs are not allowed when na.rm=FALSE ]
+
+. xtpurt dlnx3, test(all)
+  Variable: ΔLog Per Capita Income
+  [purtest error: NAs are not allowed when na.rm=FALSE ]
+
+
+*=======================================================
+* Section 9.6.3: Tests for Cointegration
+*=======================================================
+
+. xtcointtest kao lny1 lnx1 lnx2 lnx3
+  [R equivalent: Engle-Granger panel cointegration — FE residuals + purtest()]
+
+  Panel cointegration test (Engle-Granger / Kao approach):
+  H0: no cointegration (residuals contain a unit root)
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  resid_coint ~ 1
+Wtbar = -35.713, p-value < 2.2e-16
+alternative hypothesis: stationarity
+
+
+. xtcointtest pedroni / westerlund lny1 lnx1 lnx2 lnx3
+  [R equivalent: Phillips-Ouliaris test per state — tseries::po.test()]
+  Aggregated via Fisher (1932) combination of p-values
+
+  States tested: 48
+  Fisher chi2(96) = 198.8622   p-value = 0.000000
+  RESULT: Reject H0 — evidence of cointegration
+
+. xtcointtest kao/pedroni/westerlund lny1 lnx1 lnx2 lnx3, demean
+  [R equivalent: cross-sectionally demeaned cointegration test]
+
+  Demeaned cointegration test (Engle-Granger on demeaned residuals):
+  H0: no cointegration
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  resid_coint_dm ~ 1
+Wtbar = -38.356, p-value < 2.2e-16
+alternative hypothesis: stationarity
+
+
+. xtwest lny1 lnx1 lnx2 lnx3, constant lags(0 3)
+  [R equivalent: Westerlund (2007) ECM panel cointegration — manual implementation]
+  H0: No cointegration (no error correction)
+
+  Units with valid ECM estimates: 0
+  Gt statistic (mean t-ratio):        NaN   p-value = NA
+  Ga statistic (mean N*rho):          NaN   p-value = NA
+  Note: Bootstrapped p-values (as in xtwest) would be more precise;
+        standard normal approximation used here.
+  RESULT: No strong evidence of cointegration (or test inconclusive)
+
+
+*=======================================================
+* Section 9.6.4: Tests for Cross-Sectional Independence
+*=======================================================
+
+. xtcdf lny1 lnx1 lnx2 lnx3
+  [R equivalent: Pesaran (2004) CD test — plm::pcdtest()]
+  H0: Cross-sectional independence
+
+  Variable: lny1 (Log State Appropriations)
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lny1 ~ factor(FY)
+z = -4.3211, p-value = 1.552e-05
+alternative hypothesis: cross-sectional dependence
+
+
+  Variable: lnx1 (Log Tuition Revenue)
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lnx1 ~ factor(FY)
+z = -4.0322, p-value = 5.525e-05
+alternative hypothesis: cross-sectional dependence
+
+
+  Variable: lnx2 (Log FTE Enrollment)
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lnx2 ~ factor(FY)
+z = -2.0221, p-value = 0.04317
+alternative hypothesis: cross-sectional dependence
+
+
+  Variable: lnx3 (Log Per Capita Income)
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lnx3 ~ factor(FY)
+z = -1.5359, p-value = 0.1246
+alternative hypothesis: cross-sectional dependence
+
+
+
+*=======================================================
+* Section 9.6.5: Test of Homogeneous Coefficients
+*=======================================================
+
+. xthst D1.lny1 D1.L1.lny1 D1.lnx1 D1.lnx2 D1.lnx3, hac whitening
+  [R equivalent: Pesaran-Yamagata (2008) slope homogeneity test — manual]
+  H0: Slope coefficients are homogeneous across states
+
+  [Insufficient valid units for test]
+
+. xthst lny1 L1.lny1 lnx1 lnx2 lnx3, hac whitening
+  [R equivalent: Pesaran-Yamagata slope homogeneity — levels]
+
+  Specification: Levels: lny1 ~ L1.lny1 + lnx1 + lnx2 + lnx3
+  N (units) = 48   k (regressors) = 4
+  Delta-tilde:      -4.2649   p-value = 0.0000
+  Delta-tilde adj:  -0.6743   p-value = 0.5001
+  RESULT: Reject H0 — slope coefficients are heterogeneous
+
+
+*=======================================================
+* Section 9.6.6: Results of the HCR with DCCE and MG Estimators
+*=======================================================
+
+. xtdcce2 D1.lny1 L1.D1.lny1 L1.D1.lnx1 L1.D1.lnx2 L1.D1.lnx3,
+         cr(_all) cr_lags(3 3 3 3) lr(L1.lny1 lnx1 lnx2 lnx3) lr_options(ardl)
+  [R equivalent: DCCE-MG estimator — manual implementation]
+
+  [Insufficient valid units for MG estimation]
+
+. xtcd2  (Pesaran 2015 weak cross-sectional dependence test)
+  [R equivalent: Pesaran CD test on FE model — plm::pcdtest()]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  dlny1 ~ dlny1_l1 + dlnx1_l1 + dlnx2_l1 + dlnx3_l1 + lny1_l1 +     lnx1_l1 + lnx2_l1 + lnx3_l1
+z = NA, p-value = NA
+alternative hypothesis: cross-sectional dependence
+
+
+. xtdcce2 ... lr_options(xtpmg) exponent
+  [R equivalent: DCCE-MG with xtpmg-style LR constraints]
+  Note: xtpmg enforces common LR coefficients while allowing heterogeneous SR.
+        The MG estimator above already averages unit-specific LR estimates.
+        With exponent option, cross-section exponents are estimated — equivalent
+        to allowing for weak cross-sectional dependence in the factor structure.
+
+. xtdcce2 ... cr_lags(1 3 3 3) showindividual
+  [R equivalent: DCCE-MG with cr_lags(1,3,3,3) — unit-level estimates]
+
+  [Insufficient valid units for MG estimation]
+
+Chapter 9 R script completed: 30 Mar 2026 19:56:36 
+w) trend
+  Variable: Log Per Capita Income
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  as.formula(paste(v, "~ 1"))
+Wtbar = -6.8653, p-value = 3.317e-12
+alternative hypothesis: stationarity
+
+
+--- First differences: xtpurt dlny1 / dlnx1 / dlnx2 / dlnx3, test(all) ---
+
+. xtpurt dlny1, test(all)
+  Variable: ΔLog State Appropriations
+  [purtest error: NAs are not allowed when na.rm=FALSE ]
+
+. xtpurt dlnx1, test(all)
+  Variable: ΔLog Tuition Revenue
+  [purtest error: NAs are not allowed when na.rm=FALSE ]
+
+. xtpurt dlnx2, test(all)
+  Variable: ΔLog FTE Enrollment
+  [purtest error: NAs are not allowed when na.rm=FALSE ]
+
+. xtpurt dlnx3, test(all)
+  Variable: ΔLog Per Capita Income
+  [purtest error: NAs are not allowed when na.rm=FALSE ]
+
+
+*=======================================================
+* Section 9.6.3: Tests for Cointegration
+*=======================================================
+
+. xtcointtest kao lny1 lnx1 lnx2 lnx3
+  [R equivalent: Engle-Granger panel cointegration — FE residuals + purtest()]
+
+  Panel cointegration test (Engle-Granger / Kao approach):
+  H0: no cointegration (residuals contain a unit root)
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  resid_coint ~ 1
+Wtbar = -35.713, p-value < 2.2e-16
+alternative hypothesis: stationarity
+
+
+. xtcointtest pedroni / westerlund lny1 lnx1 lnx2 lnx3
+  [R equivalent: Phillips-Ouliaris test per state — tseries::po.test()]
+  Aggregated via Fisher (1932) combination of p-values
+
+  States tested: 48
+  Fisher chi2(96) = 198.8622   p-value = 0.000000
+  RESULT: Reject H0 — evidence of cointegration
+
+. xtcointtest kao/pedroni/westerlund lny1 lnx1 lnx2 lnx3, demean
+  [R equivalent: cross-sectionally demeaned cointegration test]
+
+  Demeaned cointegration test (Engle-Granger on demeaned residuals):
+  H0: no cointegration
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  resid_coint_dm ~ 1
+Wtbar = -38.356, p-value < 2.2e-16
+alternative hypothesis: stationarity
+
+
+. xtwest lny1 lnx1 lnx2 lnx3, constant lags(0 3)
+  [R equivalent: Westerlund (2007) ECM panel cointegration — manual implementation]
+  H0: No cointegration (no error correction)
+
+  Units with valid ECM estimates: 0
+  Gt statistic (mean t-ratio):        NaN   p-value = NA
+  Ga statistic (mean N*rho):          NaN   p-value = NA
+  Note: Bootstrapped p-values (as in xtwest) would be more precise;
+        standard normal approximation used here.
+  RESULT: No strong evidence of cointegration (or test inconclusive)
+
+
+*=======================================================
+* Section 9.6.4: Tests for Cross-Sectional Independence
+*=======================================================
+
+. xtcdf lny1 lnx1 lnx2 lnx3
+  [R equivalent: Pesaran (2004) CD test — plm::pcdtest()]
+  H0: Cross-sectional independence
+
+  Variable: lny1 (Log State Appropriations)
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lny1 ~ factor(FY)
+z = -4.3211, p-value = 1.552e-05
+alternative hypothesis: cross-sectional dependence
+
+
+  Variable: lnx1 (Log Tuition Revenue)
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lnx1 ~ factor(FY)
+z = -4.0322, p-value = 5.525e-05
+alternative hypothesis: cross-sectional dependence
+
+
+  Variable: lnx2 (Log FTE Enrollment)
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lnx2 ~ factor(FY)
+z = -2.0221, p-value = 0.04317
+alternative hypothesis: cross-sectional dependence
+
+
+  Variable: lnx3 (Log Per Capita Income)
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lnx3 ~ factor(FY)
+z = -1.5359, p-value = 0.1246
+alternative hypothesis: cross-sectional dependence
+
+
+
+*=======================================================
+* Section 9.6.5: Test of Homogeneous Coefficients
+*=======================================================
+
+. xthst D1.lny1 D1.L1.lny1 D1.lnx1 D1.lnx2 D1.lnx3, hac whitening
+  [R equivalent: Pesaran-Yamagata (2008) slope homogeneity test — manual]
+  H0: Slope coefficients are homogeneous across states
+
+  [Insufficient valid units for test]
+
+. xthst lny1 L1.lny1 lnx1 lnx2 lnx3, hac whitening
+  [R equivalent: Pesaran-Yamagata slope homogeneity — levels]
+
+  Specification: Levels: lny1 ~ L1.lny1 + lnx1 + lnx2 + lnx3
+  N (units) = 48   k (regressors) = 4
+  Delta-tilde:      -4.2649   p-value = 0.0000
+  Delta-tilde adj:  -0.6743   p-value = 0.5001
+  RESULT: Reject H0 — slope coefficients are heterogeneous
+
+
+*=======================================================
+* Section 9.6.6: Results of the HCR with DCCE and MG Estimators
+*=======================================================
+
+. xtdcce2 D1.lny1 L1.D1.lny1 L1.D1.lnx1 L1.D1.lnx2 L1.D1.lnx3,
+         cr(_all) cr_lags(3 3 3 3) lr(L1.lny1 lnx1 lnx2 lnx3) lr_options(ardl)
+  [R equivalent: DCCE-MG estimator — manual implementation]
+
+  [Insufficient valid units for MG estimation]
+
+. xtcd2  (Pesaran 2015 weak cross-sectional dependence test)
+  [R equivalent: Pesaran CD test on FE model — plm::pcdtest()]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  dlny1 ~ dlny1_l1 + dlnx1_l1 + dlnx2_l1 + dlnx3_l1 + lny1_l1 +     lnx1_l1 + lnx2_l1 + lnx3_l1
+z = NA, p-value = NA
+alternative hypothesis: cross-sectional dependence
+
+
+. xtdcce2 ... lr_options(xtpmg) exponent
+  [R equivalent: DCCE-MG with xtpmg-style LR constraints]
+  Note: xtpmg enforces common LR coefficients while allowing heterogeneous SR.
+        The MG estimator above already averages unit-specific LR estimates.
+        With exponent option, cross-section exponents are estimated — equivalent
+        to allowing for weak cross-sectional dependence in the factor structure.
+
+. xtdcce2 ... cr_lags(1 3 3 3) showindividual
+  [R equivalent: DCCE-MG with cr_lags(1,3,3,3) — unit-level estimates]
+
+  [Insufficient valid units for MG estimation]
+
+Chapter 9 R script completed: 30 Mar 2026 19:56:36 
