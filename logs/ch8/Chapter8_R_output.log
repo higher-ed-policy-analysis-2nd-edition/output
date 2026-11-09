@@ -1,0 +1,3909 @@
+Chapter 8 log opened: 30 Mar 2026 13:28:12 
+Graphs directory:     C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 8/Output/graphs 
+
+
+*================================================================
+* SECTION 8.2: Time Series Data and Autocorrelation
+*================================================================
+
+. describe
+
+  Observations: 48 
+  Time range:   1970 to 2017 
+
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 8/Output/graphs/fig8_1_ts_levels_R.png saved as PNG format
+
+. dfgls lnenpub2yr
+
+
+############################################### 
+# Elliot, Rothenberg and Stock Unit Root Test # 
+############################################### 
+
+Test of type DF-GLS 
+detrending of series with intercept and trend 
+
+
+Call:
+lm(formula = dfgls.form, data = data.dfgls)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.046564 -0.018558 -0.002435  0.009561  0.057463 
+
+Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+yd.lag       -0.03476    0.03872  -0.898 0.376494    
+yd.diff.lag1  0.76845    0.17403   4.416 0.000121 ***
+yd.diff.lag2  0.09744    0.21176   0.460 0.648717    
+yd.diff.lag3 -0.34485    0.17728  -1.945 0.061172 .  
+yd.diff.lag4 -0.04973    0.14995  -0.332 0.742456    
+yd.diff.lag5  0.33564    0.13806   2.431 0.021239 *  
+yd.diff.lag6 -0.06951    0.14603  -0.476 0.637497    
+yd.diff.lag7 -0.25875    0.14354  -1.803 0.081506 .  
+yd.diff.lag8  0.22233    0.12079   1.841 0.075599 .  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.02745 on 30 degrees of freedom
+Multiple R-squared:  0.5457,	Adjusted R-squared:  0.4094 
+F-statistic: 4.004 on 9 and 30 DF,  p-value: 0.001913
+
+
+Value of test-statistic is: -0.8977 
+
+Critical values of DF-GLS are:
+                 1pct  5pct 10pct
+critical values -3.77 -3.19 -2.89
+
+
+. dfgls lntupub2yr
+
+
+############################################### 
+# Elliot, Rothenberg and Stock Unit Root Test # 
+############################################### 
+
+Test of type DF-GLS 
+detrending of series with intercept and trend 
+
+
+Call:
+lm(formula = dfgls.form, data = data.dfgls)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-0.05180 -0.02108  0.00192  0.01349  0.04513 
+
+Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+yd.lag       -0.120494   0.072773  -1.656 0.108198    
+yd.diff.lag1  0.605159   0.160192   3.778 0.000701 ***
+yd.diff.lag2  0.113518   0.193554   0.586 0.561932    
+yd.diff.lag3 -0.366209   0.152723  -2.398 0.022917 *  
+yd.diff.lag4  0.051272   0.102430   0.501 0.620332    
+yd.diff.lag5  0.031023   0.100907   0.307 0.760629    
+yd.diff.lag6  0.018544   0.096929   0.191 0.849566    
+yd.diff.lag7  0.015666   0.089828   0.174 0.862727    
+yd.diff.lag8 -0.004279   0.086447  -0.049 0.960854    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.02551 on 30 degrees of freedom
+Multiple R-squared:  0.5809,	Adjusted R-squared:  0.4552 
+F-statistic: 4.621 on 9 and 30 DF,  p-value: 0.000691
+
+
+Value of test-statistic is: -1.6557 
+
+Critical values of DF-GLS are:
+                 1pct  5pct 10pct
+critical values -3.77 -3.19 -2.89
+
+
+. dfgls lnunemprate
+
+
+############################################### 
+# Elliot, Rothenberg and Stock Unit Root Test # 
+############################################### 
+
+Test of type DF-GLS 
+detrending of series with intercept and trend 
+
+
+Call:
+lm(formula = dfgls.form, data = data.dfgls)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.172505 -0.057988  0.004218  0.072405  0.313117 
+
+Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+yd.lag        -0.2593     0.1458  -1.778 0.085581 .  
+yd.diff.lag1   0.7842     0.2025   3.872 0.000542 ***
+yd.diff.lag2  -0.2154     0.2398  -0.898 0.376283    
+yd.diff.lag3   0.2509     0.2241   1.120 0.271799    
+yd.diff.lag4  -0.1265     0.1963  -0.645 0.524090    
+yd.diff.lag5   0.2524     0.1891   1.334 0.192116    
+yd.diff.lag6  -0.1597     0.1921  -0.831 0.412550    
+yd.diff.lag7   0.2599     0.1736   1.497 0.144884    
+yd.diff.lag8  -0.1634     0.1648  -0.991 0.329610    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.1228 on 30 degrees of freedom
+Multiple R-squared:  0.4617,	Adjusted R-squared:  0.3003 
+F-statistic: 2.859 on 9 and 30 DF,  p-value: 0.01465
+
+
+Value of test-statistic is: -1.7778 
+
+Critical values of DF-GLS are:
+                 1pct  5pct 10pct
+critical values -3.77 -3.19 -2.89
+
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 8/Output/graphs/fig8_2_ts_firstdiff_R.png saved as PNG format
+
+. reg D1.lnenpub2yr D1.lntupub2yr D1.lnunemprate
+
+t test of coefficients:
+
+              Estimate Std. Error t value Pr(>|t|)
+(Intercept)          0          0     NaN      NaN
+d_lntupub2yr        NA         NA      NA       NA
+d_lnunemprate       NA         NA      NA       NA
+
+
+  N = 48   R² = 0.0000   Adj. R² = 0.0000
+
+. ac residuals
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 8/Output/graphs/fig8_3_ac_residuals_R.png saved as PNG format
+
+. pac residuals, yw
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 8/Output/graphs/fig8_4_pac_residuals_R.png saved as PNG format
+
+*================================================================
+* SECTION 8.3: Testing for Autocorrelations
+* Section 8.3.1: Examples of Autocorrelation Tests—Time Series Data
+*================================================================
+
+. estat dwatson
+
+  Durbin-Watson d-statistic (2, 48) = NaN
+  [Values near 2 indicate no autocorrelation;
+   values near 0 indicate positive autocorrelation;
+   values near 4 indicate negative autocorrelation]
+
+. estat durbinalt, force
+
+Durbin's alternative test for autocorrelation
+---------------------------------------------------------------------------
+  lags(p) |         chi2              df              Prob > chi2
+----------+----------------------------------------------------------------
+       1    |        0.000               1               1.0000
+---------------------------------------------------------------------------
+              H0: no serial correlation
+
+
+*================================================================
+* SECTION 8.4: Time Series Regression Models with AR Terms
+*================================================================
+
+. prais D1.lnenpub2yr D1.lntupub2yr D1.lnunemprate, rob
+
+Iteration 1:  rho = 0.0000
+
+                             Coef.   Std. Err.         t       P>|t|
+  (Intercept)            -0.000000    0.000000       NaN         NaN
+
+  rho (AR1 coefficient): 0.000000
+
+
+*----------------------------------------------------------------
+* Section 8.4.1: Autocorrelation of the Residuals from the P-W Regression
+*----------------------------------------------------------------
+
+. ac residuals_PW
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 8/Output/graphs/fig8_5_ac_residuals_PW_R.png saved as PNG format
+
+. pac residuals_PW, yw
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 8/Output/graphs/fig8_6_pac_residuals_PW_R.png saved as PNG format
+
+. actest residuals_PW, lag(4) q0 rob
+  [R equivalent: Ljung-Box Q-test on P-W residuals, lag = 4]
+
+
+	Box-Ljung test
+
+data:  res_pw
+X-squared = NaN, df = 4, p-value = NA
+
+
+. arima D1.lnenpub2yr D1.lntupub2yr D1.lnunemprate, ar(1/2) vce(robust)
+
+. arima D1.lnenpub2yr D1.lntupub2yr D1.lnunemprate, ar(1/2)
+
+
+Call:
+lm(formula = d_lnenpub2yr ~ d_lntupub2yr + d_lnunemprate + e_lag1 + 
+    e_lag2, data = df_armax_aug)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+     0      0      0      0      0 
+
+Coefficients: (4 not defined because of singularities)
+              Estimate Std. Error t value Pr(>|t|)
+(Intercept)          0          0     NaN      NaN
+d_lntupub2yr        NA         NA      NA       NA
+d_lnunemprate       NA         NA      NA       NA
+e_lag1              NA         NA      NA       NA
+e_lag2              NA         NA      NA       NA
+
+Residual standard error: 0 on 45 degrees of freedom
+  (2 observations deleted due to missingness)
+
+
+  AR(1) coefficient (phi1): NA
+  AR(2) coefficient (phi2): NA
+
+
+. actest residuals_armax, lag(4) q0 rob
+  [R equivalent: Ljung-Box Q-test on ARMAX residuals, lag = 4]
+
+
+	Box-Ljung test
+
+data:  res_armax
+X-squared = NaN, df = 4, p-value = NA
+
+
+*================================================================
+* SECTION 8.6: Examples of Autocorrelation Tests—Panel Data
+*================================================================
+
+  Variables in Example_8_6.dta:
+  stateid, fips, state, statename, year, stapr, netuit, fte, pc_income, lnstapr, lnnetuit, lnfte, lnpc_income 
+
+  Variables in Example_8_6.dta:
+  stateid, fips, state, statename, year, stapr, netuit, fte, pc_income, lnstapr, lnnetuit, lnfte, lnpc_income 
+
+  Panel declared: stateid (entity) x year (time)
+  Observations: 1350 
+
+. xtserial lnnetuit lnstapr lnfte lnpc_income, output
+  [R equivalent: Wooldridge test — plm::pbgtest()]
+
+
+	Breusch-Godfrey/Wooldridge test for serial correlation in panel models
+
+data:  lnnetuit ~ lnstapr + lnfte + lnpc_income
+chisq = 852.95, df = 27, p-value < 2.2e-16
+alternative hypothesis: serial correlation in idiosyncratic errors
+
+
+*================================================================
+* SECTION 8.7: Panel-Data Regression Models with AR Terms
+*================================================================
+
+. xtregar lnnetuit lnstapr lnfte lnpc_income, fe
+  [R equivalent: plm within estimator. xtregar's AR(1) GLS correction
+   has no direct CRAN equivalent; the FE coefficients are the same
+   starting point. Use pbgtest() above to confirm AR(1) is present.]
+
+
+t test of coefficients:
+
+            Estimate Std. Error t value  Pr(>|t|)    
+lnstapr     -0.41580    0.12699 -3.2744  0.001087 ** 
+lnfte        1.29093    0.16274  7.9323 4.613e-15 ***
+lnpc_income  1.66738    0.10879 15.3272 < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+  Within R²: 0.9175
+
+. xtpurt lnnetuit
+  [R equivalent: plm::purtest() — Im-Pesaran-Shin panel unit root test]
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnnetuit ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. xtpurt lnstapr
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnstapr ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. xtpurt lnfte
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnfte ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. xtpurt lnpc_income
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnpc_income ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. qui xtregar D1.lnnetuit D1.lnstapr D1.lnfte D1.lnpc_income, re
+  [R equivalent: plm random-effects on first-differenced variables]
+
+  Variables in Example_8_6.dta:
+  stateid, fips, state, statename, year, stapr, netuit, fte, pc_income, lnstapr, lnnetuit, lnfte, lnpc_income 
+
+  Panel index: entity = 'stateid', time = 'year'
+
+  First-differenced panel: 1350 obs, 50 units
+
+
+. qui xtregar D1.lnnetuit D1.lnstapr D1.lnfte D1.lnpc_income, re
+  [R equivalent: pooled OLS on first-differenced variables (FD estimator)]
+
+
+t test of coefficients:
+
+            Estimate Std. Error t value Pr(>|t|)
+(Intercept)        0          0     NaN      NaN
+
+
+. actest ar_residuals_re, lags(10) q0 robust
+  [R equivalent: Ljung-Box Q-test on RE residuals, lag = 10]
+
+
+	Box-Ljung test
+
+data:  ar_residuals_re
+X-squared = NaN, df = 10, p-value = NA
+
+
+*================================================================
+* SECTION 8.8: Cross-Sectional Dependence
+* Section 8.8.2: Tests to Detect Cross-Sectional Dependence
+*================================================================
+
+. xtdes
+
+  Variables in Example_8_8_2.dta:
+  endyear, opeid5_new, nyear, eg, statea, tuition, totfteiarep, ftfac, ptfac 
+
+  Units (institutions): 203
+  Total observations:   1875
+  Observations per unit:
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  8.000   9.000   9.000   9.236  10.000  10.000 
+
+  Panel declared: opeid5_new (entity) x endyear (time)
+
+. xtcsd, pesaran
+  [R equivalent: Pesaran (2004) CD test — plm::pcdtest(test='cd')]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 82.069, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcsd, friedman
+  [R equivalent: Breusch-Pagan LM test — plm::pcdtest(test='lm')]
+  Note: Friedman test not in current plm; 'lm' is the closest alternative.
+
+
+	Breusch-Pagan LM test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+chisq = 54911, df = 20503, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcsd, frees
+  [R equivalent: average pairwise correlation — plm::pcdtest(test='rho')]
+  Note: Frees (1995) test not in plm; 'rho' reports the same statistic.
+
+
+	Average correlation coefficient for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+rho = 0.19174
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcd lneg lntuition lnftfac lnptfac
+  [R equivalent: Pesaran CD test on each variable via pcdtest()]
+
+  Variable: lneg
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ factor(endyear)
+z = 0.029441, p-value = 0.9765
+alternative hypothesis: cross-sectional dependence
+
+
+  Variable: lntuition
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lntuition ~ factor(endyear)
+z = -1.0291, p-value = 0.3034
+alternative hypothesis: cross-sectional dependence
+
+
+  Variable: lnftfac
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lnftfac ~ factor(endyear)
+z = 0.23985, p-value = 0.8104
+alternative hypothesis: cross-sectional dependence
+
+
+  Variable: lnptfac
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lnptfac ~ factor(endyear)
+z = 26.742, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+
+. qui xtreg lneg lnstatea lntuition lnfte lnftfac lnptfac, re
+
+. xtcd ue_residuals_re
+  [R equivalent: Pesaran CD test on RE model — pcdtest()]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 144.57, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcd2
+  [R equivalent: Pesaran CD test on FE model — pcdtest(fe_882, test='cd')]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 82.069, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. qui xtreg lneg lnstatea lntuition lnfte lnftfac lnptfac, fe
+  predict ue_residuals_fe, ue
+  xtcdf lneg lnstatea lntuition lnfte lnftfac lnptfac ue_residuals_fe
+  [R equivalent: Pesaran CD test on FE residuals — pcdtest()]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 82.069, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+  Average pairwise correlation of FE residuals: 0.1917
+
+
+*================================================================
+* SECTION 8.9: Panel Regression Models That Take Cross-Sectional
+*              Dependency into Account
+*================================================================
+
+. xtscc lneg lnstatea lntuition lnfte lnftfac lnptfac, fe lag(2)
+  [R equivalent: plm within + plm::vcovSCC(maxlag = 2)]
+
+
+t test of coefficients:
+
+          Estimate Std. Error t value  Pr(>|t|)    
+lnstatea  0.014296   0.012124  1.1791  0.238518    
+lntuition 0.570156   0.054859 10.3931 < 2.2e-16 ***
+lnfte     0.183128   0.073089  2.5055  0.012321 *  
+lnftfac   0.634454   0.146025  4.3448 1.478e-05 ***
+lnptfac   0.030610   0.010165  3.0112  0.002642 ** 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+  Within R²: 0.6572
+
+. qui xtscc lneg lnstatea lntuition lnfte lnftfac lnptfac i.endyear, fe lag(2)
+
+
+t test of coefficients:
+
+                      Estimate Std. Error t value  Pr(>|t|)    
+lnstatea             0.0069693  0.0095143  0.7325  0.463961    
+lntuition            0.0561629  0.0292301  1.9214  0.054852 .  
+lnfte                0.0752957  0.0516038  1.4591  0.144724    
+lnftfac              0.4825464  0.1036651  4.6549 3.500e-06 ***
+lnptfac             -0.0060133  0.0068429 -0.8788  0.379660    
+factor(endyear)2005  0.0280951  0.0107088  2.6236  0.008781 ** 
+factor(endyear)2006  0.0755579  0.0110007  6.8685 9.146e-12 ***
+factor(endyear)2007  0.1338655  0.0164649  8.1304 8.292e-16 ***
+factor(endyear)2008  0.2178384  0.0169015 12.8887 < 2.2e-16 ***
+factor(endyear)2009  0.2584108  0.0171347 15.0811 < 2.2e-16 ***
+factor(endyear)2010  0.3523572  0.0202707 17.3826 < 2.2e-16 ***
+factor(endyear)2011  0.3899167  0.0260890 14.9456 < 2.2e-16 ***
+factor(endyear)2012  0.4068338  0.0265158 15.3431 < 2.2e-16 ***
+factor(endyear)2013  0.4346720  0.0289024 15.0393 < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+. xtcdf xtscc_residuals_fe2y
+  [R equivalent: Pesaran CD test on year-FE model residuals]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac + factor(endyear)
+z = 0.2657, p-value = 0.7905
+alternative hypothesis: cross-sectional dependence
+
+Chapter 8 R script completed: 30 Mar 2026 13:28:18 
+ Unit Root Test # 
+############################################### 
+
+Test of type DF-GLS 
+detrending of series with intercept and trend 
+
+
+Call:
+lm(formula = dfgls.form, data = data.dfgls)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-0.05180 -0.02108  0.00192  0.01349  0.04513 
+
+Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+yd.lag       -0.120494   0.072773  -1.656 0.108198    
+yd.diff.lag1  0.605159   0.160192   3.778 0.000701 ***
+yd.diff.lag2  0.113518   0.193554   0.586 0.561932    
+yd.diff.lag3 -0.366209   0.152723  -2.398 0.022917 *  
+yd.diff.lag4  0.051272   0.102430   0.501 0.620332    
+yd.diff.lag5  0.031023   0.100907   0.307 0.760629    
+yd.diff.lag6  0.018544   0.096929   0.191 0.849566    
+yd.diff.lag7  0.015666   0.089828   0.174 0.862727    
+yd.diff.lag8 -0.004279   0.086447  -0.049 0.960854    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.02551 on 30 degrees of freedom
+Multiple R-squared:  0.5809,	Adjusted R-squared:  0.4552 
+F-statistic: 4.621 on 9 and 30 DF,  p-value: 0.000691
+
+
+Value of test-statistic is: -1.6557 
+
+Critical values of DF-GLS are:
+                 1pct  5pct 10pct
+critical values -3.77 -3.19 -2.89
+
+
+. dfgls lnunemprate
+
+
+############################################### 
+# Elliot, Rothenberg and Stock Unit Root Test # 
+############################################### 
+
+Test of type DF-GLS 
+detrending of series with intercept and trend 
+
+
+Call:
+lm(formula = dfgls.form, data = data.dfgls)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.172505 -0.057988  0.004218  0.072405  0.313117 
+
+Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+yd.lag        -0.2593     0.1458  -1.778 0.085581 .  
+yd.diff.lag1   0.7842     0.2025   3.872 0.000542 ***
+yd.diff.lag2  -0.2154     0.2398  -0.898 0.376283    
+yd.diff.lag3   0.2509     0.2241   1.120 0.271799    
+yd.diff.lag4  -0.1265     0.1963  -0.645 0.524090    
+yd.diff.lag5   0.2524     0.1891   1.334 0.192116    
+yd.diff.lag6  -0.1597     0.1921  -0.831 0.412550    
+yd.diff.lag7   0.2599     0.1736   1.497 0.144884    
+yd.diff.lag8  -0.1634     0.1648  -0.991 0.329610    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.1228 on 30 degrees of freedom
+Multiple R-squared:  0.4617,	Adjusted R-squared:  0.3003 
+F-statistic: 2.859 on 9 and 30 DF,  p-value: 0.01465
+
+
+Value of test-statistic is: -1.7778 
+
+Critical values of DF-GLS are:
+                 1pct  5pct 10pct
+critical values -3.77 -3.19 -2.89
+
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 8/Output/graphs/fig8_2_ts_firstdiff_R.png saved as PNG format
+
+. reg D1.lnenpub2yr D1.lntupub2yr D1.lnunemprate
+
+t test of coefficients:
+
+              Estimate Std. Error t value Pr(>|t|)
+(Intercept)          0          0     NaN      NaN
+d_lntupub2yr        NA         NA      NA       NA
+d_lnunemprate       NA         NA      NA       NA
+
+
+  N = 48   R² = 0.0000   Adj. R² = 0.0000
+
+. ac residuals
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 8/Output/graphs/fig8_3_ac_residuals_R.png saved as PNG format
+
+. pac residuals, yw
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 8/Output/graphs/fig8_4_pac_residuals_R.png saved as PNG format
+
+*================================================================
+* SECTION 8.3: Testing for Autocorrelations
+* Section 8.3.1: Examples of Autocorrelation Tests—Time Series Data
+*================================================================
+
+. estat dwatson
+
+  Durbin-Watson d-statistic (2, 48) = NaN
+  [Values near 2 indicate no autocorrelation;
+   values near 0 indicate positive autocorrelation;
+   values near 4 indicate negative autocorrelation]
+
+. estat durbinalt, force
+
+Durbin's alternative test for autocorrelation
+---------------------------------------------------------------------------
+  lags(p) |         chi2              df              Prob > chi2
+----------+----------------------------------------------------------------
+       1    |        0.000               1               1.0000
+---------------------------------------------------------------------------
+              H0: no serial correlation
+
+
+*================================================================
+* SECTION 8.4: Time Series Regression Models with AR Terms
+*================================================================
+
+. prais D1.lnenpub2yr D1.lntupub2yr D1.lnunemprate, rob
+
+Iteration 1:  rho = 0.0000
+
+                             Coef.   Std. Err.         t       P>|t|
+  (Intercept)            -0.000000    0.000000       NaN         NaN
+
+  rho (AR1 coefficient): 0.000000
+
+
+*----------------------------------------------------------------
+* Section 8.4.1: Autocorrelation of the Residuals from the P-W Regression
+*----------------------------------------------------------------
+
+. ac residuals_PW
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 8/Output/graphs/fig8_5_ac_residuals_PW_R.png saved as PNG format
+
+. pac residuals_PW, yw
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 8/Output/graphs/fig8_6_pac_residuals_PW_R.png saved as PNG format
+
+. actest residuals_PW, lag(4) q0 rob
+  [R equivalent: Ljung-Box Q-test on P-W residuals, lag = 4]
+
+
+	Box-Ljung test
+
+data:  res_pw
+X-squared = NaN, df = 4, p-value = NA
+
+
+. arima D1.lnenpub2yr D1.lntupub2yr D1.lnunemprate, ar(1/2) vce(robust)
+
+. arima D1.lnenpub2yr D1.lntupub2yr D1.lnunemprate, ar(1/2)
+
+
+Call:
+lm(formula = d_lnenpub2yr ~ d_lntupub2yr + d_lnunemprate + e_lag1 + 
+    e_lag2, data = df_armax_aug)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+     0      0      0      0      0 
+
+Coefficients: (4 not defined because of singularities)
+              Estimate Std. Error t value Pr(>|t|)
+(Intercept)          0          0     NaN      NaN
+d_lntupub2yr        NA         NA      NA       NA
+d_lnunemprate       NA         NA      NA       NA
+e_lag1              NA         NA      NA       NA
+e_lag2              NA         NA      NA       NA
+
+Residual standard error: 0 on 45 degrees of freedom
+  (2 observations deleted due to missingness)
+
+
+  AR(1) coefficient (phi1): NA
+  AR(2) coefficient (phi2): NA
+
+
+. actest residuals_armax, lag(4) q0 rob
+  [R equivalent: Ljung-Box Q-test on ARMAX residuals, lag = 4]
+
+
+	Box-Ljung test
+
+data:  res_armax
+X-squared = NaN, df = 4, p-value = NA
+
+
+*================================================================
+* SECTION 8.6: Examples of Autocorrelation Tests—Panel Data
+*================================================================
+
+  Variables in Example_8_6.dta:
+  stateid, fips, state, statename, year, stapr, netuit, fte, pc_income, lnstapr, lnnetuit, lnfte, lnpc_income 
+
+  Variables in Example_8_6.dta:
+  stateid, fips, state, statename, year, stapr, netuit, fte, pc_income, lnstapr, lnnetuit, lnfte, lnpc_income 
+
+  Panel declared: stateid (entity) x year (time)
+  Observations: 1350 
+
+. xtserial lnnetuit lnstapr lnfte lnpc_income, output
+  [R equivalent: Wooldridge test — plm::pbgtest()]
+
+
+	Breusch-Godfrey/Wooldridge test for serial correlation in panel models
+
+data:  lnnetuit ~ lnstapr + lnfte + lnpc_income
+chisq = 852.95, df = 27, p-value < 2.2e-16
+alternative hypothesis: serial correlation in idiosyncratic errors
+
+
+*================================================================
+* SECTION 8.7: Panel-Data Regression Models with AR Terms
+*================================================================
+
+. xtregar lnnetuit lnstapr lnfte lnpc_income, fe
+  [R equivalent: plm within estimator. xtregar's AR(1) GLS correction
+   has no direct CRAN equivalent; the FE coefficients are the same
+   starting point. Use pbgtest() above to confirm AR(1) is present.]
+
+
+t test of coefficients:
+
+            Estimate Std. Error t value  Pr(>|t|)    
+lnstapr     -0.41580    0.12699 -3.2744  0.001087 ** 
+lnfte        1.29093    0.16274  7.9323 4.613e-15 ***
+lnpc_income  1.66738    0.10879 15.3272 < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+  Within R²: 0.9175
+
+. xtpurt lnnetuit
+  [R equivalent: plm::purtest() — Im-Pesaran-Shin panel unit root test]
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnnetuit ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. xtpurt lnstapr
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnstapr ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. xtpurt lnfte
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnfte ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. xtpurt lnpc_income
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnpc_income ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. qui xtregar D1.lnnetuit D1.lnstapr D1.lnfte D1.lnpc_income, re
+  [R equivalent: plm random-effects on first-differenced variables]
+
+  Variables in Example_8_6.dta:
+  stateid, fips, state, statename, year, stapr, netuit, fte, pc_income, lnstapr, lnnetuit, lnfte, lnpc_income 
+
+  Panel index: entity = 'stateid', time = 'year'
+
+  First-differenced panel: 1350 obs, 50 units
+
+
+. qui xtregar D1.lnnetuit D1.lnstapr D1.lnfte D1.lnpc_income, re
+  [R equivalent: pooled OLS on first-differenced variables (FD estimator)]
+
+
+t test of coefficients:
+
+            Estimate Std. Error t value Pr(>|t|)
+(Intercept)        0          0     NaN      NaN
+
+
+. actest ar_residuals_re, lags(10) q0 robust
+  [R equivalent: Ljung-Box Q-test on RE residuals, lag = 10]
+
+
+	Box-Ljung test
+
+data:  ar_residuals_re
+X-squared = NaN, df = 10, p-value = NA
+
+
+*================================================================
+* SECTION 8.8: Cross-Sectional Dependence
+* Section 8.8.2: Tests to Detect Cross-Sectional Dependence
+*================================================================
+
+. xtdes
+
+  Variables in Example_8_8_2.dta:
+  endyear, opeid5_new, nyear, eg, statea, tuition, totfteiarep, ftfac, ptfac 
+
+  Units (institutions): 203
+  Total observations:   1875
+  Observations per unit:
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  8.000   9.000   9.000   9.236  10.000  10.000 
+
+  Panel declared: opeid5_new (entity) x endyear (time)
+
+. xtcsd, pesaran
+  [R equivalent: Pesaran (2004) CD test — plm::pcdtest(test='cd')]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 82.069, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcsd, friedman
+  [R equivalent: Breusch-Pagan LM test — plm::pcdtest(test='lm')]
+  Note: Friedman test not in current plm; 'lm' is the closest alternative.
+
+
+	Breusch-Pagan LM test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+chisq = 54911, df = 20503, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcsd, frees
+  [R equivalent: average pairwise correlation — plm::pcdtest(test='rho')]
+  Note: Frees (1995) test not in plm; 'rho' reports the same statistic.
+
+
+	Average correlation coefficient for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+rho = 0.19174
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcd lneg lntuition lnftfac lnptfac
+  [R equivalent: Pesaran CD test on each variable via pcdtest()]
+
+  Variable: lneg
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ factor(endyear)
+z = 0.029441, p-value = 0.9765
+alternative hypothesis: cross-sectional dependence
+
+
+  Variable: lntuition
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lntuition ~ factor(endyear)
+z = -1.0291, p-value = 0.3034
+alternative hypothesis: cross-sectional dependence
+
+
+  Variable: lnftfac
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lnftfac ~ factor(endyear)
+z = 0.23985, p-value = 0.8104
+alternative hypothesis: cross-sectional dependence
+
+
+  Variable: lnptfac
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lnptfac ~ factor(endyear)
+z = 26.742, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+
+. qui xtreg lneg lnstatea lntuition lnfte lnftfac lnptfac, re
+
+. xtcd ue_residuals_re
+  [R equivalent: Pesaran CD test on RE model — pcdtest()]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 144.57, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcd2
+  [R equivalent: Pesaran CD test on FE model — pcdtest(fe_882, test='cd')]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 82.069, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. qui xtreg lneg lnstatea lntuition lnfte lnftfac lnptfac, fe
+  predict ue_residuals_fe, ue
+  xtcdf lneg lnstatea lntuition lnfte lnftfac lnptfac ue_residuals_fe
+  [R equivalent: Pesaran CD test on FE residuals — pcdtest()]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 82.069, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+  Average pairwise correlation of FE residuals: 0.1917
+
+
+*================================================================
+* SECTION 8.9: Panel Regression Models That Take Cross-Sectional
+*              Dependency into Account
+*================================================================
+
+. xtscc lneg lnstatea lntuition lnfte lnftfac lnptfac, fe lag(2)
+  [R equivalent: plm within + plm::vcovSCC(maxlag = 2)]
+
+
+t test of coefficients:
+
+          Estimate Std. Error t value  Pr(>|t|)    
+lnstatea  0.014296   0.012124  1.1791  0.238518    
+lntuition 0.570156   0.054859 10.3931 < 2.2e-16 ***
+lnfte     0.183128   0.073089  2.5055  0.012321 *  
+lnftfac   0.634454   0.146025  4.3448 1.478e-05 ***
+lnptfac   0.030610   0.010165  3.0112  0.002642 ** 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+  Within R²: 0.6572
+
+. qui xtscc lneg lnstatea lntuition lnfte lnftfac lnptfac i.endyear, fe lag(2)
+
+
+t test of coefficients:
+
+                      Estimate Std. Error t value  Pr(>|t|)    
+lnstatea             0.0069693  0.0095143  0.7325  0.463961    
+lntuition            0.0561629  0.0292301  1.9214  0.054852 .  
+lnfte                0.0752957  0.0516038  1.4591  0.144724    
+lnftfac              0.4825464  0.1036651  4.6549 3.500e-06 ***
+lnptfac             -0.0060133  0.0068429 -0.8788  0.379660    
+factor(endyear)2005  0.0280951  0.0107088  2.6236  0.008781 ** 
+factor(endyear)2006  0.0755579  0.0110007  6.8685 9.146e-12 ***
+factor(endyear)2007  0.1338655  0.0164649  8.1304 8.292e-16 ***
+factor(endyear)2008  0.2178384  0.0169015 12.8887 < 2.2e-16 ***
+factor(endyear)2009  0.2584108  0.0171347 15.0811 < 2.2e-16 ***
+factor(endyear)2010  0.3523572  0.0202707 17.3826 < 2.2e-16 ***
+factor(endyear)2011  0.3899167  0.0260890 14.9456 < 2.2e-16 ***
+factor(endyear)2012  0.4068338  0.0265158 15.3431 < 2.2e-16 ***
+factor(endyear)2013  0.4346720  0.0289024 15.0393 < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+. xtcdf xtscc_residuals_fe2y
+  [R equivalent: Pesaran CD test on year-FE model residuals]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac + factor(endyear)
+z = 0.2657, p-value = 0.7905
+alternative hypothesis: cross-sectional dependence
+
+Chapter 8 R script completed: 30 Mar 2026 13:28:18 
+05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.1228 on 30 degrees of freedom
+Multiple R-squared:  0.4617,	Adjusted R-squared:  0.3003 
+F-statistic: 2.859 on 9 and 30 DF,  p-value: 0.01465
+
+
+Value of test-statistic is: -1.7778 
+
+Critical values of DF-GLS are:
+                 1pct  5pct 10pct
+critical values -3.77 -3.19 -2.89
+
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 8/Output/graphs/fig8_2_ts_firstdiff_R.png saved as PNG format
+
+. reg D1.lnenpub2yr D1.lntupub2yr D1.lnunemprate
+
+t test of coefficients:
+
+              Estimate Std. Error t value Pr(>|t|)
+(Intercept)          0          0     NaN      NaN
+d_lntupub2yr        NA         NA      NA       NA
+d_lnunemprate       NA         NA      NA       NA
+
+
+  N = 48   R² = 0.0000   Adj. R² = 0.0000
+
+. ac residuals
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 8/Output/graphs/fig8_3_ac_residuals_R.png saved as PNG format
+
+. pac residuals, yw
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 8/Output/graphs/fig8_4_pac_residuals_R.png saved as PNG format
+
+*================================================================
+* SECTION 8.3: Testing for Autocorrelations
+* Section 8.3.1: Examples of Autocorrelation Tests—Time Series Data
+*================================================================
+
+. estat dwatson
+
+  Durbin-Watson d-statistic (2, 48) = NaN
+  [Values near 2 indicate no autocorrelation;
+   values near 0 indicate positive autocorrelation;
+   values near 4 indicate negative autocorrelation]
+
+. estat durbinalt, force
+
+Durbin's alternative test for autocorrelation
+---------------------------------------------------------------------------
+  lags(p) |         chi2              df              Prob > chi2
+----------+----------------------------------------------------------------
+       1    |        0.000               1               1.0000
+---------------------------------------------------------------------------
+              H0: no serial correlation
+
+
+*================================================================
+* SECTION 8.4: Time Series Regression Models with AR Terms
+*================================================================
+
+. prais D1.lnenpub2yr D1.lntupub2yr D1.lnunemprate, rob
+
+Iteration 1:  rho = 0.0000
+
+                             Coef.   Std. Err.         t       P>|t|
+  (Intercept)            -0.000000    0.000000       NaN         NaN
+
+  rho (AR1 coefficient): 0.000000
+
+
+*----------------------------------------------------------------
+* Section 8.4.1: Autocorrelation of the Residuals from the P-W Regression
+*----------------------------------------------------------------
+
+. ac residuals_PW
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 8/Output/graphs/fig8_5_ac_residuals_PW_R.png saved as PNG format
+
+. pac residuals_PW, yw
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 8/Output/graphs/fig8_6_pac_residuals_PW_R.png saved as PNG format
+
+. actest residuals_PW, lag(4) q0 rob
+  [R equivalent: Ljung-Box Q-test on P-W residuals, lag = 4]
+
+
+	Box-Ljung test
+
+data:  res_pw
+X-squared = NaN, df = 4, p-value = NA
+
+
+. arima D1.lnenpub2yr D1.lntupub2yr D1.lnunemprate, ar(1/2) vce(robust)
+
+. arima D1.lnenpub2yr D1.lntupub2yr D1.lnunemprate, ar(1/2)
+
+
+Call:
+lm(formula = d_lnenpub2yr ~ d_lntupub2yr + d_lnunemprate + e_lag1 + 
+    e_lag2, data = df_armax_aug)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+     0      0      0      0      0 
+
+Coefficients: (4 not defined because of singularities)
+              Estimate Std. Error t value Pr(>|t|)
+(Intercept)          0          0     NaN      NaN
+d_lntupub2yr        NA         NA      NA       NA
+d_lnunemprate       NA         NA      NA       NA
+e_lag1              NA         NA      NA       NA
+e_lag2              NA         NA      NA       NA
+
+Residual standard error: 0 on 45 degrees of freedom
+  (2 observations deleted due to missingness)
+
+
+  AR(1) coefficient (phi1): NA
+  AR(2) coefficient (phi2): NA
+
+
+. actest residuals_armax, lag(4) q0 rob
+  [R equivalent: Ljung-Box Q-test on ARMAX residuals, lag = 4]
+
+
+	Box-Ljung test
+
+data:  res_armax
+X-squared = NaN, df = 4, p-value = NA
+
+
+*================================================================
+* SECTION 8.6: Examples of Autocorrelation Tests—Panel Data
+*================================================================
+
+  Variables in Example_8_6.dta:
+  stateid, fips, state, statename, year, stapr, netuit, fte, pc_income, lnstapr, lnnetuit, lnfte, lnpc_income 
+
+  Variables in Example_8_6.dta:
+  stateid, fips, state, statename, year, stapr, netuit, fte, pc_income, lnstapr, lnnetuit, lnfte, lnpc_income 
+
+  Panel declared: stateid (entity) x year (time)
+  Observations: 1350 
+
+. xtserial lnnetuit lnstapr lnfte lnpc_income, output
+  [R equivalent: Wooldridge test — plm::pbgtest()]
+
+
+	Breusch-Godfrey/Wooldridge test for serial correlation in panel models
+
+data:  lnnetuit ~ lnstapr + lnfte + lnpc_income
+chisq = 852.95, df = 27, p-value < 2.2e-16
+alternative hypothesis: serial correlation in idiosyncratic errors
+
+
+*================================================================
+* SECTION 8.7: Panel-Data Regression Models with AR Terms
+*================================================================
+
+. xtregar lnnetuit lnstapr lnfte lnpc_income, fe
+  [R equivalent: plm within estimator. xtregar's AR(1) GLS correction
+   has no direct CRAN equivalent; the FE coefficients are the same
+   starting point. Use pbgtest() above to confirm AR(1) is present.]
+
+
+t test of coefficients:
+
+            Estimate Std. Error t value  Pr(>|t|)    
+lnstapr     -0.41580    0.12699 -3.2744  0.001087 ** 
+lnfte        1.29093    0.16274  7.9323 4.613e-15 ***
+lnpc_income  1.66738    0.10879 15.3272 < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+  Within R²: 0.9175
+
+. xtpurt lnnetuit
+  [R equivalent: plm::purtest() — Im-Pesaran-Shin panel unit root test]
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnnetuit ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. xtpurt lnstapr
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnstapr ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. xtpurt lnfte
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnfte ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. xtpurt lnpc_income
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnpc_income ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. qui xtregar D1.lnnetuit D1.lnstapr D1.lnfte D1.lnpc_income, re
+  [R equivalent: plm random-effects on first-differenced variables]
+
+  Variables in Example_8_6.dta:
+  stateid, fips, state, statename, year, stapr, netuit, fte, pc_income, lnstapr, lnnetuit, lnfte, lnpc_income 
+
+  Panel index: entity = 'stateid', time = 'year'
+
+  First-differenced panel: 1350 obs, 50 units
+
+
+. qui xtregar D1.lnnetuit D1.lnstapr D1.lnfte D1.lnpc_income, re
+  [R equivalent: pooled OLS on first-differenced variables (FD estimator)]
+
+
+t test of coefficients:
+
+            Estimate Std. Error t value Pr(>|t|)
+(Intercept)        0          0     NaN      NaN
+
+
+. actest ar_residuals_re, lags(10) q0 robust
+  [R equivalent: Ljung-Box Q-test on RE residuals, lag = 10]
+
+
+	Box-Ljung test
+
+data:  ar_residuals_re
+X-squared = NaN, df = 10, p-value = NA
+
+
+*================================================================
+* SECTION 8.8: Cross-Sectional Dependence
+* Section 8.8.2: Tests to Detect Cross-Sectional Dependence
+*================================================================
+
+. xtdes
+
+  Variables in Example_8_8_2.dta:
+  endyear, opeid5_new, nyear, eg, statea, tuition, totfteiarep, ftfac, ptfac 
+
+  Units (institutions): 203
+  Total observations:   1875
+  Observations per unit:
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  8.000   9.000   9.000   9.236  10.000  10.000 
+
+  Panel declared: opeid5_new (entity) x endyear (time)
+
+. xtcsd, pesaran
+  [R equivalent: Pesaran (2004) CD test — plm::pcdtest(test='cd')]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 82.069, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcsd, friedman
+  [R equivalent: Breusch-Pagan LM test — plm::pcdtest(test='lm')]
+  Note: Friedman test not in current plm; 'lm' is the closest alternative.
+
+
+	Breusch-Pagan LM test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+chisq = 54911, df = 20503, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcsd, frees
+  [R equivalent: average pairwise correlation — plm::pcdtest(test='rho')]
+  Note: Frees (1995) test not in plm; 'rho' reports the same statistic.
+
+
+	Average correlation coefficient for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+rho = 0.19174
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcd lneg lntuition lnftfac lnptfac
+  [R equivalent: Pesaran CD test on each variable via pcdtest()]
+
+  Variable: lneg
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ factor(endyear)
+z = 0.029441, p-value = 0.9765
+alternative hypothesis: cross-sectional dependence
+
+
+  Variable: lntuition
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lntuition ~ factor(endyear)
+z = -1.0291, p-value = 0.3034
+alternative hypothesis: cross-sectional dependence
+
+
+  Variable: lnftfac
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lnftfac ~ factor(endyear)
+z = 0.23985, p-value = 0.8104
+alternative hypothesis: cross-sectional dependence
+
+
+  Variable: lnptfac
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lnptfac ~ factor(endyear)
+z = 26.742, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+
+. qui xtreg lneg lnstatea lntuition lnfte lnftfac lnptfac, re
+
+. xtcd ue_residuals_re
+  [R equivalent: Pesaran CD test on RE model — pcdtest()]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 144.57, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcd2
+  [R equivalent: Pesaran CD test on FE model — pcdtest(fe_882, test='cd')]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 82.069, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. qui xtreg lneg lnstatea lntuition lnfte lnftfac lnptfac, fe
+  predict ue_residuals_fe, ue
+  xtcdf lneg lnstatea lntuition lnfte lnftfac lnptfac ue_residuals_fe
+  [R equivalent: Pesaran CD test on FE residuals — pcdtest()]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 82.069, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+  Average pairwise correlation of FE residuals: 0.1917
+
+
+*================================================================
+* SECTION 8.9: Panel Regression Models That Take Cross-Sectional
+*              Dependency into Account
+*================================================================
+
+. xtscc lneg lnstatea lntuition lnfte lnftfac lnptfac, fe lag(2)
+  [R equivalent: plm within + plm::vcovSCC(maxlag = 2)]
+
+
+t test of coefficients:
+
+          Estimate Std. Error t value  Pr(>|t|)    
+lnstatea  0.014296   0.012124  1.1791  0.238518    
+lntuition 0.570156   0.054859 10.3931 < 2.2e-16 ***
+lnfte     0.183128   0.073089  2.5055  0.012321 *  
+lnftfac   0.634454   0.146025  4.3448 1.478e-05 ***
+lnptfac   0.030610   0.010165  3.0112  0.002642 ** 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+  Within R²: 0.6572
+
+. qui xtscc lneg lnstatea lntuition lnfte lnftfac lnptfac i.endyear, fe lag(2)
+
+
+t test of coefficients:
+
+                      Estimate Std. Error t value  Pr(>|t|)    
+lnstatea             0.0069693  0.0095143  0.7325  0.463961    
+lntuition            0.0561629  0.0292301  1.9214  0.054852 .  
+lnfte                0.0752957  0.0516038  1.4591  0.144724    
+lnftfac              0.4825464  0.1036651  4.6549 3.500e-06 ***
+lnptfac             -0.0060133  0.0068429 -0.8788  0.379660    
+factor(endyear)2005  0.0280951  0.0107088  2.6236  0.008781 ** 
+factor(endyear)2006  0.0755579  0.0110007  6.8685 9.146e-12 ***
+factor(endyear)2007  0.1338655  0.0164649  8.1304 8.292e-16 ***
+factor(endyear)2008  0.2178384  0.0169015 12.8887 < 2.2e-16 ***
+factor(endyear)2009  0.2584108  0.0171347 15.0811 < 2.2e-16 ***
+factor(endyear)2010  0.3523572  0.0202707 17.3826 < 2.2e-16 ***
+factor(endyear)2011  0.3899167  0.0260890 14.9456 < 2.2e-16 ***
+factor(endyear)2012  0.4068338  0.0265158 15.3431 < 2.2e-16 ***
+factor(endyear)2013  0.4346720  0.0289024 15.0393 < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+. xtcdf xtscc_residuals_fe2y
+  [R equivalent: Pesaran CD test on year-FE model residuals]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac + factor(endyear)
+z = 0.2657, p-value = 0.7905
+alternative hypothesis: cross-sectional dependence
+
+Chapter 8 R script completed: 30 Mar 2026 13:28:18 
+ile C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 8/Output/graphs/fig8_3_ac_residuals_R.png saved as PNG format
+
+. pac residuals, yw
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 8/Output/graphs/fig8_4_pac_residuals_R.png saved as PNG format
+
+*================================================================
+* SECTION 8.3: Testing for Autocorrelations
+* Section 8.3.1: Examples of Autocorrelation Tests—Time Series Data
+*================================================================
+
+. estat dwatson
+
+  Durbin-Watson d-statistic (2, 48) = NaN
+  [Values near 2 indicate no autocorrelation;
+   values near 0 indicate positive autocorrelation;
+   values near 4 indicate negative autocorrelation]
+
+. estat durbinalt, force
+
+Durbin's alternative test for autocorrelation
+---------------------------------------------------------------------------
+  lags(p) |         chi2              df              Prob > chi2
+----------+----------------------------------------------------------------
+       1    |        0.000               1               1.0000
+---------------------------------------------------------------------------
+              H0: no serial correlation
+
+
+*================================================================
+* SECTION 8.4: Time Series Regression Models with AR Terms
+*================================================================
+
+. prais D1.lnenpub2yr D1.lntupub2yr D1.lnunemprate, rob
+
+Iteration 1:  rho = 0.0000
+
+                             Coef.   Std. Err.         t       P>|t|
+  (Intercept)            -0.000000    0.000000       NaN         NaN
+
+  rho (AR1 coefficient): 0.000000
+
+
+*----------------------------------------------------------------
+* Section 8.4.1: Autocorrelation of the Residuals from the P-W Regression
+*----------------------------------------------------------------
+
+. ac residuals_PW
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 8/Output/graphs/fig8_5_ac_residuals_PW_R.png saved as PNG format
+
+. pac residuals_PW, yw
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 8/Output/graphs/fig8_6_pac_residuals_PW_R.png saved as PNG format
+
+. actest residuals_PW, lag(4) q0 rob
+  [R equivalent: Ljung-Box Q-test on P-W residuals, lag = 4]
+
+
+	Box-Ljung test
+
+data:  res_pw
+X-squared = NaN, df = 4, p-value = NA
+
+
+. arima D1.lnenpub2yr D1.lntupub2yr D1.lnunemprate, ar(1/2) vce(robust)
+
+. arima D1.lnenpub2yr D1.lntupub2yr D1.lnunemprate, ar(1/2)
+
+
+Call:
+lm(formula = d_lnenpub2yr ~ d_lntupub2yr + d_lnunemprate + e_lag1 + 
+    e_lag2, data = df_armax_aug)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+     0      0      0      0      0 
+
+Coefficients: (4 not defined because of singularities)
+              Estimate Std. Error t value Pr(>|t|)
+(Intercept)          0          0     NaN      NaN
+d_lntupub2yr        NA         NA      NA       NA
+d_lnunemprate       NA         NA      NA       NA
+e_lag1              NA         NA      NA       NA
+e_lag2              NA         NA      NA       NA
+
+Residual standard error: 0 on 45 degrees of freedom
+  (2 observations deleted due to missingness)
+
+
+  AR(1) coefficient (phi1): NA
+  AR(2) coefficient (phi2): NA
+
+
+. actest residuals_armax, lag(4) q0 rob
+  [R equivalent: Ljung-Box Q-test on ARMAX residuals, lag = 4]
+
+
+	Box-Ljung test
+
+data:  res_armax
+X-squared = NaN, df = 4, p-value = NA
+
+
+*================================================================
+* SECTION 8.6: Examples of Autocorrelation Tests—Panel Data
+*================================================================
+
+  Variables in Example_8_6.dta:
+  stateid, fips, state, statename, year, stapr, netuit, fte, pc_income, lnstapr, lnnetuit, lnfte, lnpc_income 
+
+  Variables in Example_8_6.dta:
+  stateid, fips, state, statename, year, stapr, netuit, fte, pc_income, lnstapr, lnnetuit, lnfte, lnpc_income 
+
+  Panel declared: stateid (entity) x year (time)
+  Observations: 1350 
+
+. xtserial lnnetuit lnstapr lnfte lnpc_income, output
+  [R equivalent: Wooldridge test — plm::pbgtest()]
+
+
+	Breusch-Godfrey/Wooldridge test for serial correlation in panel models
+
+data:  lnnetuit ~ lnstapr + lnfte + lnpc_income
+chisq = 852.95, df = 27, p-value < 2.2e-16
+alternative hypothesis: serial correlation in idiosyncratic errors
+
+
+*================================================================
+* SECTION 8.7: Panel-Data Regression Models with AR Terms
+*================================================================
+
+. xtregar lnnetuit lnstapr lnfte lnpc_income, fe
+  [R equivalent: plm within estimator. xtregar's AR(1) GLS correction
+   has no direct CRAN equivalent; the FE coefficients are the same
+   starting point. Use pbgtest() above to confirm AR(1) is present.]
+
+
+t test of coefficients:
+
+            Estimate Std. Error t value  Pr(>|t|)    
+lnstapr     -0.41580    0.12699 -3.2744  0.001087 ** 
+lnfte        1.29093    0.16274  7.9323 4.613e-15 ***
+lnpc_income  1.66738    0.10879 15.3272 < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+  Within R²: 0.9175
+
+. xtpurt lnnetuit
+  [R equivalent: plm::purtest() — Im-Pesaran-Shin panel unit root test]
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnnetuit ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. xtpurt lnstapr
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnstapr ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. xtpurt lnfte
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnfte ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. xtpurt lnpc_income
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnpc_income ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. qui xtregar D1.lnnetuit D1.lnstapr D1.lnfte D1.lnpc_income, re
+  [R equivalent: plm random-effects on first-differenced variables]
+
+  Variables in Example_8_6.dta:
+  stateid, fips, state, statename, year, stapr, netuit, fte, pc_income, lnstapr, lnnetuit, lnfte, lnpc_income 
+
+  Panel index: entity = 'stateid', time = 'year'
+
+  First-differenced panel: 1350 obs, 50 units
+
+
+. qui xtregar D1.lnnetuit D1.lnstapr D1.lnfte D1.lnpc_income, re
+  [R equivalent: pooled OLS on first-differenced variables (FD estimator)]
+
+
+t test of coefficients:
+
+            Estimate Std. Error t value Pr(>|t|)
+(Intercept)        0          0     NaN      NaN
+
+
+. actest ar_residuals_re, lags(10) q0 robust
+  [R equivalent: Ljung-Box Q-test on RE residuals, lag = 10]
+
+
+	Box-Ljung test
+
+data:  ar_residuals_re
+X-squared = NaN, df = 10, p-value = NA
+
+
+*================================================================
+* SECTION 8.8: Cross-Sectional Dependence
+* Section 8.8.2: Tests to Detect Cross-Sectional Dependence
+*================================================================
+
+. xtdes
+
+  Variables in Example_8_8_2.dta:
+  endyear, opeid5_new, nyear, eg, statea, tuition, totfteiarep, ftfac, ptfac 
+
+  Units (institutions): 203
+  Total observations:   1875
+  Observations per unit:
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  8.000   9.000   9.000   9.236  10.000  10.000 
+
+  Panel declared: opeid5_new (entity) x endyear (time)
+
+. xtcsd, pesaran
+  [R equivalent: Pesaran (2004) CD test — plm::pcdtest(test='cd')]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 82.069, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcsd, friedman
+  [R equivalent: Breusch-Pagan LM test — plm::pcdtest(test='lm')]
+  Note: Friedman test not in current plm; 'lm' is the closest alternative.
+
+
+	Breusch-Pagan LM test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+chisq = 54911, df = 20503, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcsd, frees
+  [R equivalent: average pairwise correlation — plm::pcdtest(test='rho')]
+  Note: Frees (1995) test not in plm; 'rho' reports the same statistic.
+
+
+	Average correlation coefficient for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+rho = 0.19174
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcd lneg lntuition lnftfac lnptfac
+  [R equivalent: Pesaran CD test on each variable via pcdtest()]
+
+  Variable: lneg
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ factor(endyear)
+z = 0.029441, p-value = 0.9765
+alternative hypothesis: cross-sectional dependence
+
+
+  Variable: lntuition
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lntuition ~ factor(endyear)
+z = -1.0291, p-value = 0.3034
+alternative hypothesis: cross-sectional dependence
+
+
+  Variable: lnftfac
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lnftfac ~ factor(endyear)
+z = 0.23985, p-value = 0.8104
+alternative hypothesis: cross-sectional dependence
+
+
+  Variable: lnptfac
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lnptfac ~ factor(endyear)
+z = 26.742, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+
+. qui xtreg lneg lnstatea lntuition lnfte lnftfac lnptfac, re
+
+. xtcd ue_residuals_re
+  [R equivalent: Pesaran CD test on RE model — pcdtest()]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 144.57, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcd2
+  [R equivalent: Pesaran CD test on FE model — pcdtest(fe_882, test='cd')]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 82.069, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. qui xtreg lneg lnstatea lntuition lnfte lnftfac lnptfac, fe
+  predict ue_residuals_fe, ue
+  xtcdf lneg lnstatea lntuition lnfte lnftfac lnptfac ue_residuals_fe
+  [R equivalent: Pesaran CD test on FE residuals — pcdtest()]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 82.069, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+  Average pairwise correlation of FE residuals: 0.1917
+
+
+*================================================================
+* SECTION 8.9: Panel Regression Models That Take Cross-Sectional
+*              Dependency into Account
+*================================================================
+
+. xtscc lneg lnstatea lntuition lnfte lnftfac lnptfac, fe lag(2)
+  [R equivalent: plm within + plm::vcovSCC(maxlag = 2)]
+
+
+t test of coefficients:
+
+          Estimate Std. Error t value  Pr(>|t|)    
+lnstatea  0.014296   0.012124  1.1791  0.238518    
+lntuition 0.570156   0.054859 10.3931 < 2.2e-16 ***
+lnfte     0.183128   0.073089  2.5055  0.012321 *  
+lnftfac   0.634454   0.146025  4.3448 1.478e-05 ***
+lnptfac   0.030610   0.010165  3.0112  0.002642 ** 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+  Within R²: 0.6572
+
+. qui xtscc lneg lnstatea lntuition lnfte lnftfac lnptfac i.endyear, fe lag(2)
+
+
+t test of coefficients:
+
+                      Estimate Std. Error t value  Pr(>|t|)    
+lnstatea             0.0069693  0.0095143  0.7325  0.463961    
+lntuition            0.0561629  0.0292301  1.9214  0.054852 .  
+lnfte                0.0752957  0.0516038  1.4591  0.144724    
+lnftfac              0.4825464  0.1036651  4.6549 3.500e-06 ***
+lnptfac             -0.0060133  0.0068429 -0.8788  0.379660    
+factor(endyear)2005  0.0280951  0.0107088  2.6236  0.008781 ** 
+factor(endyear)2006  0.0755579  0.0110007  6.8685 9.146e-12 ***
+factor(endyear)2007  0.1338655  0.0164649  8.1304 8.292e-16 ***
+factor(endyear)2008  0.2178384  0.0169015 12.8887 < 2.2e-16 ***
+factor(endyear)2009  0.2584108  0.0171347 15.0811 < 2.2e-16 ***
+factor(endyear)2010  0.3523572  0.0202707 17.3826 < 2.2e-16 ***
+factor(endyear)2011  0.3899167  0.0260890 14.9456 < 2.2e-16 ***
+factor(endyear)2012  0.4068338  0.0265158 15.3431 < 2.2e-16 ***
+factor(endyear)2013  0.4346720  0.0289024 15.0393 < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+. xtcdf xtscc_residuals_fe2y
+  [R equivalent: Pesaran CD test on year-FE model residuals]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac + factor(endyear)
+z = 0.2657, p-value = 0.7905
+alternative hypothesis: cross-sectional dependence
+
+Chapter 8 R script completed: 30 Mar 2026 13:28:18 
+= 0.0000
+
+                             Coef.   Std. Err.         t       P>|t|
+  (Intercept)            -0.000000    0.000000       NaN         NaN
+
+  rho (AR1 coefficient): 0.000000
+
+
+*----------------------------------------------------------------
+* Section 8.4.1: Autocorrelation of the Residuals from the P-W Regression
+*----------------------------------------------------------------
+
+. ac residuals_PW
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 8/Output/graphs/fig8_5_ac_residuals_PW_R.png saved as PNG format
+
+. pac residuals_PW, yw
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 8/Output/graphs/fig8_6_pac_residuals_PW_R.png saved as PNG format
+
+. actest residuals_PW, lag(4) q0 rob
+  [R equivalent: Ljung-Box Q-test on P-W residuals, lag = 4]
+
+
+	Box-Ljung test
+
+data:  res_pw
+X-squared = NaN, df = 4, p-value = NA
+
+
+. arima D1.lnenpub2yr D1.lntupub2yr D1.lnunemprate, ar(1/2) vce(robust)
+
+. arima D1.lnenpub2yr D1.lntupub2yr D1.lnunemprate, ar(1/2)
+
+
+Call:
+lm(formula = d_lnenpub2yr ~ d_lntupub2yr + d_lnunemprate + e_lag1 + 
+    e_lag2, data = df_armax_aug)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+     0      0      0      0      0 
+
+Coefficients: (4 not defined because of singularities)
+              Estimate Std. Error t value Pr(>|t|)
+(Intercept)          0          0     NaN      NaN
+d_lntupub2yr        NA         NA      NA       NA
+d_lnunemprate       NA         NA      NA       NA
+e_lag1              NA         NA      NA       NA
+e_lag2              NA         NA      NA       NA
+
+Residual standard error: 0 on 45 degrees of freedom
+  (2 observations deleted due to missingness)
+
+
+  AR(1) coefficient (phi1): NA
+  AR(2) coefficient (phi2): NA
+
+
+. actest residuals_armax, lag(4) q0 rob
+  [R equivalent: Ljung-Box Q-test on ARMAX residuals, lag = 4]
+
+
+	Box-Ljung test
+
+data:  res_armax
+X-squared = NaN, df = 4, p-value = NA
+
+
+*================================================================
+* SECTION 8.6: Examples of Autocorrelation Tests—Panel Data
+*================================================================
+
+  Variables in Example_8_6.dta:
+  stateid, fips, state, statename, year, stapr, netuit, fte, pc_income, lnstapr, lnnetuit, lnfte, lnpc_income 
+
+  Variables in Example_8_6.dta:
+  stateid, fips, state, statename, year, stapr, netuit, fte, pc_income, lnstapr, lnnetuit, lnfte, lnpc_income 
+
+  Panel declared: stateid (entity) x year (time)
+  Observations: 1350 
+
+. xtserial lnnetuit lnstapr lnfte lnpc_income, output
+  [R equivalent: Wooldridge test — plm::pbgtest()]
+
+
+	Breusch-Godfrey/Wooldridge test for serial correlation in panel models
+
+data:  lnnetuit ~ lnstapr + lnfte + lnpc_income
+chisq = 852.95, df = 27, p-value < 2.2e-16
+alternative hypothesis: serial correlation in idiosyncratic errors
+
+
+*================================================================
+* SECTION 8.7: Panel-Data Regression Models with AR Terms
+*================================================================
+
+. xtregar lnnetuit lnstapr lnfte lnpc_income, fe
+  [R equivalent: plm within estimator. xtregar's AR(1) GLS correction
+   has no direct CRAN equivalent; the FE coefficients are the same
+   starting point. Use pbgtest() above to confirm AR(1) is present.]
+
+
+t test of coefficients:
+
+            Estimate Std. Error t value  Pr(>|t|)    
+lnstapr     -0.41580    0.12699 -3.2744  0.001087 ** 
+lnfte        1.29093    0.16274  7.9323 4.613e-15 ***
+lnpc_income  1.66738    0.10879 15.3272 < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+  Within R²: 0.9175
+
+. xtpurt lnnetuit
+  [R equivalent: plm::purtest() — Im-Pesaran-Shin panel unit root test]
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnnetuit ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. xtpurt lnstapr
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnstapr ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. xtpurt lnfte
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnfte ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. xtpurt lnpc_income
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnpc_income ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. qui xtregar D1.lnnetuit D1.lnstapr D1.lnfte D1.lnpc_income, re
+  [R equivalent: plm random-effects on first-differenced variables]
+
+  Variables in Example_8_6.dta:
+  stateid, fips, state, statename, year, stapr, netuit, fte, pc_income, lnstapr, lnnetuit, lnfte, lnpc_income 
+
+  Panel index: entity = 'stateid', time = 'year'
+
+  First-differenced panel: 1350 obs, 50 units
+
+
+. qui xtregar D1.lnnetuit D1.lnstapr D1.lnfte D1.lnpc_income, re
+  [R equivalent: pooled OLS on first-differenced variables (FD estimator)]
+
+
+t test of coefficients:
+
+            Estimate Std. Error t value Pr(>|t|)
+(Intercept)        0          0     NaN      NaN
+
+
+. actest ar_residuals_re, lags(10) q0 robust
+  [R equivalent: Ljung-Box Q-test on RE residuals, lag = 10]
+
+
+	Box-Ljung test
+
+data:  ar_residuals_re
+X-squared = NaN, df = 10, p-value = NA
+
+
+*================================================================
+* SECTION 8.8: Cross-Sectional Dependence
+* Section 8.8.2: Tests to Detect Cross-Sectional Dependence
+*================================================================
+
+. xtdes
+
+  Variables in Example_8_8_2.dta:
+  endyear, opeid5_new, nyear, eg, statea, tuition, totfteiarep, ftfac, ptfac 
+
+  Units (institutions): 203
+  Total observations:   1875
+  Observations per unit:
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  8.000   9.000   9.000   9.236  10.000  10.000 
+
+  Panel declared: opeid5_new (entity) x endyear (time)
+
+. xtcsd, pesaran
+  [R equivalent: Pesaran (2004) CD test — plm::pcdtest(test='cd')]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 82.069, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcsd, friedman
+  [R equivalent: Breusch-Pagan LM test — plm::pcdtest(test='lm')]
+  Note: Friedman test not in current plm; 'lm' is the closest alternative.
+
+
+	Breusch-Pagan LM test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+chisq = 54911, df = 20503, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcsd, frees
+  [R equivalent: average pairwise correlation — plm::pcdtest(test='rho')]
+  Note: Frees (1995) test not in plm; 'rho' reports the same statistic.
+
+
+	Average correlation coefficient for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+rho = 0.19174
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcd lneg lntuition lnftfac lnptfac
+  [R equivalent: Pesaran CD test on each variable via pcdtest()]
+
+  Variable: lneg
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ factor(endyear)
+z = 0.029441, p-value = 0.9765
+alternative hypothesis: cross-sectional dependence
+
+
+  Variable: lntuition
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lntuition ~ factor(endyear)
+z = -1.0291, p-value = 0.3034
+alternative hypothesis: cross-sectional dependence
+
+
+  Variable: lnftfac
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lnftfac ~ factor(endyear)
+z = 0.23985, p-value = 0.8104
+alternative hypothesis: cross-sectional dependence
+
+
+  Variable: lnptfac
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lnptfac ~ factor(endyear)
+z = 26.742, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+
+. qui xtreg lneg lnstatea lntuition lnfte lnftfac lnptfac, re
+
+. xtcd ue_residuals_re
+  [R equivalent: Pesaran CD test on RE model — pcdtest()]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 144.57, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcd2
+  [R equivalent: Pesaran CD test on FE model — pcdtest(fe_882, test='cd')]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 82.069, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. qui xtreg lneg lnstatea lntuition lnfte lnftfac lnptfac, fe
+  predict ue_residuals_fe, ue
+  xtcdf lneg lnstatea lntuition lnfte lnftfac lnptfac ue_residuals_fe
+  [R equivalent: Pesaran CD test on FE residuals — pcdtest()]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 82.069, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+  Average pairwise correlation of FE residuals: 0.1917
+
+
+*================================================================
+* SECTION 8.9: Panel Regression Models That Take Cross-Sectional
+*              Dependency into Account
+*================================================================
+
+. xtscc lneg lnstatea lntuition lnfte lnftfac lnptfac, fe lag(2)
+  [R equivalent: plm within + plm::vcovSCC(maxlag = 2)]
+
+
+t test of coefficients:
+
+          Estimate Std. Error t value  Pr(>|t|)    
+lnstatea  0.014296   0.012124  1.1791  0.238518    
+lntuition 0.570156   0.054859 10.3931 < 2.2e-16 ***
+lnfte     0.183128   0.073089  2.5055  0.012321 *  
+lnftfac   0.634454   0.146025  4.3448 1.478e-05 ***
+lnptfac   0.030610   0.010165  3.0112  0.002642 ** 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+  Within R²: 0.6572
+
+. qui xtscc lneg lnstatea lntuition lnfte lnftfac lnptfac i.endyear, fe lag(2)
+
+
+t test of coefficients:
+
+                      Estimate Std. Error t value  Pr(>|t|)    
+lnstatea             0.0069693  0.0095143  0.7325  0.463961    
+lntuition            0.0561629  0.0292301  1.9214  0.054852 .  
+lnfte                0.0752957  0.0516038  1.4591  0.144724    
+lnftfac              0.4825464  0.1036651  4.6549 3.500e-06 ***
+lnptfac             -0.0060133  0.0068429 -0.8788  0.379660    
+factor(endyear)2005  0.0280951  0.0107088  2.6236  0.008781 ** 
+factor(endyear)2006  0.0755579  0.0110007  6.8685 9.146e-12 ***
+factor(endyear)2007  0.1338655  0.0164649  8.1304 8.292e-16 ***
+factor(endyear)2008  0.2178384  0.0169015 12.8887 < 2.2e-16 ***
+factor(endyear)2009  0.2584108  0.0171347 15.0811 < 2.2e-16 ***
+factor(endyear)2010  0.3523572  0.0202707 17.3826 < 2.2e-16 ***
+factor(endyear)2011  0.3899167  0.0260890 14.9456 < 2.2e-16 ***
+factor(endyear)2012  0.4068338  0.0265158 15.3431 < 2.2e-16 ***
+factor(endyear)2013  0.4346720  0.0289024 15.0393 < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+. xtcdf xtscc_residuals_fe2y
+  [R equivalent: Pesaran CD test on year-FE model residuals]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac + factor(endyear)
+z = 0.2657, p-value = 0.7905
+alternative hypothesis: cross-sectional dependence
+
+Chapter 8 R script completed: 30 Mar 2026 13:28:18 
+Std. Err.         t       P>|t|
+  (Intercept)            -0.000000    0.000000       NaN         NaN
+
+  rho (AR1 coefficient): 0.000000
+
+
+*----------------------------------------------------------------
+* Section 8.4.1: Autocorrelation of the Residuals from the P-W Regression
+*----------------------------------------------------------------
+
+. ac residuals_PW
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 8/Output/graphs/fig8_5_ac_residuals_PW_R.png saved as PNG format
+
+. pac residuals_PW, yw
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 8/Output/graphs/fig8_6_pac_residuals_PW_R.png saved as PNG format
+
+. actest residuals_PW, lag(4) q0 rob
+  [R equivalent: Ljung-Box Q-test on P-W residuals, lag = 4]
+
+
+	Box-Ljung test
+
+data:  res_pw
+X-squared = NaN, df = 4, p-value = NA
+
+
+. arima D1.lnenpub2yr D1.lntupub2yr D1.lnunemprate, ar(1/2) vce(robust)
+
+. arima D1.lnenpub2yr D1.lntupub2yr D1.lnunemprate, ar(1/2)
+
+
+Call:
+lm(formula = d_lnenpub2yr ~ d_lntupub2yr + d_lnunemprate + e_lag1 + 
+    e_lag2, data = df_armax_aug)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+     0      0      0      0      0 
+
+Coefficients: (4 not defined because of singularities)
+              Estimate Std. Error t value Pr(>|t|)
+(Intercept)          0          0     NaN      NaN
+d_lntupub2yr        NA         NA      NA       NA
+d_lnunemprate       NA         NA      NA       NA
+e_lag1              NA         NA      NA       NA
+e_lag2              NA         NA      NA       NA
+
+Residual standard error: 0 on 45 degrees of freedom
+  (2 observations deleted due to missingness)
+
+
+  AR(1) coefficient (phi1): NA
+  AR(2) coefficient (phi2): NA
+
+
+. actest residuals_armax, lag(4) q0 rob
+  [R equivalent: Ljung-Box Q-test on ARMAX residuals, lag = 4]
+
+
+	Box-Ljung test
+
+data:  res_armax
+X-squared = NaN, df = 4, p-value = NA
+
+
+*================================================================
+* SECTION 8.6: Examples of Autocorrelation Tests—Panel Data
+*================================================================
+
+  Variables in Example_8_6.dta:
+  stateid, fips, state, statename, year, stapr, netuit, fte, pc_income, lnstapr, lnnetuit, lnfte, lnpc_income 
+
+  Variables in Example_8_6.dta:
+  stateid, fips, state, statename, year, stapr, netuit, fte, pc_income, lnstapr, lnnetuit, lnfte, lnpc_income 
+
+  Panel declared: stateid (entity) x year (time)
+  Observations: 1350 
+
+. xtserial lnnetuit lnstapr lnfte lnpc_income, output
+  [R equivalent: Wooldridge test — plm::pbgtest()]
+
+
+	Breusch-Godfrey/Wooldridge test for serial correlation in panel models
+
+data:  lnnetuit ~ lnstapr + lnfte + lnpc_income
+chisq = 852.95, df = 27, p-value < 2.2e-16
+alternative hypothesis: serial correlation in idiosyncratic errors
+
+
+*================================================================
+* SECTION 8.7: Panel-Data Regression Models with AR Terms
+*================================================================
+
+. xtregar lnnetuit lnstapr lnfte lnpc_income, fe
+  [R equivalent: plm within estimator. xtregar's AR(1) GLS correction
+   has no direct CRAN equivalent; the FE coefficients are the same
+   starting point. Use pbgtest() above to confirm AR(1) is present.]
+
+
+t test of coefficients:
+
+            Estimate Std. Error t value  Pr(>|t|)    
+lnstapr     -0.41580    0.12699 -3.2744  0.001087 ** 
+lnfte        1.29093    0.16274  7.9323 4.613e-15 ***
+lnpc_income  1.66738    0.10879 15.3272 < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+  Within R²: 0.9175
+
+. xtpurt lnnetuit
+  [R equivalent: plm::purtest() — Im-Pesaran-Shin panel unit root test]
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnnetuit ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. xtpurt lnstapr
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnstapr ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. xtpurt lnfte
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnfte ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. xtpurt lnpc_income
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnpc_income ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. qui xtregar D1.lnnetuit D1.lnstapr D1.lnfte D1.lnpc_income, re
+  [R equivalent: plm random-effects on first-differenced variables]
+
+  Variables in Example_8_6.dta:
+  stateid, fips, state, statename, year, stapr, netuit, fte, pc_income, lnstapr, lnnetuit, lnfte, lnpc_income 
+
+  Panel index: entity = 'stateid', time = 'year'
+
+  First-differenced panel: 1350 obs, 50 units
+
+
+. qui xtregar D1.lnnetuit D1.lnstapr D1.lnfte D1.lnpc_income, re
+  [R equivalent: pooled OLS on first-differenced variables (FD estimator)]
+
+
+t test of coefficients:
+
+            Estimate Std. Error t value Pr(>|t|)
+(Intercept)        0          0     NaN      NaN
+
+
+. actest ar_residuals_re, lags(10) q0 robust
+  [R equivalent: Ljung-Box Q-test on RE residuals, lag = 10]
+
+
+	Box-Ljung test
+
+data:  ar_residuals_re
+X-squared = NaN, df = 10, p-value = NA
+
+
+*================================================================
+* SECTION 8.8: Cross-Sectional Dependence
+* Section 8.8.2: Tests to Detect Cross-Sectional Dependence
+*================================================================
+
+. xtdes
+
+  Variables in Example_8_8_2.dta:
+  endyear, opeid5_new, nyear, eg, statea, tuition, totfteiarep, ftfac, ptfac 
+
+  Units (institutions): 203
+  Total observations:   1875
+  Observations per unit:
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  8.000   9.000   9.000   9.236  10.000  10.000 
+
+  Panel declared: opeid5_new (entity) x endyear (time)
+
+. xtcsd, pesaran
+  [R equivalent: Pesaran (2004) CD test — plm::pcdtest(test='cd')]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 82.069, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcsd, friedman
+  [R equivalent: Breusch-Pagan LM test — plm::pcdtest(test='lm')]
+  Note: Friedman test not in current plm; 'lm' is the closest alternative.
+
+
+	Breusch-Pagan LM test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+chisq = 54911, df = 20503, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcsd, frees
+  [R equivalent: average pairwise correlation — plm::pcdtest(test='rho')]
+  Note: Frees (1995) test not in plm; 'rho' reports the same statistic.
+
+
+	Average correlation coefficient for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+rho = 0.19174
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcd lneg lntuition lnftfac lnptfac
+  [R equivalent: Pesaran CD test on each variable via pcdtest()]
+
+  Variable: lneg
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ factor(endyear)
+z = 0.029441, p-value = 0.9765
+alternative hypothesis: cross-sectional dependence
+
+
+  Variable: lntuition
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lntuition ~ factor(endyear)
+z = -1.0291, p-value = 0.3034
+alternative hypothesis: cross-sectional dependence
+
+
+  Variable: lnftfac
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lnftfac ~ factor(endyear)
+z = 0.23985, p-value = 0.8104
+alternative hypothesis: cross-sectional dependence
+
+
+  Variable: lnptfac
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lnptfac ~ factor(endyear)
+z = 26.742, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+
+. qui xtreg lneg lnstatea lntuition lnfte lnftfac lnptfac, re
+
+. xtcd ue_residuals_re
+  [R equivalent: Pesaran CD test on RE model — pcdtest()]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 144.57, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcd2
+  [R equivalent: Pesaran CD test on FE model — pcdtest(fe_882, test='cd')]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 82.069, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. qui xtreg lneg lnstatea lntuition lnfte lnftfac lnptfac, fe
+  predict ue_residuals_fe, ue
+  xtcdf lneg lnstatea lntuition lnfte lnftfac lnptfac ue_residuals_fe
+  [R equivalent: Pesaran CD test on FE residuals — pcdtest()]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 82.069, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+  Average pairwise correlation of FE residuals: 0.1917
+
+
+*================================================================
+* SECTION 8.9: Panel Regression Models That Take Cross-Sectional
+*              Dependency into Account
+*================================================================
+
+. xtscc lneg lnstatea lntuition lnfte lnftfac lnptfac, fe lag(2)
+  [R equivalent: plm within + plm::vcovSCC(maxlag = 2)]
+
+
+t test of coefficients:
+
+          Estimate Std. Error t value  Pr(>|t|)    
+lnstatea  0.014296   0.012124  1.1791  0.238518    
+lntuition 0.570156   0.054859 10.3931 < 2.2e-16 ***
+lnfte     0.183128   0.073089  2.5055  0.012321 *  
+lnftfac   0.634454   0.146025  4.3448 1.478e-05 ***
+lnptfac   0.030610   0.010165  3.0112  0.002642 ** 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+  Within R²: 0.6572
+
+. qui xtscc lneg lnstatea lntuition lnfte lnftfac lnptfac i.endyear, fe lag(2)
+
+
+t test of coefficients:
+
+                      Estimate Std. Error t value  Pr(>|t|)    
+lnstatea             0.0069693  0.0095143  0.7325  0.463961    
+lntuition            0.0561629  0.0292301  1.9214  0.054852 .  
+lnfte                0.0752957  0.0516038  1.4591  0.144724    
+lnftfac              0.4825464  0.1036651  4.6549 3.500e-06 ***
+lnptfac             -0.0060133  0.0068429 -0.8788  0.379660    
+factor(endyear)2005  0.0280951  0.0107088  2.6236  0.008781 ** 
+factor(endyear)2006  0.0755579  0.0110007  6.8685 9.146e-12 ***
+factor(endyear)2007  0.1338655  0.0164649  8.1304 8.292e-16 ***
+factor(endyear)2008  0.2178384  0.0169015 12.8887 < 2.2e-16 ***
+factor(endyear)2009  0.2584108  0.0171347 15.0811 < 2.2e-16 ***
+factor(endyear)2010  0.3523572  0.0202707 17.3826 < 2.2e-16 ***
+factor(endyear)2011  0.3899167  0.0260890 14.9456 < 2.2e-16 ***
+factor(endyear)2012  0.4068338  0.0265158 15.3431 < 2.2e-16 ***
+factor(endyear)2013  0.4346720  0.0289024 15.0393 < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+. xtcdf xtscc_residuals_fe2y
+  [R equivalent: Pesaran CD test on year-FE model residuals]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac + factor(endyear)
+z = 0.2657, p-value = 0.7905
+alternative hypothesis: cross-sectional dependence
+
+Chapter 8 R script completed: 30 Mar 2026 13:28:18 
+------
+
+. ac residuals_PW
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 8/Output/graphs/fig8_5_ac_residuals_PW_R.png saved as PNG format
+
+. pac residuals_PW, yw
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 8/Output/graphs/fig8_6_pac_residuals_PW_R.png saved as PNG format
+
+. actest residuals_PW, lag(4) q0 rob
+  [R equivalent: Ljung-Box Q-test on P-W residuals, lag = 4]
+
+
+	Box-Ljung test
+
+data:  res_pw
+X-squared = NaN, df = 4, p-value = NA
+
+
+. arima D1.lnenpub2yr D1.lntupub2yr D1.lnunemprate, ar(1/2) vce(robust)
+
+. arima D1.lnenpub2yr D1.lntupub2yr D1.lnunemprate, ar(1/2)
+
+
+Call:
+lm(formula = d_lnenpub2yr ~ d_lntupub2yr + d_lnunemprate + e_lag1 + 
+    e_lag2, data = df_armax_aug)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+     0      0      0      0      0 
+
+Coefficients: (4 not defined because of singularities)
+              Estimate Std. Error t value Pr(>|t|)
+(Intercept)          0          0     NaN      NaN
+d_lntupub2yr        NA         NA      NA       NA
+d_lnunemprate       NA         NA      NA       NA
+e_lag1              NA         NA      NA       NA
+e_lag2              NA         NA      NA       NA
+
+Residual standard error: 0 on 45 degrees of freedom
+  (2 observations deleted due to missingness)
+
+
+  AR(1) coefficient (phi1): NA
+  AR(2) coefficient (phi2): NA
+
+
+. actest residuals_armax, lag(4) q0 rob
+  [R equivalent: Ljung-Box Q-test on ARMAX residuals, lag = 4]
+
+
+	Box-Ljung test
+
+data:  res_armax
+X-squared = NaN, df = 4, p-value = NA
+
+
+*================================================================
+* SECTION 8.6: Examples of Autocorrelation Tests—Panel Data
+*================================================================
+
+  Variables in Example_8_6.dta:
+  stateid, fips, state, statename, year, stapr, netuit, fte, pc_income, lnstapr, lnnetuit, lnfte, lnpc_income 
+
+  Variables in Example_8_6.dta:
+  stateid, fips, state, statename, year, stapr, netuit, fte, pc_income, lnstapr, lnnetuit, lnfte, lnpc_income 
+
+  Panel declared: stateid (entity) x year (time)
+  Observations: 1350 
+
+. xtserial lnnetuit lnstapr lnfte lnpc_income, output
+  [R equivalent: Wooldridge test — plm::pbgtest()]
+
+
+	Breusch-Godfrey/Wooldridge test for serial correlation in panel models
+
+data:  lnnetuit ~ lnstapr + lnfte + lnpc_income
+chisq = 852.95, df = 27, p-value < 2.2e-16
+alternative hypothesis: serial correlation in idiosyncratic errors
+
+
+*================================================================
+* SECTION 8.7: Panel-Data Regression Models with AR Terms
+*================================================================
+
+. xtregar lnnetuit lnstapr lnfte lnpc_income, fe
+  [R equivalent: plm within estimator. xtregar's AR(1) GLS correction
+   has no direct CRAN equivalent; the FE coefficients are the same
+   starting point. Use pbgtest() above to confirm AR(1) is present.]
+
+
+t test of coefficients:
+
+            Estimate Std. Error t value  Pr(>|t|)    
+lnstapr     -0.41580    0.12699 -3.2744  0.001087 ** 
+lnfte        1.29093    0.16274  7.9323 4.613e-15 ***
+lnpc_income  1.66738    0.10879 15.3272 < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+  Within R²: 0.9175
+
+. xtpurt lnnetuit
+  [R equivalent: plm::purtest() — Im-Pesaran-Shin panel unit root test]
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnnetuit ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. xtpurt lnstapr
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnstapr ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. xtpurt lnfte
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnfte ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. xtpurt lnpc_income
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnpc_income ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. qui xtregar D1.lnnetuit D1.lnstapr D1.lnfte D1.lnpc_income, re
+  [R equivalent: plm random-effects on first-differenced variables]
+
+  Variables in Example_8_6.dta:
+  stateid, fips, state, statename, year, stapr, netuit, fte, pc_income, lnstapr, lnnetuit, lnfte, lnpc_income 
+
+  Panel index: entity = 'stateid', time = 'year'
+
+  First-differenced panel: 1350 obs, 50 units
+
+
+. qui xtregar D1.lnnetuit D1.lnstapr D1.lnfte D1.lnpc_income, re
+  [R equivalent: pooled OLS on first-differenced variables (FD estimator)]
+
+
+t test of coefficients:
+
+            Estimate Std. Error t value Pr(>|t|)
+(Intercept)        0          0     NaN      NaN
+
+
+. actest ar_residuals_re, lags(10) q0 robust
+  [R equivalent: Ljung-Box Q-test on RE residuals, lag = 10]
+
+
+	Box-Ljung test
+
+data:  ar_residuals_re
+X-squared = NaN, df = 10, p-value = NA
+
+
+*================================================================
+* SECTION 8.8: Cross-Sectional Dependence
+* Section 8.8.2: Tests to Detect Cross-Sectional Dependence
+*================================================================
+
+. xtdes
+
+  Variables in Example_8_8_2.dta:
+  endyear, opeid5_new, nyear, eg, statea, tuition, totfteiarep, ftfac, ptfac 
+
+  Units (institutions): 203
+  Total observations:   1875
+  Observations per unit:
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  8.000   9.000   9.000   9.236  10.000  10.000 
+
+  Panel declared: opeid5_new (entity) x endyear (time)
+
+. xtcsd, pesaran
+  [R equivalent: Pesaran (2004) CD test — plm::pcdtest(test='cd')]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 82.069, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcsd, friedman
+  [R equivalent: Breusch-Pagan LM test — plm::pcdtest(test='lm')]
+  Note: Friedman test not in current plm; 'lm' is the closest alternative.
+
+
+	Breusch-Pagan LM test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+chisq = 54911, df = 20503, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcsd, frees
+  [R equivalent: average pairwise correlation — plm::pcdtest(test='rho')]
+  Note: Frees (1995) test not in plm; 'rho' reports the same statistic.
+
+
+	Average correlation coefficient for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+rho = 0.19174
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcd lneg lntuition lnftfac lnptfac
+  [R equivalent: Pesaran CD test on each variable via pcdtest()]
+
+  Variable: lneg
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ factor(endyear)
+z = 0.029441, p-value = 0.9765
+alternative hypothesis: cross-sectional dependence
+
+
+  Variable: lntuition
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lntuition ~ factor(endyear)
+z = -1.0291, p-value = 0.3034
+alternative hypothesis: cross-sectional dependence
+
+
+  Variable: lnftfac
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lnftfac ~ factor(endyear)
+z = 0.23985, p-value = 0.8104
+alternative hypothesis: cross-sectional dependence
+
+
+  Variable: lnptfac
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lnptfac ~ factor(endyear)
+z = 26.742, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+
+. qui xtreg lneg lnstatea lntuition lnfte lnftfac lnptfac, re
+
+. xtcd ue_residuals_re
+  [R equivalent: Pesaran CD test on RE model — pcdtest()]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 144.57, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcd2
+  [R equivalent: Pesaran CD test on FE model — pcdtest(fe_882, test='cd')]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 82.069, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. qui xtreg lneg lnstatea lntuition lnfte lnftfac lnptfac, fe
+  predict ue_residuals_fe, ue
+  xtcdf lneg lnstatea lntuition lnfte lnftfac lnptfac ue_residuals_fe
+  [R equivalent: Pesaran CD test on FE residuals — pcdtest()]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 82.069, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+  Average pairwise correlation of FE residuals: 0.1917
+
+
+*================================================================
+* SECTION 8.9: Panel Regression Models That Take Cross-Sectional
+*              Dependency into Account
+*================================================================
+
+. xtscc lneg lnstatea lntuition lnfte lnftfac lnptfac, fe lag(2)
+  [R equivalent: plm within + plm::vcovSCC(maxlag = 2)]
+
+
+t test of coefficients:
+
+          Estimate Std. Error t value  Pr(>|t|)    
+lnstatea  0.014296   0.012124  1.1791  0.238518    
+lntuition 0.570156   0.054859 10.3931 < 2.2e-16 ***
+lnfte     0.183128   0.073089  2.5055  0.012321 *  
+lnftfac   0.634454   0.146025  4.3448 1.478e-05 ***
+lnptfac   0.030610   0.010165  3.0112  0.002642 ** 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+  Within R²: 0.6572
+
+. qui xtscc lneg lnstatea lntuition lnfte lnftfac lnptfac i.endyear, fe lag(2)
+
+
+t test of coefficients:
+
+                      Estimate Std. Error t value  Pr(>|t|)    
+lnstatea             0.0069693  0.0095143  0.7325  0.463961    
+lntuition            0.0561629  0.0292301  1.9214  0.054852 .  
+lnfte                0.0752957  0.0516038  1.4591  0.144724    
+lnftfac              0.4825464  0.1036651  4.6549 3.500e-06 ***
+lnptfac             -0.0060133  0.0068429 -0.8788  0.379660    
+factor(endyear)2005  0.0280951  0.0107088  2.6236  0.008781 ** 
+factor(endyear)2006  0.0755579  0.0110007  6.8685 9.146e-12 ***
+factor(endyear)2007  0.1338655  0.0164649  8.1304 8.292e-16 ***
+factor(endyear)2008  0.2178384  0.0169015 12.8887 < 2.2e-16 ***
+factor(endyear)2009  0.2584108  0.0171347 15.0811 < 2.2e-16 ***
+factor(endyear)2010  0.3523572  0.0202707 17.3826 < 2.2e-16 ***
+factor(endyear)2011  0.3899167  0.0260890 14.9456 < 2.2e-16 ***
+factor(endyear)2012  0.4068338  0.0265158 15.3431 < 2.2e-16 ***
+factor(endyear)2013  0.4346720  0.0289024 15.0393 < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+. xtcdf xtscc_residuals_fe2y
+  [R equivalent: Pesaran CD test on year-FE model residuals]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac + factor(endyear)
+z = 0.2657, p-value = 0.7905
+alternative hypothesis: cross-sectional dependence
+
+Chapter 8 R script completed: 30 Mar 2026 13:28:18 
+------
+
+. ac residuals_PW
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 8/Output/graphs/fig8_5_ac_residuals_PW_R.png saved as PNG format
+
+. pac residuals_PW, yw
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 8/Output/graphs/fig8_6_pac_residuals_PW_R.png saved as PNG format
+
+. actest residuals_PW, lag(4) q0 rob
+  [R equivalent: Ljung-Box Q-test on P-W residuals, lag = 4]
+
+
+	Box-Ljung test
+
+data:  res_pw
+X-squared = NaN, df = 4, p-value = NA
+
+
+. arima D1.lnenpub2yr D1.lntupub2yr D1.lnunemprate, ar(1/2) vce(robust)
+
+. arima D1.lnenpub2yr D1.lntupub2yr D1.lnunemprate, ar(1/2)
+
+
+Call:
+lm(formula = d_lnenpub2yr ~ d_lntupub2yr + d_lnunemprate + e_lag1 + 
+    e_lag2, data = df_armax_aug)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+     0      0      0      0      0 
+
+Coefficients: (4 not defined because of singularities)
+              Estimate Std. Error t value Pr(>|t|)
+(Intercept)          0          0     NaN      NaN
+d_lntupub2yr        NA         NA      NA       NA
+d_lnunemprate       NA         NA      NA       NA
+e_lag1              NA         NA      NA       NA
+e_lag2              NA         NA      NA       NA
+
+Residual standard error: 0 on 45 degrees of freedom
+  (2 observations deleted due to missingness)
+
+
+  AR(1) coefficient (phi1): NA
+  AR(2) coefficient (phi2): NA
+
+
+. actest residuals_armax, lag(4) q0 rob
+  [R equivalent: Ljung-Box Q-test on ARMAX residuals, lag = 4]
+
+
+	Box-Ljung test
+
+data:  res_armax
+X-squared = NaN, df = 4, p-value = NA
+
+
+*================================================================
+* SECTION 8.6: Examples of Autocorrelation Tests—Panel Data
+*================================================================
+
+  Variables in Example_8_6.dta:
+  stateid, fips, state, statename, year, stapr, netuit, fte, pc_income, lnstapr, lnnetuit, lnfte, lnpc_income 
+
+  Variables in Example_8_6.dta:
+  stateid, fips, state, statename, year, stapr, netuit, fte, pc_income, lnstapr, lnnetuit, lnfte, lnpc_income 
+
+  Panel declared: stateid (entity) x year (time)
+  Observations: 1350 
+
+. xtserial lnnetuit lnstapr lnfte lnpc_income, output
+  [R equivalent: Wooldridge test — plm::pbgtest()]
+
+
+	Breusch-Godfrey/Wooldridge test for serial correlation in panel models
+
+data:  lnnetuit ~ lnstapr + lnfte + lnpc_income
+chisq = 852.95, df = 27, p-value < 2.2e-16
+alternative hypothesis: serial correlation in idiosyncratic errors
+
+
+*================================================================
+* SECTION 8.7: Panel-Data Regression Models with AR Terms
+*================================================================
+
+. xtregar lnnetuit lnstapr lnfte lnpc_income, fe
+  [R equivalent: plm within estimator. xtregar's AR(1) GLS correction
+   has no direct CRAN equivalent; the FE coefficients are the same
+   starting point. Use pbgtest() above to confirm AR(1) is present.]
+
+
+t test of coefficients:
+
+            Estimate Std. Error t value  Pr(>|t|)    
+lnstapr     -0.41580    0.12699 -3.2744  0.001087 ** 
+lnfte        1.29093    0.16274  7.9323 4.613e-15 ***
+lnpc_income  1.66738    0.10879 15.3272 < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+  Within R²: 0.9175
+
+. xtpurt lnnetuit
+  [R equivalent: plm::purtest() — Im-Pesaran-Shin panel unit root test]
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnnetuit ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. xtpurt lnstapr
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnstapr ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. xtpurt lnfte
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnfte ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. xtpurt lnpc_income
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnpc_income ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. qui xtregar D1.lnnetuit D1.lnstapr D1.lnfte D1.lnpc_income, re
+  [R equivalent: plm random-effects on first-differenced variables]
+
+  Variables in Example_8_6.dta:
+  stateid, fips, state, statename, year, stapr, netuit, fte, pc_income, lnstapr, lnnetuit, lnfte, lnpc_income 
+
+  Panel index: entity = 'stateid', time = 'year'
+
+  First-differenced panel: 1350 obs, 50 units
+
+
+. qui xtregar D1.lnnetuit D1.lnstapr D1.lnfte D1.lnpc_income, re
+  [R equivalent: pooled OLS on first-differenced variables (FD estimator)]
+
+
+t test of coefficients:
+
+            Estimate Std. Error t value Pr(>|t|)
+(Intercept)        0          0     NaN      NaN
+
+
+. actest ar_residuals_re, lags(10) q0 robust
+  [R equivalent: Ljung-Box Q-test on RE residuals, lag = 10]
+
+
+	Box-Ljung test
+
+data:  ar_residuals_re
+X-squared = NaN, df = 10, p-value = NA
+
+
+*================================================================
+* SECTION 8.8: Cross-Sectional Dependence
+* Section 8.8.2: Tests to Detect Cross-Sectional Dependence
+*================================================================
+
+. xtdes
+
+  Variables in Example_8_8_2.dta:
+  endyear, opeid5_new, nyear, eg, statea, tuition, totfteiarep, ftfac, ptfac 
+
+  Units (institutions): 203
+  Total observations:   1875
+  Observations per unit:
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  8.000   9.000   9.000   9.236  10.000  10.000 
+
+  Panel declared: opeid5_new (entity) x endyear (time)
+
+. xtcsd, pesaran
+  [R equivalent: Pesaran (2004) CD test — plm::pcdtest(test='cd')]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 82.069, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcsd, friedman
+  [R equivalent: Breusch-Pagan LM test — plm::pcdtest(test='lm')]
+  Note: Friedman test not in current plm; 'lm' is the closest alternative.
+
+
+	Breusch-Pagan LM test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+chisq = 54911, df = 20503, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcsd, frees
+  [R equivalent: average pairwise correlation — plm::pcdtest(test='rho')]
+  Note: Frees (1995) test not in plm; 'rho' reports the same statistic.
+
+
+	Average correlation coefficient for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+rho = 0.19174
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcd lneg lntuition lnftfac lnptfac
+  [R equivalent: Pesaran CD test on each variable via pcdtest()]
+
+  Variable: lneg
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ factor(endyear)
+z = 0.029441, p-value = 0.9765
+alternative hypothesis: cross-sectional dependence
+
+
+  Variable: lntuition
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lntuition ~ factor(endyear)
+z = -1.0291, p-value = 0.3034
+alternative hypothesis: cross-sectional dependence
+
+
+  Variable: lnftfac
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lnftfac ~ factor(endyear)
+z = 0.23985, p-value = 0.8104
+alternative hypothesis: cross-sectional dependence
+
+
+  Variable: lnptfac
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lnptfac ~ factor(endyear)
+z = 26.742, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+
+. qui xtreg lneg lnstatea lntuition lnfte lnftfac lnptfac, re
+
+. xtcd ue_residuals_re
+  [R equivalent: Pesaran CD test on RE model — pcdtest()]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 144.57, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcd2
+  [R equivalent: Pesaran CD test on FE model — pcdtest(fe_882, test='cd')]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 82.069, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. qui xtreg lneg lnstatea lntuition lnfte lnftfac lnptfac, fe
+  predict ue_residuals_fe, ue
+  xtcdf lneg lnstatea lntuition lnfte lnftfac lnptfac ue_residuals_fe
+  [R equivalent: Pesaran CD test on FE residuals — pcdtest()]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 82.069, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+  Average pairwise correlation of FE residuals: 0.1917
+
+
+*================================================================
+* SECTION 8.9: Panel Regression Models That Take Cross-Sectional
+*              Dependency into Account
+*================================================================
+
+. xtscc lneg lnstatea lntuition lnfte lnftfac lnptfac, fe lag(2)
+  [R equivalent: plm within + plm::vcovSCC(maxlag = 2)]
+
+
+t test of coefficients:
+
+          Estimate Std. Error t value  Pr(>|t|)    
+lnstatea  0.014296   0.012124  1.1791  0.238518    
+lntuition 0.570156   0.054859 10.3931 < 2.2e-16 ***
+lnfte     0.183128   0.073089  2.5055  0.012321 *  
+lnftfac   0.634454   0.146025  4.3448 1.478e-05 ***
+lnptfac   0.030610   0.010165  3.0112  0.002642 ** 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+  Within R²: 0.6572
+
+. qui xtscc lneg lnstatea lntuition lnfte lnftfac lnptfac i.endyear, fe lag(2)
+
+
+t test of coefficients:
+
+                      Estimate Std. Error t value  Pr(>|t|)    
+lnstatea             0.0069693  0.0095143  0.7325  0.463961    
+lntuition            0.0561629  0.0292301  1.9214  0.054852 .  
+lnfte                0.0752957  0.0516038  1.4591  0.144724    
+lnftfac              0.4825464  0.1036651  4.6549 3.500e-06 ***
+lnptfac             -0.0060133  0.0068429 -0.8788  0.379660    
+factor(endyear)2005  0.0280951  0.0107088  2.6236  0.008781 ** 
+factor(endyear)2006  0.0755579  0.0110007  6.8685 9.146e-12 ***
+factor(endyear)2007  0.1338655  0.0164649  8.1304 8.292e-16 ***
+factor(endyear)2008  0.2178384  0.0169015 12.8887 < 2.2e-16 ***
+factor(endyear)2009  0.2584108  0.0171347 15.0811 < 2.2e-16 ***
+factor(endyear)2010  0.3523572  0.0202707 17.3826 < 2.2e-16 ***
+factor(endyear)2011  0.3899167  0.0260890 14.9456 < 2.2e-16 ***
+factor(endyear)2012  0.4068338  0.0265158 15.3431 < 2.2e-16 ***
+factor(endyear)2013  0.4346720  0.0289024 15.0393 < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+. xtcdf xtscc_residuals_fe2y
+  [R equivalent: Pesaran CD test on year-FE model residuals]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac + factor(endyear)
+z = 0.2657, p-value = 0.7905
+alternative hypothesis: cross-sectional dependence
+
+Chapter 8 R script completed: 30 Mar 2026 13:28:18 
+: stationarity
+
+
+. xtpurt lnstapr
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnstapr ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. xtpurt lnfte
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnfte ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. xtpurt lnpc_income
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnpc_income ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. qui xtregar D1.lnnetuit D1.lnstapr D1.lnfte D1.lnpc_income, re
+  [R equivalent: plm random-effects on first-differenced variables]
+
+  Variables in Example_8_6.dta:
+  stateid, fips, state, statename, year, stapr, netuit, fte, pc_income, lnstapr, lnnetuit, lnfte, lnpc_income 
+
+  Panel index: entity = 'stateid', time = 'year'
+
+  First-differenced panel: 1350 obs, 50 units
+
+
+. qui xtregar D1.lnnetuit D1.lnstapr D1.lnfte D1.lnpc_income, re
+  [R equivalent: pooled OLS on first-differenced variables (FD estimator)]
+
+
+t test of coefficients:
+
+            Estimate Std. Error t value Pr(>|t|)
+(Intercept)        0          0     NaN      NaN
+
+
+. actest ar_residuals_re, lags(10) q0 robust
+  [R equivalent: Ljung-Box Q-test on RE residuals, lag = 10]
+
+
+	Box-Ljung test
+
+data:  ar_residuals_re
+X-squared = NaN, df = 10, p-value = NA
+
+
+*================================================================
+* SECTION 8.8: Cross-Sectional Dependence
+* Section 8.8.2: Tests to Detect Cross-Sectional Dependence
+*================================================================
+
+. xtdes
+
+  Variables in Example_8_8_2.dta:
+  endyear, opeid5_new, nyear, eg, statea, tuition, totfteiarep, ftfac, ptfac 
+
+  Units (institutions): 203
+  Total observations:   1875
+  Observations per unit:
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  8.000   9.000   9.000   9.236  10.000  10.000 
+
+  Panel declared: opeid5_new (entity) x endyear (time)
+
+. xtcsd, pesaran
+  [R equivalent: Pesaran (2004) CD test — plm::pcdtest(test='cd')]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 82.069, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcsd, friedman
+  [R equivalent: Breusch-Pagan LM test — plm::pcdtest(test='lm')]
+  Note: Friedman test not in current plm; 'lm' is the closest alternative.
+
+
+	Breusch-Pagan LM test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+chisq = 54911, df = 20503, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcsd, frees
+  [R equivalent: average pairwise correlation — plm::pcdtest(test='rho')]
+  Note: Frees (1995) test not in plm; 'rho' reports the same statistic.
+
+
+	Average correlation coefficient for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+rho = 0.19174
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcd lneg lntuition lnftfac lnptfac
+  [R equivalent: Pesaran CD test on each variable via pcdtest()]
+
+  Variable: lneg
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ factor(endyear)
+z = 0.029441, p-value = 0.9765
+alternative hypothesis: cross-sectional dependence
+
+
+  Variable: lntuition
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lntuition ~ factor(endyear)
+z = -1.0291, p-value = 0.3034
+alternative hypothesis: cross-sectional dependence
+
+
+  Variable: lnftfac
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lnftfac ~ factor(endyear)
+z = 0.23985, p-value = 0.8104
+alternative hypothesis: cross-sectional dependence
+
+
+  Variable: lnptfac
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lnptfac ~ factor(endyear)
+z = 26.742, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+
+. qui xtreg lneg lnstatea lntuition lnfte lnftfac lnptfac, re
+
+. xtcd ue_residuals_re
+  [R equivalent: Pesaran CD test on RE model — pcdtest()]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 144.57, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcd2
+  [R equivalent: Pesaran CD test on FE model — pcdtest(fe_882, test='cd')]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 82.069, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. qui xtreg lneg lnstatea lntuition lnfte lnftfac lnptfac, fe
+  predict ue_residuals_fe, ue
+  xtcdf lneg lnstatea lntuition lnfte lnftfac lnptfac ue_residuals_fe
+  [R equivalent: Pesaran CD test on FE residuals — pcdtest()]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 82.069, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+  Average pairwise correlation of FE residuals: 0.1917
+
+
+*================================================================
+* SECTION 8.9: Panel Regression Models That Take Cross-Sectional
+*              Dependency into Account
+*================================================================
+
+. xtscc lneg lnstatea lntuition lnfte lnftfac lnptfac, fe lag(2)
+  [R equivalent: plm within + plm::vcovSCC(maxlag = 2)]
+
+
+t test of coefficients:
+
+          Estimate Std. Error t value  Pr(>|t|)    
+lnstatea  0.014296   0.012124  1.1791  0.238518    
+lntuition 0.570156   0.054859 10.3931 < 2.2e-16 ***
+lnfte     0.183128   0.073089  2.5055  0.012321 *  
+lnftfac   0.634454   0.146025  4.3448 1.478e-05 ***
+lnptfac   0.030610   0.010165  3.0112  0.002642 ** 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+  Within R²: 0.6572
+
+. qui xtscc lneg lnstatea lntuition lnfte lnftfac lnptfac i.endyear, fe lag(2)
+
+
+t test of coefficients:
+
+                      Estimate Std. Error t value  Pr(>|t|)    
+lnstatea             0.0069693  0.0095143  0.7325  0.463961    
+lntuition            0.0561629  0.0292301  1.9214  0.054852 .  
+lnfte                0.0752957  0.0516038  1.4591  0.144724    
+lnftfac              0.4825464  0.1036651  4.6549 3.500e-06 ***
+lnptfac             -0.0060133  0.0068429 -0.8788  0.379660    
+factor(endyear)2005  0.0280951  0.0107088  2.6236  0.008781 ** 
+factor(endyear)2006  0.0755579  0.0110007  6.8685 9.146e-12 ***
+factor(endyear)2007  0.1338655  0.0164649  8.1304 8.292e-16 ***
+factor(endyear)2008  0.2178384  0.0169015 12.8887 < 2.2e-16 ***
+factor(endyear)2009  0.2584108  0.0171347 15.0811 < 2.2e-16 ***
+factor(endyear)2010  0.3523572  0.0202707 17.3826 < 2.2e-16 ***
+factor(endyear)2011  0.3899167  0.0260890 14.9456 < 2.2e-16 ***
+factor(endyear)2012  0.4068338  0.0265158 15.3431 < 2.2e-16 ***
+factor(endyear)2013  0.4346720  0.0289024 15.0393 < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+. xtcdf xtscc_residuals_fe2y
+  [R equivalent: Pesaran CD test on year-FE model residuals]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac + factor(endyear)
+z = 0.2657, p-value = 0.7905
+alternative hypothesis: cross-sectional dependence
+
+Chapter 8 R script completed: 30 Mar 2026 13:28:18 
+: stationarity
+
+
+. xtpurt lnstapr
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnstapr ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. xtpurt lnfte
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnfte ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. xtpurt lnpc_income
+
+
+	Im-Pesaran-Shin Unit-Root Test (ex. var.: Individual Intercepts)
+
+data:  lnpc_income ~ 1
+Wtbar = NA, p-value = NA
+alternative hypothesis: stationarity
+
+
+. qui xtregar D1.lnnetuit D1.lnstapr D1.lnfte D1.lnpc_income, re
+  [R equivalent: plm random-effects on first-differenced variables]
+
+  Variables in Example_8_6.dta:
+  stateid, fips, state, statename, year, stapr, netuit, fte, pc_income, lnstapr, lnnetuit, lnfte, lnpc_income 
+
+  Panel index: entity = 'stateid', time = 'year'
+
+  First-differenced panel: 1350 obs, 50 units
+
+
+. qui xtregar D1.lnnetuit D1.lnstapr D1.lnfte D1.lnpc_income, re
+  [R equivalent: pooled OLS on first-differenced variables (FD estimator)]
+
+
+t test of coefficients:
+
+            Estimate Std. Error t value Pr(>|t|)
+(Intercept)        0          0     NaN      NaN
+
+
+. actest ar_residuals_re, lags(10) q0 robust
+  [R equivalent: Ljung-Box Q-test on RE residuals, lag = 10]
+
+
+	Box-Ljung test
+
+data:  ar_residuals_re
+X-squared = NaN, df = 10, p-value = NA
+
+
+*================================================================
+* SECTION 8.8: Cross-Sectional Dependence
+* Section 8.8.2: Tests to Detect Cross-Sectional Dependence
+*================================================================
+
+. xtdes
+
+  Variables in Example_8_8_2.dta:
+  endyear, opeid5_new, nyear, eg, statea, tuition, totfteiarep, ftfac, ptfac 
+
+  Units (institutions): 203
+  Total observations:   1875
+  Observations per unit:
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  8.000   9.000   9.000   9.236  10.000  10.000 
+
+  Panel declared: opeid5_new (entity) x endyear (time)
+
+. xtcsd, pesaran
+  [R equivalent: Pesaran (2004) CD test — plm::pcdtest(test='cd')]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 82.069, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcsd, friedman
+  [R equivalent: Breusch-Pagan LM test — plm::pcdtest(test='lm')]
+  Note: Friedman test not in current plm; 'lm' is the closest alternative.
+
+
+	Breusch-Pagan LM test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+chisq = 54911, df = 20503, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcsd, frees
+  [R equivalent: average pairwise correlation — plm::pcdtest(test='rho')]
+  Note: Frees (1995) test not in plm; 'rho' reports the same statistic.
+
+
+	Average correlation coefficient for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+rho = 0.19174
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcd lneg lntuition lnftfac lnptfac
+  [R equivalent: Pesaran CD test on each variable via pcdtest()]
+
+  Variable: lneg
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ factor(endyear)
+z = 0.029441, p-value = 0.9765
+alternative hypothesis: cross-sectional dependence
+
+
+  Variable: lntuition
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lntuition ~ factor(endyear)
+z = -1.0291, p-value = 0.3034
+alternative hypothesis: cross-sectional dependence
+
+
+  Variable: lnftfac
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lnftfac ~ factor(endyear)
+z = 0.23985, p-value = 0.8104
+alternative hypothesis: cross-sectional dependence
+
+
+  Variable: lnptfac
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lnptfac ~ factor(endyear)
+z = 26.742, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+
+. qui xtreg lneg lnstatea lntuition lnfte lnftfac lnptfac, re
+
+. xtcd ue_residuals_re
+  [R equivalent: Pesaran CD test on RE model — pcdtest()]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 144.57, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. xtcd2
+  [R equivalent: Pesaran CD test on FE model — pcdtest(fe_882, test='cd')]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 82.069, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+
+. qui xtreg lneg lnstatea lntuition lnfte lnftfac lnptfac, fe
+  predict ue_residuals_fe, ue
+  xtcdf lneg lnstatea lntuition lnfte lnftfac lnptfac ue_residuals_fe
+  [R equivalent: Pesaran CD test on FE residuals — pcdtest()]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac
+z = 82.069, p-value < 2.2e-16
+alternative hypothesis: cross-sectional dependence
+
+  Average pairwise correlation of FE residuals: 0.1917
+
+
+*================================================================
+* SECTION 8.9: Panel Regression Models That Take Cross-Sectional
+*              Dependency into Account
+*================================================================
+
+. xtscc lneg lnstatea lntuition lnfte lnftfac lnptfac, fe lag(2)
+  [R equivalent: plm within + plm::vcovSCC(maxlag = 2)]
+
+
+t test of coefficients:
+
+          Estimate Std. Error t value  Pr(>|t|)    
+lnstatea  0.014296   0.012124  1.1791  0.238518    
+lntuition 0.570156   0.054859 10.3931 < 2.2e-16 ***
+lnfte     0.183128   0.073089  2.5055  0.012321 *  
+lnftfac   0.634454   0.146025  4.3448 1.478e-05 ***
+lnptfac   0.030610   0.010165  3.0112  0.002642 ** 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+  Within R²: 0.6572
+
+. qui xtscc lneg lnstatea lntuition lnfte lnftfac lnptfac i.endyear, fe lag(2)
+
+
+t test of coefficients:
+
+                      Estimate Std. Error t value  Pr(>|t|)    
+lnstatea             0.0069693  0.0095143  0.7325  0.463961    
+lntuition            0.0561629  0.0292301  1.9214  0.054852 .  
+lnfte                0.0752957  0.0516038  1.4591  0.144724    
+lnftfac              0.4825464  0.1036651  4.6549 3.500e-06 ***
+lnptfac             -0.0060133  0.0068429 -0.8788  0.379660    
+factor(endyear)2005  0.0280951  0.0107088  2.6236  0.008781 ** 
+factor(endyear)2006  0.0755579  0.0110007  6.8685 9.146e-12 ***
+factor(endyear)2007  0.1338655  0.0164649  8.1304 8.292e-16 ***
+factor(endyear)2008  0.2178384  0.0169015 12.8887 < 2.2e-16 ***
+factor(endyear)2009  0.2584108  0.0171347 15.0811 < 2.2e-16 ***
+factor(endyear)2010  0.3523572  0.0202707 17.3826 < 2.2e-16 ***
+factor(endyear)2011  0.3899167  0.0260890 14.9456 < 2.2e-16 ***
+factor(endyear)2012  0.4068338  0.0265158 15.3431 < 2.2e-16 ***
+factor(endyear)2013  0.4346720  0.0289024 15.0393 < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+. xtcdf xtscc_residuals_fe2y
+  [R equivalent: Pesaran CD test on year-FE model residuals]
+
+
+	Pesaran CD test for cross-sectional dependence in panels
+
+data:  lneg ~ lnstatea + lntuition + lnfte + lnftfac + lnptfac + factor(endyear)
+z = 0.2657, p-value = 0.7905
+alternative hypothesis: cross-sectional dependence
+
+Chapter 8 R script completed: 30 Mar 2026 13:28:18 
