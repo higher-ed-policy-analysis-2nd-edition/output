@@ -1,0 +1,584 @@
+Chapter 7 log opened: 29 Mar 2026 19:26:32 
+Graphs directory:     C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 7/Output/graphs 
+
+
+*======================================================================
+* SECTION 7.2: REVIEW OF OLS REGRESSION
+*======================================================================
+
+*------------------------------------------------------------------------
+* Bivariate OLS Regression (year == 2016)
+*------------------------------------------------------------------------
+
+. regress netuit_fte stapr_fte if year==2016
+
+t test of coefficients:
+
+               Estimate  Std. Error t value  Pr(>|t|)    
+(Intercept) 10192.74776  1107.68423  9.2019 3.587e-12 ***
+stapr_fte      -0.35438     0.13213 -2.6822      0.01 *  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+  N = 50   R² = 0.1303   Adj. R² = 0.1122
+
+
+. regress netuit_fte stapr_fte stapr_fte2 pc_income if year==2016
+
+t test of coefficients:
+
+               Estimate  Std. Error t value Pr(>|t|)   
+(Intercept)  9.7441e+03  3.4721e+03  2.8064 0.007322 **
+stapr_fte   -1.6088e+00  5.0619e-01 -3.1782 0.002649 **
+stapr_fte2   5.4252e-05  2.3250e-05  2.3334 0.024051 * 
+pc_income    1.3229e-01  5.3308e-02  2.4817 0.016790 * 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+  N = 50   R² = 0.3222   Adj. R² = 0.2780
+
+*------------------------------------------------------------------------
+* Section 7.2.3: Pooled OLS Regression (all years)
+*------------------------------------------------------------------------
+
+. reg netuit_fte stapr_fte stapr_fte2 pc_income
+
+t test of coefficients:
+
+               Estimate  Std. Error  t value  Pr(>|t|)    
+(Intercept)  2.4031e+03  3.2054e+02   7.4969 1.180e-13 ***
+stapr_fte   -1.0183e+00  7.7334e-02 -13.1676 < 2.2e-16 ***
+stapr_fte2   3.2858e-05  4.3258e-06   7.5958 5.696e-14 ***
+pc_income    2.0362e-01  4.8243e-03  42.2072 < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+  N = 1350   R² = 0.5766   Adj. R² = 0.5756
+
+. reg netuit_fte stapr_fte stapr_fte2 pc_income i.region_compact
+
+t test of coefficients:
+
+                   Estimate  Std. Error  t value  Pr(>|t|)    
+(Intercept)      2.7125e+03  3.6628e+02   7.4055 2.299e-13 ***
+stapr_fte       -1.0405e+00  7.5085e-02 -13.8581 < 2.2e-16 ***
+stapr_fte2       3.8301e-05  4.2155e-06   9.0858 < 2.2e-16 ***
+pc_income        1.9173e-01  4.7585e-03  40.2930 < 2.2e-16 ***
+region_compact1  1.8580e+02  1.9470e+02   0.9543    0.3401    
+region_compact2 -9.5799e+02  1.9975e+02  -4.7958 1.801e-06 ***
+region_compact3  9.9674e+01  1.9737e+02   0.5050    0.6136    
+region_compact4  1.1006e+03  2.1576e+02   5.1011 3.862e-07 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+  N = 1350   R² = 0.6319   Adj. R² = 0.6300
+
+* EXAMPLE 1: Categorical × Categorical Interaction
+
+. reg netuit_fte stapr_fte i.region_compact##i.ugradmerit
+
+t test of coefficients:
+
+                               Estimate  Std. Error t value  Pr(>|t|)    
+(Intercept)                  6.6581e+03  6.0084e+02 11.0813 < 2.2e-16 ***
+stapr_fte                    2.7501e-02  2.8985e-02  0.9488 0.3428935    
+region_compact1             -4.3760e+03  6.6335e+02 -6.5969 6.030e-11 ***
+region_compact2             -4.3502e+03  6.1083e+02 -7.1218 1.734e-12 ***
+region_compact3             -3.3568e+03  6.6064e+02 -5.0811 4.284e-07 ***
+region_compact4             -9.1797e+02  6.3762e+02 -1.4397 0.1501941    
+ugradmerit1                 -2.1500e+03  6.4871e+02 -3.3142 0.0009436 ***
+region_compact1:ugradmerit1  3.4772e+03  7.3290e+02  4.7444 2.315e-06 ***
+region_compact2:ugradmerit1  2.8374e+03  6.9674e+02  4.0724 4.925e-05 ***
+region_compact3:ugradmerit1  3.0845e+03  7.3526e+02  4.1951 2.907e-05 ***
+region_compact4:ugradmerit1  3.0289e+03  7.4380e+02  4.0721 4.931e-05 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+  N = 1350   R² = 0.1994   Adj. R² = 0.1935
+
+. lrtest model1 model2
+
+Likelihood ratio test
+
+Model 1: netuit_fte ~ stapr_fte + region_compact
+Model 2: netuit_fte ~ stapr_fte + region_compact * ugradmerit
+  #Df LogLik Df Chisq Pr(>Chisq)    
+1   7 -12395                        
+2  12 -12372  5 46.33   7.78e-09 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+. testparm i.region_compact#i.ugradmerit
+
+Wald test
+
+Model 1: netuit_fte ~ stapr_fte + region_compact
+Model 2: netuit_fte ~ stapr_fte + region_compact * ugradmerit
+  Res.Df Df    F    Pr(>F)    
+1   1344                      
+2   1339  5 9.35 9.066e-09 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+* EXAMPLE 2: Categorical × Continuous Interaction
+
+. reg netuit_fte i.ugradmerit i.region_compact c.stapr_fte##i.tuitset
+
+t test of coefficients:
+
+                      Estimate  Std. Error t value  Pr(>|t|)    
+(Intercept)         1895.03213  1400.07391  1.3535 0.1761174    
+ugradmerit1          561.87760   152.10648  3.6940 0.0002297 ***
+region_compact1    -1500.98709   276.82690 -5.4221 6.981e-08 ***
+region_compact2    -2130.32787   283.35739 -7.5182 1.014e-13 ***
+region_compact3    -1020.98107   280.50263 -3.6398 0.0002832 ***
+region_compact4     1018.53006   320.97287  3.1733 0.0015417 ** 
+stapr_fte              0.20608     0.21732  0.9483 0.3431693    
+tuitset2           10193.37462  1678.68337  6.0722 1.641e-09 ***
+tuitset3            1900.95666  1390.01800  1.3676 0.1716744    
+tuitset4            3296.06350  1411.99051  2.3343 0.0197255 *  
+stapr_fte:tuitset2    -1.31020     0.27373 -4.7865 1.885e-06 ***
+stapr_fte:tuitset3    -0.10694     0.21983 -0.4865 0.6266956    
+stapr_fte:tuitset4    -0.20436     0.22413 -0.9118 0.3620397    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+  N = 1350   R² = 0.2594   Adj. R² = 0.2527
+
+. testparm c.stapr_fte#i.tuitset
+
+Wald test
+
+Model 1: netuit_fte ~ ugradmerit + region_compact + stapr_fte + tuitset
+Model 2: netuit_fte ~ ugradmerit + region_compact + stapr_fte * tuitset
+  Res.Df Df      F    Pr(>F)    
+1   1340                        
+2   1337  3 17.309 4.981e-11 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+* EXAMPLE 3: Continuous × Continuous Interaction
+
+. reg netuit_fte i.region_compact c.stapr_fte##c.state_needFTE
+
+t test of coefficients:
+
+                           Estimate  Std. Error t value  Pr(>|t|)    
+(Intercept)              3.3494e+03  3.7362e+02  8.9647 < 2.2e-16 ***
+region_compact1         -7.2997e+02  3.0962e+02 -2.3576   0.01854 *  
+region_compact2         -1.5469e+03  3.1683e+02 -4.8824 1.174e-06 ***
+region_compact3         -1.8783e+02  3.0915e+02 -0.6076   0.54356    
+region_compact4          1.7630e+03  3.2780e+02  5.3781 8.873e-08 ***
+stapr_fte                1.2853e-01  3.6413e-02  3.5297   0.00043 ***
+state_needFTE            3.3721e+00  4.9321e-01  6.8371 1.224e-11 ***
+stapr_fte:state_needFTE -3.9211e-04  7.3955e-05 -5.3020 1.338e-07 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+  N = 1350   R² = 0.2097   Adj. R² = 0.2056
+
+. margins, dydx(stapr_fte) at(state_needFTE=(0(3000)10000))
+
+  state_needFTE    dy/dx(stapr_fte)
+  ------------------------------
+  0                    0.128527
+  3000                -1.047798
+  6000                -2.224123
+  9000                -3.400448
+
+. marginsplot (Fig. 7.1)
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 7/Output/graphs/fig7_1_marginsplot_R.png saved as PNG format
+
+*------------------------------------------------------------------------
+* Testing Regression Assumptions
+*------------------------------------------------------------------------
+file C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 7/Output/graphs/fig7_2_rvfplot_R.png saved as PNG format
+
+. estat imtest  (information matrix / heteroscedasticity test)
+
+
+	studentized Breusch-Pagan test
+
+data:  ols_base
+BP = 122.58, df = 7, p-value < 2.2e-16
+
+
+. reg ... , robust
+
+. regress netuit_fte stapr_fte stapr_fte2 pc_income i.region_compact, robust
+
+t test of coefficients:
+
+                   Estimate  Std. Error  t value  Pr(>|t|)    
+(Intercept)      2.7125e+03  3.5364e+02   7.6702 3.283e-14 ***
+stapr_fte       -1.0405e+00  7.2104e-02 -14.4310 < 2.2e-16 ***
+stapr_fte2       3.8301e-05  4.0280e-06   9.5086 < 2.2e-16 ***
+pc_income        1.9173e-01  6.0699e-03  31.5873 < 2.2e-16 ***
+region_compact1  1.8580e+02  1.9933e+02   0.9321    0.3514    
+region_compact2 -9.5799e+02  1.8099e+02  -5.2931 1.403e-07 ***
+region_compact3  9.9674e+01  1.7825e+02   0.5592    0.5761    
+region_compact4  1.1006e+03  2.2105e+02   4.9789 7.225e-07 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+  N = 1350   R² = 0.6319   Adj. R² = 0.6300
+
+. robvar eps, by(state)  (Levene test for equal variances across states)
+
+Bartlett test of homogeneity of variances (by state):
+
+	Bartlett test of homogeneity of variances
+
+data:  eps_base by state
+Bartlett's K-squared = 828.91, df = 49, p-value < 2.2e-16
+
+
+. reg ... , cluster(state)
+
+. regress netuit_fte stapr_fte stapr_fte2 pc_income i.region_compact, cluster(state)
+
+t test of coefficients:
+
+                   Estimate  Std. Error t value  Pr(>|t|)    
+(Intercept)      2.7125e+03  1.2949e+03  2.0948  0.036374 *  
+stapr_fte       -1.0405e+00  2.4494e-01 -4.2481 2.304e-05 ***
+stapr_fte2       3.8301e-05  1.2235e-05  3.1305  0.001783 ** 
+pc_income        1.9173e-01  1.6724e-02 11.4646 < 2.2e-16 ***
+region_compact1  1.8580e+02  9.1541e+02  0.2030  0.839186    
+region_compact2 -9.5799e+02  8.5192e+02 -1.1245  0.261002    
+region_compact3  9.9674e+01  8.4171e+02  0.1184  0.905754    
+region_compact4  1.1006e+03  1.0530e+03  1.0452  0.296128    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+  N = 1350   R² = 0.6319   Adj. R² = 0.6300
+
+*======================================================================
+* SECTION 7.3: FIXED-EFFECTS REGRESSION
+*======================================================================
+
+* FEDV — state dummy variables
+
+. reg netuit_fte stapr_fte stapr_fte2 pc_income i.stateid, cluster(state)
+
+t test of coefficients:
+
+               Estimate  Std. Error   t value  Pr(>|t|)    
+(Intercept)  2.1776e+03  5.7455e+02    3.7901 0.0001575 ***
+stapr_fte   -5.6400e-01  1.2748e-01   -4.4243 1.049e-05 ***
+stapr_fte2   9.0902e-06  7.1538e-06    1.2707 0.2040669    
+pc_income    2.1094e-01  1.1466e-02   18.3970 < 2.2e-16 ***
+stateid2    -8.6477e+02  5.0480e+02   -1.7131 0.0869350 .  
+stateid3    -2.5701e+03  1.7920e+02  -14.3417 < 2.2e-16 ***
+stateid4    -1.4878e+03  3.5803e+01  -41.5569 < 2.2e-16 ***
+stateid5    -5.4089e+03  1.2046e+02  -44.9030 < 2.2e-16 ***
+stateid6    -2.6419e+03  2.3110e+02  -11.4320 < 2.2e-16 ***
+stateid7    -1.8048e+03  2.6393e+02   -6.8383 1.231e-11 ***
+stateid8     2.7954e+03  1.1296e+02   24.7454 < 2.2e-16 ***
+stateid9    -4.0363e+03  8.2024e+01  -49.2092 < 2.2e-16 ***
+stateid10   -2.5521e+03  7.4235e+01  -34.3784 < 2.2e-16 ***
+stateid11   -1.1781e+03  3.7687e+02   -3.1261 0.0018108 ** 
+stateid12   -2.3610e+03  4.5929e+01  -51.4055 < 2.2e-16 ***
+stateid13   -3.2040e+03  8.3948e+01  -38.1661 < 2.2e-16 ***
+stateid14   -3.2312e+02  5.8147e+01   -5.5569 3.329e-08 ***
+stateid15   -6.6172e+02  4.8344e+01  -13.6879 < 2.2e-16 ***
+stateid16   -2.6569e+03  9.7871e+01  -27.1470 < 2.2e-16 ***
+stateid17   -1.0395e+03  3.3754e+01  -30.7950 < 2.2e-16 ***
+stateid18   -2.6137e+03  2.6134e+01 -100.0098 < 2.2e-16 ***
+stateid19    4.5725e+01  3.5234e+01    1.2978 0.1945957    
+stateid20   -2.5891e+03  1.5793e+02  -16.3935 < 2.2e-16 ***
+stateid21   -3.2707e+03  1.5423e+02  -21.2069 < 2.2e-16 ***
+stateid22    2.9035e+02  1.3625e+02    2.1310 0.0332744 *  
+stateid23   -2.0329e+03  8.7924e+01  -23.1217 < 2.2e-16 ***
+stateid24   -1.0562e+03  3.3402e+01  -31.6214 < 2.2e-16 ***
+stateid25   -2.4683e+03  1.2012e+02  -20.5486 < 2.2e-16 ***
+stateid26   -2.0463e+03  1.3736e+02  -14.8974 < 2.2e-16 ***
+stateid27   -2.5225e+03  5.9835e+01  -42.1582 < 2.2e-16 ***
+stateid28   -3.3893e+03  6.0911e+01  -55.6441 < 2.2e-16 ***
+stateid29   -1.3435e+03  3.1349e+02   -4.2857 1.957e-05 ***
+stateid30   -1.9701e+03  1.5376e+02  -12.8127 < 2.2e-16 ***
+stateid31   -2.5214e+03  1.0197e+02  -24.7263 < 2.2e-16 ***
+stateid32   -3.8301e+03  1.3277e+02  -28.8476 < 2.2e-16 ***
+stateid33   -2.3948e+03  8.5282e+01  -28.0810 < 2.2e-16 ***
+stateid34   -1.5292e+03  5.5416e+01  -27.5953 < 2.2e-16 ***
+stateid35   -1.2487e+03  1.1739e+02  -10.6373 < 2.2e-16 ***
+stateid36   -2.5396e+03  2.0977e+01 -121.0684 < 2.2e-16 ***
+stateid37   -2.0879e+03  1.5365e+02  -13.5889 < 2.2e-16 ***
+stateid38   -2.3542e+02  1.5848e+02   -1.4855 0.1376489    
+stateid39   -7.9438e+02  1.3757e+02   -5.7744 9.653e-09 ***
+stateid40   -6.6716e+02  5.8702e+01  -11.3651 < 2.2e-16 ***
+stateid41   -1.5017e+03  1.0850e+02  -13.8403 < 2.2e-16 ***
+stateid42   -1.8782e+03  2.3566e+01  -79.7004 < 2.2e-16 ***
+stateid43   -2.7523e+03  4.9847e+01  -55.2161 < 2.2e-16 ***
+stateid44   -2.0408e+03  3.8520e+01  -52.9806 < 2.2e-16 ***
+stateid45    2.9540e+03  2.4634e+02   11.9916 < 2.2e-16 ***
+stateid46   -2.7604e+03  1.6175e+02  -17.0663 < 2.2e-16 ***
+stateid47   -4.0039e+03  1.1486e+02  -34.8589 < 2.2e-16 ***
+stateid48   -1.0835e+03  4.6698e+01  -23.2019 < 2.2e-16 ***
+stateid49   -2.9204e+03  1.2110e+02  -24.1151 < 2.2e-16 ***
+stateid50   -3.1319e+03  2.3602e+02  -13.2694 < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+  N = 1350   R² = 0.8989   Adj. R² = 0.8949
+
+* Within-group FE via plm (equivalent to areg absorb)
+
+. areg netuit_fte stapr_fte stapr_fte2 pc_income, cluster(stateid) absorb(stateid)
+
+
+t test of coefficients:
+
+              Estimate  Std. Error t value  Pr(>|t|)    
+stapr_fte  -5.6400e-01  1.2388e-01 -4.5528  5.79e-06 ***
+stapr_fte2  9.0902e-06  6.9518e-06  1.3076    0.1912    
+pc_income   2.1094e-01  1.1142e-02 18.9316 < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+  Within R²: 0.8085
+
+. testparm i.stateid
+
+
+	F test for individual effects
+
+data:  netuit_fte ~ stapr_fte + stapr_fte2 + pc_income
+F = 84.403, df1 = 49, df2 = 1297, p-value < 2.2e-16
+alternative hypothesis: significant effects
+
+
+. areg eg statea tuition totfteiarep ftfac ptfac D, cluster(opeid5_new) absorb(opeid5_new)
+
+
+t test of coefficients:
+
+               Estimate  Std. Error t value Pr(>|t|)    
+statea       6.3418e-01  7.3370e-02  8.6436  < 2e-16 ***
+tuition      1.1930e+00  5.9722e-02 19.9766  < 2e-16 ***
+totfteiarep  1.1675e+03  9.4813e+02  1.2314  0.21836    
+ftfac        2.7583e+04  2.7740e+04  0.9944  0.32019    
+ptfac        7.0266e+03  1.3820e+04  0.5084  0.61121    
+D           -5.8185e+06  2.5210e+06 -2.3080  0.02112 *  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+*------------------------------------------------------------------------
+* Section 7.3.2.1: Within-Group Estimator
+*------------------------------------------------------------------------
+
+. xtreg eg statea tuition totfteiarep ftfac ptfac, fe cluster(opeid5_new)
+
+
+t test of coefficients:
+
+              Estimate Std. Error t value Pr(>|t|)    
+statea      6.3595e-01 7.1940e-02  8.8400   <2e-16 ***
+tuition     1.2012e+00 5.9742e-02 20.1061   <2e-16 ***
+totfteiarep 1.0503e+03 1.0287e+03  1.0210   0.3074    
+ftfac       3.2820e+04 3.1006e+04  1.0585   0.2900    
+ptfac       7.3758e+03 1.4824e+04  0.4975   0.6189    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+  Within  R²: 0.7784
+  Between R²: NA  (not defined for within/FE estimator)
+  rho:        0.8430  (fraction of variance due to fixed effects)
+
+
+*======================================================================
+* SECTION 7.4: RANDOM-EFFECTS REGRESSION
+*======================================================================
+
+. xtreg netuit_fte stapr_fte stapr_fte2 pc_income i.region_compact, re cluster(stateid)
+
+
+t test of coefficients:
+
+                   Estimate  Std. Error t value  Pr(>|t|)    
+(Intercept)      2.2699e+02  9.6449e+02  0.2353    0.8140    
+stapr_fte       -5.7670e-01  1.2214e-01 -4.7216 2.585e-06 ***
+stapr_fte2       9.8294e-06  6.9572e-06  1.4128    0.1579    
+pc_income        2.1064e-01  1.1351e-02 18.5565 < 2.2e-16 ***
+region_compact1  3.4351e+02  9.4806e+02  0.3623    0.7172    
+region_compact2 -6.2924e+02  9.0814e+02 -0.6929    0.4885    
+region_compact3  2.7663e+02  9.0257e+02  0.3065    0.7593    
+region_compact4  1.3043e+03  1.1595e+03  1.1249    0.2609    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+  Within  R²: 0.8085
+  Between R²: 0.4145
+  rho:        0.6849
+
+. xttest0  (Breusch-Pagan LM test: RE vs. pooled OLS)
+
+
+	Lagrange Multiplier Test - (Breusch-Pagan)
+
+data:  netuit_fte ~ stapr_fte + stapr_fte2 + pc_income + region_compact
+chisq = 8010.8, df = 1, p-value < 2.2e-16
+alternative hypothesis: significant effects
+
+
+  H0: var(u_i) = 0 (pooled OLS is sufficient)
+  RESULT: Reject H0 — random effects preferred over pooled OLS
+
+*------------------------------------------------------------------------
+* Section 7.4.1: The Hausman Test
+*------------------------------------------------------------------------
+
+. hausman fixed random
+
+
+	Hausman Test
+
+data:  eg ~ statea + tuition + totfteiarep + ftfac + ptfac
+chisq = 90.693, df = 5, p-value < 2.2e-16
+alternative hypothesis: one model is inconsistent
+
+
+. hausman fixed random  (log-transformed)
+
+
+	Hausman Test
+
+data:  lneg ~ lnstatea + lntuition + lntotfteiarep + lnftfac + ptfac
+chisq = 81.714, df = 5, p-value = 3.674e-16
+alternative hypothesis: one model is inconsistent
+
+
+. rhausman fixed random, reps(400) cluster  (cluster-robust Hausman)
+  [R equivalent: robust Hausman via vcovHC-corrected coefficient comparison]
+
+  chi2(5) = -8.8320   p-value = 1.0000
+  RESULT: Fail to reject H0 — random effects may be consistent
+
+
+*======================================================================
+* SECTION 7.5: INSTRUMENTAL VARIABLES AND TWO-STAGE LEAST SQUARES
+*======================================================================
+
+. tab masters
+
+
+   0    1 
+4932 3068 
+
+. sum ln_salary masters ga_funding_adj p_masters
+
+   ln_salary         masters       ga_funding_adj    p_masters      
+ Min.   : 7.939   Min.   :0.0000   Min.   : 7.20   Min.   :0.00000  
+ 1st Qu.:10.184   1st Qu.:0.0000   1st Qu.:15.53   1st Qu.:0.01049  
+ Median :10.741   Median :0.0000   Median :18.75   Median :0.16690  
+ Mean   :10.787   Mean   :0.3835   Mean   :19.06   Mean   :0.38795  
+ 3rd Qu.:11.352   3rd Qu.:1.0000   3rd Qu.:22.11   3rd Qu.:0.91404  
+ Max.   :14.093   Max.   :1.0000   Max.   :37.81   Max.   :1.00000  
+
+. tabstat salary ln_salary, by(masters) stats(mean sd n)
+
+# A tibble: 2 × 6
+  masters mean_salary sd_salary mean_ln_salary sd_ln_salary     n
+    <dbl>       <dbl>     <dbl>          <dbl>        <dbl> <int>
+1       0      43243.    39391.           10.4        0.692  4932
+2       1     118084.   107232.           11.4        0.786  3068
+
+*----------------------------------------------------------------------
+* OLS ESTIMATION (Potentially biased due to endogeneity)
+*----------------------------------------------------------------------
+
+. regress ln_salary masters $X_controls, robust
+
+         Estimate Std. Error  t value Pr(>|t|)
+masters 0.9632808 0.01776491 54.22379        0
+
+  OLS Estimate: 0.9633 (SE = 0.0178)
+
+*----------------------------------------------------------------------
+* FIRST-STAGE REGRESSION (Testing Instrument Relevance)
+*----------------------------------------------------------------------
+
+. regress masters ga_funding_adj $X_controls, robust
+
+                 Estimate  Std. Error  t value      Pr(>|t|)
+ga_funding_adj 0.04185408 0.001162091 36.01617 2.386857e-263
+
+  GA Funding coefficient:  0.0419
+  Standard error:          0.0012
+  t-statistic:              36.02
+  Partial F-statistic:     1297.2
+  Stock-Yogo threshold:   F > 10
+  RESULT: Strong instrument (F = 1297.2 > 10)
+
+*----------------------------------------------------------------------
+* IV/2SLS ESTIMATION
+*----------------------------------------------------------------------
+
+. ivregress 2sls ln_salary (masters = ga_funding_adj) $X_controls, first robust
+
+         Estimate Std. Error  t value     Pr(>|t|)
+masters 0.4031215 0.04894837 8.235648 2.069677e-16
+
+  IV/2SLS Estimate: 0.4031 (SE = 0.0489)
+  95% CI: [0.3072, 0.4991]
+
+*----------------------------------------------------------------------
+* ASSESSING INSTRUMENT VALIDITY
+*----------------------------------------------------------------------
+
+. estat firststage
+
+  Partial F (Weak instruments):  1308.4396  (p = 0.0000)
+  Stock-Yogo threshold: F > 10
+  RESULT: Strong instrument
+
+. estat endogenous  (Durbin-Wu-Hausman test)
+  H0: masters is exogenous (OLS is consistent)
+
+  Wu-Hausman F:   183.4175  (p = 0.0000)
+  Sargan chi2:    NA  (p = NA)
+  RESULT: Reject H0 — endogeneity confirmed; IV estimation warranted
+
+. estimates table ols_model iv_model
+  OLS vs. IV/2SLS: Effect of Master's Degree on Log Salary
+
+  Statistic               OLS     IV/2SLS
+  ----------------------------------------
+  masters coef         0.9633      0.4031
+  SE (robust)          0.0178      0.0489
+  N                      8000        8000
+  ----------------------------------------
+
+  OLS estimate:   0.9633 (SE = 0.0178)
+  IV estimate:    0.4031 (SE = 0.0489)
+  Difference:     0.5602
+
+  Interpretation:
+  The OLS estimate exceeds the IV estimate, indicating upward bias
+  due to positive selection on unobservables. Students who complete
+  master's degrees have higher unobserved ability and motivation,
+  which independently increases salary.
+
+*----------------------------------------------------------------------
+* MANUAL 2SLS (pedagogical — SEs are incorrect; use ivreg() for inference)
+*----------------------------------------------------------------------
+
+  Manual 2SLS estimate: 0.4031
+  ivreg() estimate:     0.4031
+  (Coefficients should be identical; SEs differ)
+
+Chapter 7 R script completed: 29 Mar 2026 19:26:37 
