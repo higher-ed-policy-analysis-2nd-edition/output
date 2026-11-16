@@ -1,0 +1,314 @@
+Log file: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 12/Output/logs/Chapter12_R_output.log 
+Chapter 12 log opened: 15 Nov 2026 18:29:53 
+
+============================================================
+  Section 2: Synthetic Data Generation
+============================================================
+Canonical dataset downloaded from GitHub repository.
+
+============================================================
+  Section 3: Descriptive Statistics and Policy Exposure
+============================================================
+
+   0    1 
+4989 3011 
+# A tibble: 2 × 16
+  masters salary_mean salary_sd salary_min salary_max salary_n ln_salary_mean ln_salary_sd ln_salary_min ln_salary_max ln_salary_n
+    <dbl>       <dbl>     <dbl>      <dbl>      <dbl>    <int>          <dbl>        <dbl>         <dbl>         <dbl>       <int>
+1       0      67934.    58142.      3183.    940681.     4989           10.9        0.742          8.07          13.8        4989
+2       1     138168.   122197.      1135.    894258.     3011           11.3        1.19           7.03          13.7        3011
+# ℹ 5 more variables: grad_plus_loans_mean <dbl>, grad_plus_loans_sd <dbl>, grad_plus_loans_min <dbl>, grad_plus_loans_max <dbl>,
+#   grad_plus_loans_n <int>
+
+Policy exposure summary:
+      25%       50%       75%       90%       95% 
+ 42.04541  62.05897  82.92291 101.04286 111.70285 
+Mean: 62.76749  Max: 171.4188  N: 8000 
+
+Students above $100k cap:
+   
+            0         1
+  0 0.6189609 0.3810391
+  1 0.6623981 0.3376019
+   
+             0          1
+  0 0.88594909 0.90368648
+  1 0.11405091 0.09631352
+
+Mean loan overage conditional on exceeding cap:
+     Min.   1st Qu.    Median      Mean   3rd Qu.      Max. 
+ 0.008252  4.211462 10.336015 13.625439 20.338742 71.418798 
+Constrained completers: 290 / 3011 (9.6%)
+
+Mean federal graduate borrowing and share above the limit, by program area:
+# A tibble: 5 × 5
+  prog_area grad_plus_loans_mean grad_plus_loans_n above_cap_mean above_cap_n
+  <fct>                    <dbl>             <int>          <dbl>       <int>
+1 STEM                      70.7              1729         0.136         1729
+2 Business                  81.9              1449         0.255         1449
+3 Education                 56.1              1244         0.0635        1244
+4 Health                    66.5              1152         0.101         1152
+5 Other                     47.4              2426         0.0243        2426
+
+============================================================
+  Section 4: Probit Selection Model and Propensity Score
+============================================================
+
+t test of coefficients:
+
+                   Estimate  Std. Error t value  Pr(>|t|)    
+(Intercept)     -0.16398335  0.07059947 -2.3227  0.020219 *  
+ga_funding_adj   0.04887821  0.00229279 21.3182 < 2.2e-16 ***
+female          -0.00399311  0.01043197 -0.3828  0.701896    
+black            0.00563565  0.01576910  0.3574  0.720812    
+hispanic        -0.02132782  0.01669926 -1.2772  0.201579    
+asian           -0.01737540  0.02068199 -0.8401  0.400865    
+age_ba          -0.01457727  0.00195753 -7.4468 1.056e-13 ***
+firstgen        -0.02083084  0.01181467 -1.7631  0.077916 .  
+parent_income_q  0.02157497  0.00468295  4.6071 4.146e-06 ***
+parent_grad      0.03835479  0.01075433  3.5664  0.000364 ***
+ugpa             0.13761455  0.01201044 11.4579 < 2.2e-16 ***
+stem_major       0.02996098  0.01373844  2.1808  0.029226 *  
+bus_major       -0.01020246  0.01439651 -0.7087  0.478546    
+ed_major         0.01403062  0.01554380  0.9027  0.366739    
+selective_inst   0.02576688  0.01175755  2.1915  0.028443 *  
+public_ug       -0.00573343  0.01154674 -0.4965  0.619526    
+state_unemp     -0.00084139  0.00409934 -0.2053  0.837382    
+metro            0.01882242  0.01117473  1.6844  0.092149 .  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+First-stage F-statistic: 454.47
+
+Call:
+glm(formula = rhs_formula("masters", c(Z_instrument, X_controls)), 
+    family = binomial(link = "probit"), data = dat)
+
+Coefficients:
+                 Estimate Std. Error z value Pr(>|z|)    
+(Intercept)     -1.847350   0.203294  -9.087  < 2e-16 ***
+ga_funding_adj   0.136670   0.006907  19.786  < 2e-16 ***
+female          -0.013522   0.029292  -0.462 0.644339    
+black            0.013607   0.044109   0.308 0.757710    
+hispanic        -0.062632   0.048234  -1.299 0.194114    
+asian           -0.046930   0.058037  -0.809 0.418731    
+age_ba          -0.041315   0.005694  -7.256 3.99e-13 ***
+firstgen        -0.059112   0.033467  -1.766 0.077346 .  
+parent_income_q  0.060024   0.013145   4.566 4.97e-06 ***
+parent_grad      0.105490   0.030008   3.515 0.000439 ***
+ugpa             0.389902   0.034816  11.199  < 2e-16 ***
+stem_major       0.083462   0.038231   2.183 0.029027 *  
+bus_major       -0.028363   0.041064  -0.691 0.489751    
+ed_major         0.041948   0.042976   0.976 0.329021    
+selective_inst   0.070584   0.032833   2.150 0.031573 *  
+public_ug       -0.016079   0.032486  -0.495 0.620637    
+state_unemp     -0.002145   0.011543  -0.186 0.852591    
+metro            0.052072   0.031498   1.653 0.098291 .  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 10596.2  on 7999  degrees of freedom
+Residual deviance:  9970.5  on 7982  degrees of freedom
+AIC: 10007
+
+Number of Fisher Scoring iterations: 4
+
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+0.04727 0.27776 0.36692 0.37653 0.46742 0.85070 
+GA funding coefficient (probit): 0.1366703 
+# A tibble: 2 × 6
+  masters  mean    sd   p10   p50   p90
+    <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
+1       0 0.348 0.125 0.190 0.338 0.521
+2       1 0.424 0.134 0.255 0.419 0.604
+
+============================================================
+  Section 5: MTE Estimation
+============================================================
+
+t test of coefficients:
+
+                   Estimate  Std. Error t value  Pr(>|t|)    
+(Intercept)      9.94481639  0.19590670 50.7630 < 2.2e-16 ***
+masters          0.55435639  0.39947583  1.3877 0.1652643    
+female          -0.09367915  0.02048943 -4.5721 4.902e-06 ***
+black           -0.07416374  0.03097313 -2.3945 0.0166681 *  
+hispanic        -0.04679653  0.03467605 -1.3495 0.1772036    
+asian           -0.08490172  0.04207274 -2.0180 0.0436273 *  
+age_ba           0.00013538  0.00408355  0.0332 0.9735531    
+firstgen         0.07787538  0.02265577  3.4373 0.0005905 ***
+parent_income_q  0.01792665  0.00947726  1.8915 0.0585878 .  
+parent_grad      0.00176860  0.02127251  0.0831 0.9337422    
+ugpa             0.27068087  0.02767759  9.7798 < 2.2e-16 ***
+stem_major       0.16243537  0.02672337  6.0784 1.270e-09 ***
+bus_major        0.24372037  0.02799010  8.7074 < 2.2e-16 ***
+ed_major        -0.17628916  0.03117509 -5.6548 1.614e-08 ***
+selective_inst   0.14942952  0.02314063  6.4575 1.127e-10 ***
+public_ug        0.03669902  0.02311406  1.5877 0.1123858    
+state_unemp     -0.00772937  0.00799214 -0.9671 0.3335123    
+metro            0.02528504  0.02193936  1.1525 0.2491515    
+phat            -0.16531456  1.28629536 -0.1285 0.8977408    
+phat2           -0.36028353  3.50150511 -0.1029 0.9180498    
+phat3            0.64022040  2.98706804  0.2143 0.8302947    
+masters:phat     1.60264252  3.19936296  0.5009 0.6164374    
+masters:phat2   -5.59241017  8.00870225 -0.6983 0.4850152    
+masters:phat3    3.17317558  6.29506097  0.5041 0.6142234    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Joint F-test, any effect (4 terms) p-value: 0.0000
+Heterogeneity F-test (MTE flat in u) p-value: 0.0000
+
+MTE polynomial: MTE(u) =  0.5544 +  1.6026*u + -5.5924*u^2 +  3.1732*u^3
+Estimated ATE (cubic): 0.2848
+Estimated ATT: 0.4439
+Estimated ATU: 0.5352
+
+Treatment parameter hierarchy (this dataset): ATU > ATT > ATE = 0.5352 > 0.4439 > 0.2848
+
+============================================================
+  Section 6: Policy Simulation
+============================================================
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.5002  0.5333  0.5848  0.6028  0.6545  0.9234 
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+0.00000 0.00000 0.00000 0.02185 0.00000 0.92341 
+
+--- Treatment Parameter Hierarchy (Point Estimates) ---
+ATE   (population average):           0.2848
+ATT   (E[MTE | D=1], completers):     0.4439
+ATU   (E[MTE | D=0], non-completers): 0.5352
+MPRTE (cap-displaced margin):         0.4954
+
+MPRTE compares the average return of displaced students with the
+average return of all completers (ATT). If MPRTE > ATT, the cap removes
+students with above-average returns among completers (efficiency loss).
+Present value factor (30 yrs, 3% r): 19.600
+Point-estimate fiscal savings ($000s):   2340.9
+Point-estimate behavioral cost ($000s):  79852.8
+Point-estimate efficiency gain (low-return exit, $000s):     69.3
+Point-estimate net benefit ($000s): -77442.6
+Benefit-cost ratio: 0.030
+
+--- Institutional Outcomes (Point Estimates) ---
+Net institutional revenue loss ($000s):      11792.9
+Cross-subsidy disruption ($000s):             2358.6
+Total institutional sector impact ($000s):   14151.5
+
+Institutional revenue loss by program area ($000s):
+# A tibble: 5 × 4
+  prog_area inst_rev_loss_i_sum inst_rev_loss_i_mean inst_rev_loss_i_n
+  <fct>                   <dbl>                <dbl>             <int>
+1 STEM                    2818.                4.08                691
+2 Business                6136.               12.1                 507
+3 Education                759.                1.57                482
+4 Health                  1707.                3.89                439
+5 Other                    373.                0.418               892
+
+Institutional revenue loss by institution type ($000s):
+# A tibble: 2 × 4
+  selective_inst inst_rev_loss_i_sum inst_rev_loss_i_mean inst_rev_loss_i_n
+           <dbl>               <dbl>                <dbl>             <int>
+1              0               5494.                 2.55              2158
+2              1               6299.                 7.38               853
+# A tibble: 2 × 4
+  public_ug inst_rev_loss_i_sum inst_rev_loss_i_mean inst_rev_loss_i_n
+      <dbl>               <dbl>                <dbl>             <int>
+1         0               3366.                 3.91               862
+2         1               8427.                 3.92              2149
+
+Extended net benefit (incl. institutional costs, $000s): -91594.2
+
+============================================================
+  Section 7: Bayesian Microsimulation
+============================================================
+MTE polynomial coefficient names: masters, masters:phat, masters:phat2, masters:phat3 
+
+Running 1000 posterior draws...
+(This typically takes under a minute.)
+  Draw 100 / 1000 complete
+  Draw 200 / 1000 complete
+  Draw 300 / 1000 complete
+  Draw 400 / 1000 complete
+  Draw 500 / 1000 complete
+  Draw 600 / 1000 complete
+  Draw 700 / 1000 complete
+  Draw 800 / 1000 complete
+  Draw 900 / 1000 complete
+  Draw 1000 / 1000 complete
+Simulation complete.
+
+============================================================
+  Section 8: Cost-Benefit Decomposition
+============================================================
+
+--- Posterior Summary: CBA Components ($000s) ---
+fiscal_s:  mean = 2345.91  sd = 337.09  95% CI: [1773.01, 2895.99]
+behav_cost_s:  mean = 80295.72  sd = 9095.95  95% CI: [63658.50, 97872.00]
+effic_gain_s:  mean = 207.16  sd = 283.60  95% CI: [  0.00, 1012.69]
+net_benefit_s:  mean = -77742.65  sd = 9088.03  95% CI: [-95547.34, -61185.60]
+
+--- Institutional Outcomes: Posterior Summary ($000s) ---
+inst_rev_loss_s:  mean =   11828.23  95% CI: [  10060.76,   13793.72]
+cross_sub_loss_s:  mean =    2365.65  95% CI: [   2012.15,    2758.74]
+nb_extended_s:  mean =  -91936.53  95% CI: [-109950.90,  -74929.61]
+
+P(Extended NB > 0, incl. institutional costs): 0.000
+  b0_s_mean   b0_s_sd b1_s_mean  b1_s_sd b2_s_mean  b2_s_sd b3_s_mean  b3_s_sd ate_s_mean  ate_s_sd att_s_mean   att_s_sd atu_s_mean
+1 0.5601407 0.3934148   1.53806 3.140163  -5.41148 7.847342  3.027041 6.156938  0.2821045 0.1366323  0.4435738 0.02496703  0.5345647
+    atu_s_sd mprte_s_mean mprte_s_sd
+1 0.02566435    0.4949251 0.02427901
+
+--- Treatment Parameter Posterior (log-salary units) ---
+ate_s:  mean =   0.2821  sd =   0.1366  95% CI: [  0.0030,   0.5298]
+att_s:  mean =   0.4436  sd =   0.0250  95% CI: [  0.3957,   0.4935]
+mprte_s:  mean =   0.4949  sd =   0.0243  95% CI: [  0.4466,   0.5412]
+atu_s:  mean =   0.5346  sd =   0.0257  95% CI: [  0.4830,   0.5847]
+
+P(MPRTE > ATT | data): 1.000   (posterior probability cap binds high-return margin)
+
+Probability policy is efficient P(NB > 0): 0.000
+
+Posterior benefit-cost ratio:
+BCR:  mean =   0.0322  sd =   0.0066  95% CI: [  0.0211,   0.0466]
+
+Net benefit per displaced student ($000s):
+NB/student:  mean = -444.73  sd =  51.99  95% CI: [-546.58, -350.02]
+
+============================================================
+  Section 9: Posterior Summaries and Inference
+============================================================
+fiscal_s: mean =      2345.91  95% CI: [     1773.01,      2895.99]
+behav_cost_s: mean =     80295.72  95% CI: [    63658.50,     97872.00]
+effic_gain_s: mean =       207.16  95% CI: [        0.00,      1012.69]
+net_benefit_s: mean =    -77742.65  95% CI: [   -95547.34,    -61185.60]
+bcr_s: mean =         0.03  95% CI: [        0.02,         0.05]
+
+--- Policy Verdict ---
+Posterior mean NB =    -77742.65 ($000s) < 0
+Scenario B likely: cap displaces students with positive marginal returns.
+Human capital loss exceeds fiscal savings.
+
+Summary table written to C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 12/Output/tables/Table12_1_CBA_Summary.tex 
+
+============================================================
+  Section 10: Figures
+============================================================
+
+============================================================
+  Chapter 12 Script Complete
+============================================================
+Output files:
+  R log:          C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 12/Output/logs/Chapter12_R_output.log 
+  Data:          Example_12_1.dta
+  Table:          C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 12/Output/tables/Table12_1_CBA_Summary.tex 
+  Sim results:    C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 12/Output/tables/sim_results_ch12.dta 
+  Figures:        C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 12/Output/graphs/fig12_1_posterior_nb_R.png 
+                  C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 12/Output/graphs/fig12_2_mte_policy_R.png 
+                  C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 12/Output/graphs/fig12_3_cba_decomp_R.png 
+                  C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 12/Output/graphs/fig12_4_param_posteriors_R.png 
+                  C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 12/Output/graphs/fig12_5_mte_byfield_R.png 
+                  C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 12/Output/graphs/fig12_6_inst_rev_byfield_R.png 
+                  C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 12/Output/graphs/fig12_7_full_cost_stack_R.png 
