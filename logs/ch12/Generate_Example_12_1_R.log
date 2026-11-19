@@ -1,0 +1,25 @@
+Generate_Example_12_1.R log opened: 17 Nov 2026 13:34:29 
+Log file: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 12/Output/logs/Generate_Example_12_1_R.log 
+Data directory: C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 12/Data 
+Synthetic dataset saved as C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 12/Data/Example_12_1_R.dta 
+N = 8000 observations, 27 variables
+
+--- Sanity Checks ---
+
+   0    1 
+5070 2930 
+ grad_plus_loans    ln_salary          salary      
+ Min.   :  0.00   Min.   : 8.725   Min.   :  6155  
+ 1st Qu.: 42.02   1st Qu.:10.604   1st Qu.: 40314  
+ Median : 62.14   Median :10.965   Median : 57804  
+ Mean   : 62.77   Mean   :10.975   Mean   : 67788  
+ 3rd Qu.: 83.09   3rd Qu.:11.344   3rd Qu.: 84496  
+ Max.   :170.70   Max.   :13.142   Max.   :509961  
+Share above $100k cap: 0.106
+
+--- True treatment effects (log salary units) ---
+True ATE: 0.2307
+True ATT: 0.2948
+True ATU: 0.1937
+
+Generate_Example_12_1.R log closed: 17 Nov 2026 13:34:29 

@@ -1,22 +1,20 @@
------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------
       name:  <unnamed>
-       log:  C:\Users\marvi\Dropbox\Book\2nd Edition\Chapter 12\Output/logs/Chapter12_Stata_out
-> put.log
+       log:  C:\Users\marvi\Dropbox\Book\2nd Edition\Chapter 12\Output/logs/Chapter12_Stata_output.log
   log type:  text
- opened on:  15 Nov 2026, 18:28:47
+ opened on:  19 Nov 2026, 12:32:59
 
 . di "Log file: " c(pwd) "/Output/logs/Chapter12_Stata_output.log"
-Log file: C:\Users\marvi\Dropbox\Book\2nd Edition\Chapter 12/Output/logs/Chapter12_Stata_output
-> .log
+Log file: C:\Users\marvi\Dropbox\Book\2nd Edition\Chapter 12/Output/logs/Chapter12_Stata_output.log
 
 . di "Chapter 12 log opened: " c(current_date) " " c(current_time)
-Chapter 12 log opened: 15 Nov 2026 18:28:47
+Chapter 12 log opened: 19 Nov 2026 12:32:59
 
 . 
 . * ── Global macros ───────────────────────────────────────────────────────────
 . * Individual-level controls (same set as Chapter 11 for consistency)
-. global X_controls "female black hispanic asian age_ba firstgen parent_income_q parent_grad ug
-> pa stem_major bus_major ed_major selective_inst public_ug state_unemp metro"
+. global X_controls "female black hispanic asian age_ba firstgen parent_income_q parent_grad ugpa stem_ma
+> jor bus_major ed_major selective_inst public_ug state_unemp metro"
 
 . global X "$X_controls"
 
@@ -30,6 +28,8 @@ Chapter 12 log opened: 15 Nov 2026 18:28:47
 
 . global subsidy_rate    0.20    // Government subsidy on Grad PLUS principal
 
+. global tax_rate        0.20    // Marginal tax rate on forgone earnings (REVISION 6)
+
 . global cap_threshold   100     // Policy cap ($000s)
 
 . global base_salary     47000   // Pooled mean annual salary (non-holders)
@@ -37,6 +37,19 @@ Chapter 12 log opened: 15 Nov 2026 18:28:47
 . global cost_per_degree 100000  // Not used in any calculation (retained for reference)
 
 . global S_draws         1000     // Number of Bayesian posterior draws
+
+. global cross_sub_share 0.20    // Share of net revenue that cross-subsidizes other programs
+
+. * Prior settings for the posterior simulation (Section 7; Table 12.2)
+. global prior_sd_salary  0.10   // SD of log base salary
+
+. global prior_hw_subsidy 0.05   // Half-width of uniform prior on subsidy rate
+
+. global prior_sd_tuition 0.08   // SD of log tuition multiplier
+
+. global tax_lo           0.15   // Tax-rate prior: uniform lower bound
+
+. global tax_hi           0.25   // Tax-rate prior: uniform upper bound
 
 . 
 . 
@@ -76,8 +89,8 @@ Chapter 12 log opened: 15 Nov 2026 18:28:47
 . 
 . * ── Attempt to load from repository; generate synthetically if unavailable ──
 . capture copy ///
->     "https://raw.githubusercontent.com/higher-ed-policy-analysis-2nd-edition/data/main/ch12/E
-> xample_12_1.dta" ///
+>     "https://raw.githubusercontent.com/higher-ed-policy-analysis-2nd-edition/data/main/ch12/Example_12_
+> 1.dta" ///
 >     "Example_12_1.dta", replace
 
 . 
@@ -120,8 +133,10 @@ Chapter 12 log opened: 15 Nov 2026 18:28:47
 .     * ── State GA funding (instrument) ───────────────────────────────────────────
 .     * Each student is assigned a state GA funding level. Variation is driven by
 .     * state budgetary conditions and is plausibly exogenous to individual earnings.
-.     gen ga_funding_adj = round(rnormal(7.5, 2.2) * 10) / 10
-.     replace ga_funding_adj = max(2.0, min(14.0, ga_funding_adj))
+.     * Calibration (REVISION 3): SD 4.0 and bounds 0-20 (previously SD 2.2,
+.     * bounds 2-14) so that propensity scores span nearly all of [0,1].
+.     gen ga_funding_adj = round(rnormal(7.5, 4.0) * 10) / 10
+.     replace ga_funding_adj = max(0, min(20, ga_funding_adj))
 . 
 .     * ── Grad PLUS loan amount ────────────────────────────────────────────────────
 .     * Loan amounts reflect program costs (STEM and business programs cost more),
@@ -179,12 +194,13 @@ Chapter 12 log opened: 15 Nov 2026 18:28:47
 .     * ── Latent propensity to complete ───────────────────────────────────────────
 .     * The selection equation mirrors Chapter 11. Students select into completion
 .     * based on observed covariates, GA funding, and an unobserved individual factor.
-.     gen epsilon = rnormal(0, 1)    // Latent selection error (positive correlation
-.     gen nu      = rnormal(0, 1)    //   with earnings error to create selection bias)
+.     gen epsilon = rnormal(0, 1)    // Latent selection error; defines resistance U_D
+.     gen nu      = rnormal(0, 1)    // Not used; retained so the random-number
+.                                    //   sequence matches Generate_Example_12_1.do
 . 
 .     * Latent index (linear combination of instrument + controls + noise)
-.     gen index_latent = -1.97 ///
->         + 0.13 * ga_funding_adj ///
+.     gen index_latent = -3.00 ///          // REVISION 3 (was -1.97)
+>         + 0.25 * ga_funding_adj ///      // REVISION 3 (was 0.13)
 >         + 0.04 * ugpa * 10 ///
 >         + 0.08 * parent_grad ///
 >         - 0.10 * firstgen ///
@@ -201,19 +217,25 @@ Chapter 12 log opened: 15 Nov 2026 18:28:47
 .     * ── Propensity score (true) ─────────────────────────────────────────────────
 .     gen phat_true = normal(index_latent)
 . 
-.     * ── Heterogeneous treatment effects ─────────────────────────────────────────
-.     * MTE(u) = b0 + b1*u + b2*u^2 + b3*u^3  (cubic polynomial)
-.     * True parameters imply declining MTE → positive selection on gains.
-.     * Interpretation: students most likely to complete (low u) benefit the most.
-.     local b0_true = -2.50
-.     local b1_true =  19.30
-.     local b2_true = -30.25
-.     local b3_true =  15.12
+.     * ── Heterogeneous treatment effects (REVISION 3) ────────────────────────────
+.     * MTE(u) = a0 + a1*u + a2*u^2  (quadratic in resistance u, as in Ch. 11)
+.     * Resistance is U_D = normal(-epsilon): uniform on [0,1], and a student
+.     * completes (index_latent > 0) exactly when U_D is below the propensity
+.     * score.
+.     * The MTE declines from 0.40 at u = 0 to 0.10 at u = 1: positive selection
+.     * on gains, so students most likely to complete benefit the most
+.     * (Carneiro, Heckman, & Vytlacil, 2011). True ATE = a0 + a1/2 + a2/3 = 0.233.
+.     * Selection on levels: students with higher resistance have higher
+.     * earnings without the degree (better outside options), so a naive OLS
+.     * comparison of completers and non-completers is biased.
+.     local a0_true =  0.40
+.     local a1_true = -0.40
+.     local a2_true =  0.10
 . 
-.     gen u_true      = 1 - phat_true
-.     gen mte_true    = `b0_true' + `b1_true'*u_true + `b2_true'*u_true^2 + `b3_true'*u_true^3
-.     gen Y1_latent   = mte_true + rnormal(0, 0.40)    // Log-salary under D=1
-.     gen Y0_latent   = rnormal(0, 0.70)               // Log-salary under D=0
+.     gen u_true      = normal(-epsilon)                // U_D: resistance
+.     gen mte_true    = `a0_true' + `a1_true'*u_true + `a2_true'*u_true^2
+.     gen Y0_latent   = 0.15*(u_true - 0.5) + rnormal(0, 0.45)   // Log-salary under D=0
+.     gen Y1_latent   = Y0_latent + mte_true + rnormal(0, 0.10)  // Log-salary under D=1
 . 
 .     * ── Observed log salary ─────────────────────────────────────────────────────
 .     gen ln_salary = 10.0 ///
@@ -279,8 +301,8 @@ Canonical dataset downloaded from GitHub repository.
      Degree |
     (1=Yes) |      Freq.     Percent        Cum.
 ------------+-----------------------------------
-          0 |      4,989       62.36       62.36
-          1 |      3,011       37.64      100.00
+          0 |      4,949       61.86       61.86
+          1 |      3,051       38.14      100.00
 ------------+-----------------------------------
       Total |      8,000      100.00
 
@@ -291,22 +313,22 @@ Group variable: masters (Completed Master's Degree (1=Yes))
 
  masters |    salary  ln_sal~y  grad_p~s
 ---------+------------------------------
-       0 |  67934.11  10.85113  63.64936
-         |  58141.51  .7422588  29.13926
-         |  3182.516  8.065427         0
-         |  940680.5  13.75436  162.8045
-         |      4989      4989      4989
+       0 |  61478.73  10.88334  65.55819
+         |  35959.76  .5331678  29.30936
+         |  8480.216  9.045491         0
+         |  445003.5  13.00584  181.2126
+         |      4949      4949      4949
 ---------+------------------------------
-       1 |  138168.2   11.3171   61.3063
-         |  122196.7  1.193933  29.36864
-         |  1134.708  7.034131         0
-         |  894257.9  13.70375  171.4188
-         |      3011      3011      3011
+       1 |  82120.94  11.16543  59.46414
+         |  47817.73  .5506679  29.04126
+         |  11090.47  9.313842         0
+         |  385562.4  12.86246  151.7186
+         |      3051      3051      3051
 ---------+------------------------------
-   Total |  94368.48  11.02651  62.76749
-         |  94259.28  .9648481  29.24601
-         |  1134.708  7.034131         0
-         |  940680.5  13.75436  171.4188
+   Total |  69351.16  10.99092  63.23407
+         |  42098.42  .5569928  29.35522
+         |  8480.216  9.045491         0
+         |  445003.5  13.00584  181.2126
          |      8000      8000      8000
 ----------------------------------------
 
@@ -325,7 +347,7 @@ Policy exposure summary:
 
     Variable |      Mean       p25       p50       p75       p90       p95       Max         N
 -------------+--------------------------------------------------------------------------------
-grad_plus_~s |  62.76749  42.04491  62.05897   82.9327   101.053  111.7089  171.4188      8000
+grad_plus_~s |  63.23407  43.00381  62.82679  83.72255  101.2822  111.7342  181.2126      8000
 ----------------------------------------------------------------------------------------------
 
 . 
@@ -347,16 +369,16 @@ Students above $100k cap:
            |    Degree (1=Yes)
  above_cap |         0          1 |     Total
 -----------+----------------------+----------
-         0 |     4,420      2,721 |     7,141 
-           |     61.90      38.10 |    100.00 
-           |     88.59      90.37 |     89.26 
+         0 |     4,351      2,788 |     7,139 
+           |     60.95      39.05 |    100.00 
+           |     87.92      91.38 |     89.24 
 -----------+----------------------+----------
-         1 |       569        290 |       859 
-           |     66.24      33.76 |    100.00 
-           |     11.41       9.63 |     10.74 
+         1 |       598        263 |       861 
+           |     69.45      30.55 |    100.00 
+           |     12.08       8.62 |     10.76 
 -----------+----------------------+----------
-     Total |     4,989      3,011 |     8,000 
-           |     62.36      37.64 |    100.00 
+     Total |     4,949      3,051 |     8,000 
+           |     61.86      38.14 |    100.00 
            |    100.00     100.00 |    100.00 
 
 . 
@@ -368,7 +390,7 @@ Mean loan overage conditional on exceeding cap:
 
     Variable |        Obs        Mean    Std. dev.       Min        Max
 -------------+---------------------------------------------------------
-loan_overage |        859    13.62544    11.90279   .0082524    71.4188
+loan_overage |        861    13.90403    11.93836   .0009308   81.21259
 
 . 
 . * Share of completers who would face a binding constraint
@@ -382,7 +404,7 @@ loan_overage |        859    13.62544    11.90279   .0082524    71.4188
 
 . di as text "Constrained completers: " `n_constrained' " / " `n_completers' ///
 >     " (" %5.1f 100*`n_constrained'/`n_completers' "%)"
-Constrained completers: 290 / 3011 (  9.6%)
+Constrained completers: 263 / 3051 (  8.6%)
 
 . 
 . * ── By program area ─────────────────────────────────────────────────────────
@@ -392,16 +414,16 @@ Constrained completers: 290 / 3011 (  9.6%)
 . gen prog_area = 5
 
 . replace prog_area = 1 if stem_major   == 1
-(1,729 real changes made)
+(1,783 real changes made)
 
 . replace prog_area = 2 if bus_major    == 1
-(1,449 real changes made)
+(1,515 real changes made)
 
 . replace prog_area = 3 if ed_major     == 1
-(1,244 real changes made)
+(1,250 real changes made)
 
 . replace prog_area = 4 if health_major == 1
-(1,152 real changes made)
+(1,139 real changes made)
 
 . label define prog_area_lbl 1 "STEM" 2 "Business" 3 "Education" 4 "Health" 5 "Other", replace
 
@@ -421,24 +443,211 @@ Group variable: prog_area (Graduate program area)
 
 prog_area |  grad_p~s  above_~p
 ----------+--------------------
-     STEM |  70.65499  .1364951
-          |      1729      1729
+     STEM |  71.31338  .1441391
+          |      1783      1783
 ----------+--------------------
- Business |  81.88267  .2546584
-          |      1449      1449
+ Business |  81.51807  .2415842
+          |      1515      1515
 ----------+--------------------
-Education |   56.0602  .0635048
-          |      1244      1244
+Education |  56.61136     .0552
+          |      1250      1250
 ----------+--------------------
-   Health |  66.48109  .1006944
-          |      1152      1152
+   Health |  67.03116  .1071115
+          |      1139      1139
 ----------+--------------------
-    Other |  47.40494  .0243199
-          |      2426      2426
+    Other |  46.73939  .0203199
+          |      2313      2313
 ----------+--------------------
-    Total |  62.76749   .107375
+    Total |  63.23407   .107625
           |      8000      8000
 -------------------------------
+
+. 
+. * ── Table 12.1: Descriptive statistics (Word) ──────────────────────────────
+. * Panel A: student-level variables; Panel B: institution- and state-level
+. * variables. Mean, SD, minimum, and maximum for all students, plus means for
+. * completers and non-completers. Written with putdocx so it pastes into Word.
+. gen other_major = 1 - stem_major - bus_major - ed_major - health_major
+
+. 
+. * Row list: a word starting with "@" is a panel heading ("_" = space)
+. local t1rows "@Panel_A:_Student-level_variables ln_salary salary female black"
+
+. local t1rows "`t1rows' hispanic asian age_ba firstgen parent_income_q parent_grad ugpa"
+
+. local t1rows "`t1rows' stem_major bus_major ed_major health_major other_major"
+
+. local t1rows "`t1rows' grad_plus_loans above_cap"
+
+. local t1rows "`t1rows' @Panel_B:_Institution-_and_state-level_variables selective_inst"
+
+. local t1rows "`t1rows' public_ug annual_tuition program_years net_inst_rev"
+
+. local t1rows "`t1rows' ga_funding_adj state_unemp metro"
+
+. local t1bin "female black hispanic asian firstgen parent_grad stem_major bus_major"
+
+. local t1bin "`t1bin' ed_major health_major other_major selective_inst public_ug metro above_cap"
+
+. 
+. local lab_ln_salary       "Log annual salary"
+
+. local lab_salary          "Annual salary ($)"
+
+. local lab_female          "Female"
+
+. local lab_black           "Black"
+
+. local lab_hispanic        "Hispanic"
+
+. local lab_asian           "Asian"
+
+. local lab_age_ba          "Age at bachelor's degree"
+
+. local lab_firstgen        "First-generation student"
+
+. local lab_parent_income_q "Parental income quartile (1-4)"
+
+. local lab_parent_grad     "Parent holds a graduate degree"
+
+. local lab_ugpa            "Undergraduate GPA"
+
+. local lab_stem_major      "Program area: STEM"
+
+. local lab_bus_major       "Program area: Business"
+
+. local lab_ed_major        "Program area: Education"
+
+. local lab_health_major    "Program area: Health"
+
+. local lab_other_major     "Program area: Other"
+
+. local lab_grad_plus_loans "Federal graduate borrowing ($000s)"
+
+. local lab_above_cap       "Borrowing above the $100,000 limit"
+
+. local lab_selective_inst  "Selective institution"
+
+. local lab_public_ug       "Public undergraduate institution"
+
+. local lab_annual_tuition  "Annual tuition ($000s)"
+
+. local lab_program_years   "Program length (years)"
+
+. local lab_net_inst_rev    "Net institutional revenue per student ($000s)"
+
+. local lab_ga_funding_adj  "State GA funding (instrument)"
+
+. local lab_state_unemp     "State unemployment rate (%)"
+
+. local lab_metro           "Metropolitan area"
+
+. 
+. local nrow : word count `t1rows'
+
+. local R1 = `nrow' + 3                       // header + rows + N + note
+
+. putdocx clear
+
+. putdocx begin, font("Times New Roman", 10)
+
+. putdocx paragraph
+
+. putdocx text ("Table 12.1 "), bold
+
+. putdocx text ("Descriptive statistics")
+
+. putdocx table t1 = (`R1', 7), border(all, nil) layout(autofitcontents)
+
+. putdocx table t1(1,1) = ("Variable")
+
+. local c = 1
+
+. foreach h in "Mean" "SD" "Min" "Max" "Completers" "Non-completers" {
+  2.     local ++c
+  3.     putdocx table t1(1,`c') = ("`h'"), halign(right)
+  4. }
+
+. local r = 1
+
+. foreach w of local t1rows {
+  2.     local ++r
+  3.     if substr("`w'", 1, 1) == "@" {
+  4.         local g = subinstr(substr("`w'", 2, .), "_", " ", .)
+  5.         putdocx table t1(`r',1) = ("`g'"), italic
+  6.         continue
+  7.     }
+  8.     putdocx table t1(`r',1) = ("    `lab_`w''")
+  9.     local isbin : list w in t1bin
+ 10.     qui sum `w'
+ 11.     local xm  = r(mean)
+ 12.     local xsd = r(sd)
+ 13.     local xlo = r(min)
+ 14.     local xhi = r(max)
+ 15.     * Formats: binary = 3 decimals (min/max 0); large amounts = 0; others = 2
+.     if `isbin' {
+ 16.         local fm "%9.3f"
+ 17.         local fx "%9.0f"
+ 18.     }
+ 19.     else if abs(`xm') >= 1000 {
+ 20.         local fm "%12.0fc"
+ 21.         local fx "%12.0fc"
+ 22.     }
+ 23.     else {
+ 24.         local fm "%12.2fc"
+ 25.         local fx "%12.2fc"
+ 26.     }
+ 27.     qui sum `w' if masters == 1
+ 28.     local xm1 = r(mean)
+ 29.     qui sum `w' if masters == 0
+ 30.     local xm0 = r(mean)
+ 31.     putdocx table t1(`r',2) = (strtrim(string(`xm',  "`fm'"))), halign(right)
+ 32.     putdocx table t1(`r',3) = (strtrim(string(`xsd', "`fm'"))), halign(right)
+ 33.     putdocx table t1(`r',4) = (strtrim(string(`xlo', "`fx'"))), halign(right)
+ 34.     putdocx table t1(`r',5) = (strtrim(string(`xhi', "`fx'"))), halign(right)
+ 35.     putdocx table t1(`r',6) = (strtrim(string(`xm1', "`fm'"))), halign(right)
+ 36.     putdocx table t1(`r',7) = (strtrim(string(`xm0', "`fm'"))), halign(right)
+ 37. }
+
+. local ++r
+
+. putdocx table t1(`r',1) = ("N")
+
+. local nall = strtrim(string(_N, "%9.0fc"))
+
+. qui count if masters == 1
+
+. local n1 = strtrim(string(r(N), "%9.0fc"))
+
+. qui count if masters == 0
+
+. local n0 = strtrim(string(r(N), "%9.0fc"))
+
+. putdocx table t1(`r',2) = ("`nall'"), halign(right)
+
+. putdocx table t1(`r',6) = ("`n1'"), halign(right)
+
+. putdocx table t1(`r',7) = ("`n0'"), halign(right)
+
+. local ++r
+
+. putdocx table t1(`r',1) = ("Note: Completers and Non-completers columns report means. Binary variables 
+> are shown as proportions. Panel B characteristics are attached to each student's record; the data conta
+> in no institution or state identifiers. Amounts marked $000s are in thousands of dollars. Synthetic dat
+> a (Example_12_1.dta)."), colspan(7)
+
+. putdocx table t1(1,.), border(top)
+
+. putdocx table t1(1,.), border(bottom)
+
+. putdocx table t1(`=`R1'-1',.), border(bottom)
+
+. putdocx save "$tables_dir/Table12_1_Descriptives_Stata.docx", replace
+successfully created "C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 12/Output/tables/Table12_1_Descript
+> ives_Stata.docx"
+
+. di as text "Table 12.1 written to $tables_dir/Table12_1_Descriptives_Stata.docx"
+Table 12.1 written to Output/tables/Table12_1_Descriptives_Stata.docx
 
 . 
 . 
@@ -465,80 +674,81 @@ Education |   56.0602  .0635048
 . reg masters $Z $X, robust
 
 Linear regression                               Number of obs     =      8,000
-                                                F(17, 7982)       =      44.13
+                                                F(17, 7982)       =     388.17
                                                 Prob > F          =     0.0000
-                                                R-squared         =     0.0753
-                                                Root MSE          =     .46639
+                                                R-squared         =     0.3194
+                                                Root MSE          =     .40116
 
 ---------------------------------------------------------------------------------
                 |               Robust
         masters | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
 ----------------+----------------------------------------------------------------
- ga_funding_adj |   .0488782   .0022928    21.32   0.000     .0443837    .0533727
-         female |  -.0039931    .010432    -0.38   0.702    -.0244425    .0164563
-          black |   .0056357   .0157691     0.36   0.721    -.0252759    .0365472
-       hispanic |  -.0213278   .0166993    -1.28   0.202    -.0540627    .0114071
-          asian |  -.0173754    .020682    -0.84   0.401    -.0579175    .0231667
-         age_ba |  -.0145773   .0019575    -7.45   0.000    -.0184145     -.01074
-       firstgen |  -.0208308   .0118147    -1.76   0.078    -.0439907     .002329
-parent_income_q |    .021575   .0046829     4.61   0.000     .0123952    .0307548
-    parent_grad |   .0383548   .0107543     3.57   0.000     .0172735    .0594361
-           ugpa |   .1376146   .0120104    11.46   0.000      .114071    .1611581
-     stem_major |    .029961   .0137384     2.18   0.029       .00303    .0568919
-      bus_major |  -.0102025   .0143965    -0.71   0.479    -.0384234    .0180185
-       ed_major |   .0140306   .0155438     0.90   0.367    -.0164393    .0445005
- selective_inst |   .0257669   .0117575     2.19   0.028      .002719    .0488147
-      public_ug |  -.0057334   .0115467    -0.50   0.620    -.0283681    .0169012
-    state_unemp |  -.0008414   .0040993    -0.21   0.837    -.0088772    .0071944
-          metro |   .0188224   .0111747     1.68   0.092     -.003083    .0407278
-          _cons |  -.1639834   .0705995    -2.32   0.020    -.3023767     -.02559
+ ga_funding_adj |   .0688412   .0008903    77.32   0.000      .067096    .0705865
+         female |   .0131912   .0089781     1.47   0.142    -.0044083    .0307907
+          black |   .0110417    .013045     0.85   0.397    -.0145299    .0366132
+       hispanic |   .0186868   .0144132     1.30   0.195    -.0095668    .0469404
+          asian |  -.0214967   .0175927    -1.22   0.222     -.055983    .0129895
+         age_ba |  -.0107664    .001735    -6.21   0.000    -.0141675   -.0073653
+       firstgen |  -.0390411   .0101398    -3.85   0.000    -.0589178   -.0191644
+parent_income_q |   .0152176   .0039826     3.82   0.000     .0074106    .0230245
+    parent_grad |   .0265339   .0093244     2.85   0.004     .0082557    .0448121
+           ugpa |   .1172366   .0104293    11.24   0.000     .0967925    .1376806
+     stem_major |  -.0158034   .0116533    -1.36   0.175     -.038647    .0070402
+      bus_major |  -.0256908    .012351    -2.08   0.038     -.049902   -.0014796
+       ed_major |   .0005781   .0133542     0.04   0.965    -.0255996    .0267557
+ selective_inst |   .0088622   .0099566     0.89   0.373    -.0106553    .0283798
+      public_ug |   .0002021   .0098894     0.02   0.984    -.0191838    .0195879
+    state_unemp |  -.0019185   .0035594    -0.54   0.590    -.0088959    .0050588
+          metro |  -.0005282   .0096158    -0.05   0.956    -.0193776    .0183212
+          _cons |  -.2934152   .0602721    -4.87   0.000    -.4115644   -.1752661
 ---------------------------------------------------------------------------------
 
 . test ga_funding_adj
 
  ( 1)  ga_funding_adj = 0
 
-       F(  1,  7982) =  454.47
+       F(  1,  7982) = 5978.66
             Prob > F =    0.0000
 
 . di as text "First-stage F-statistic: " %6.2f r(F)
-First-stage F-statistic: 454.47
+First-stage F-statistic: 5978.66
 
 . 
 . * ── Probit selection model ──────────────────────────────────────────────────
 . probit masters $Z $X
 
-Iteration 0:  Log likelihood = -5298.0927  
-Iteration 1:  Log likelihood =  -4986.321  
-Iteration 2:  Log likelihood = -4985.2636  
-Iteration 3:  Log likelihood = -4985.2636  
+Iteration 0:  Log likelihood =  -5317.866  
+Iteration 1:  Log likelihood = -3805.6922  
+Iteration 2:  Log likelihood =  -3798.923  
+Iteration 3:  Log likelihood = -3798.9208  
+Iteration 4:  Log likelihood = -3798.9208  
 
-Probit regression                                       Number of obs =  8,000
-                                                        LR chi2(17)   = 625.66
-                                                        Prob > chi2   = 0.0000
-Log likelihood = -4985.2636                             Pseudo R2     = 0.0590
+Probit regression                                      Number of obs =   8,000
+                                                       LR chi2(17)   = 3037.89
+                                                       Prob > chi2   =  0.0000
+Log likelihood = -3798.9208                            Pseudo R2     =  0.2856
 
 ---------------------------------------------------------------------------------
         masters | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 ----------------+----------------------------------------------------------------
- ga_funding_adj |   .1366703   .0069151    19.76   0.000      .123117    .1502236
-         female |  -.0135224    .029296    -0.46   0.644    -.0709415    .0438967
-          black |    .013607   .0440951     0.31   0.758    -.0728177    .1000318
-       hispanic |  -.0626317   .0483261    -1.30   0.195    -.1573491    .0320856
-          asian |  -.0469307   .0578715    -0.81   0.417    -.1603568    .0664954
-         age_ba |  -.0413152   .0057062    -7.24   0.000    -.0524992   -.0301312
-       firstgen |   -.059112   .0334769    -1.77   0.077    -.1247255    .0065014
-parent_income_q |   .0600238   .0131435     4.57   0.000      .034263    .0857847
-    parent_grad |   .1054903   .0300071     3.52   0.000     .0466775     .164303
-           ugpa |   .3899024   .0348202    11.20   0.000      .321656    .4581488
-     stem_major |   .0834623     .03824     2.18   0.029     .0085133    .1584114
-      bus_major |  -.0283628    .041067    -0.69   0.490    -.1088527    .0521271
-       ed_major |   .0419481   .0429113     0.98   0.328    -.0421565    .1260527
- selective_inst |   .0705844    .032848     2.15   0.032     .0062035    .1349654
-      public_ug |  -.0160789   .0325152    -0.49   0.621    -.0798075    .0476497
-    state_unemp |  -.0021448   .0115485    -0.19   0.853    -.0247795    .0204899
-          metro |   .0520717   .0314905     1.65   0.098    -.0096486     .113792
-          _cons |   -1.84735   .2033442    -9.08   0.000    -2.245898   -1.448803
+ ga_funding_adj |   .2484545     .00547    45.42   0.000     .2377335    .2591754
+         female |   .0481119    .033085     1.45   0.146    -.0167335    .1129572
+          black |   .0314315   .0492014     0.64   0.523    -.0650015    .1278644
+       hispanic |   .0670721   .0538535     1.25   0.213    -.0384787     .172623
+          asian |  -.0719356   .0669564    -1.07   0.283    -.2031676    .0592965
+         age_ba |  -.0386863   .0063589    -6.08   0.000    -.0511495   -.0262231
+       firstgen |  -.1470627    .037842    -3.89   0.000    -.2212316   -.0728938
+parent_income_q |   .0556086   .0148624     3.74   0.000     .0264788    .0847384
+    parent_grad |   .1038069   .0339728     3.06   0.002     .0372215    .1703922
+           ugpa |   .4450697     .03961    11.24   0.000     .3674354    .5227039
+     stem_major |  -.0607748   .0433459    -1.40   0.161    -.1457312    .0241817
+      bus_major |  -.0983425   .0455929    -2.16   0.031     -.187703   -.0089821
+       ed_major |   .0114231    .048469     0.24   0.814    -.0835745    .1064206
+ selective_inst |   .0369275   .0367531     1.00   0.315    -.0351073    .1089623
+      public_ug |   .0083132   .0366554     0.23   0.821      -.06353    .0801564
+    state_unemp |  -.0045332   .0129263    -0.35   0.726    -.0298684    .0208019
+          metro |    -.00196   .0355761    -0.06   0.956    -.0716878    .0677679
+          _cons |   -2.95377   .2260319   -13.07   0.000    -3.396784   -2.510756
 ---------------------------------------------------------------------------------
 
 . estimates store probit_first
@@ -554,10 +764,8 @@ parent_income_q |   .0600238   .0131435     4.57   0.000      .034263    .085784
 . label variable z_index "Linear Index from Probit"
 
 . 
-. * Polynomial terms for control function
+. * Polynomial term for the quadratic control function
 . gen phat2 = phat^2
-
-. gen phat3 = phat^3
 
 . 
 . summarize phat, detail
@@ -565,20 +773,20 @@ parent_income_q |   .0600238   .0131435     4.57   0.000      .034263    .085784
                  Propensity Score P(D=1|Z,X)
 -------------------------------------------------------------
       Percentiles      Smallest
- 1%     .1167179       .0472746
- 5%      .170526       .0526926
-10%     .2062847       .0576531       Obs               8,000
-25%     .2777432       .0583974       Sum of wgt.       8,000
+ 1%     .0064472       .0008922
+ 5%      .018916       .0013455
+10%     .0405473       .0013597       Obs               8,000
+25%     .1309048       .0019121       Sum of wgt.       8,000
 
-50%     .3669151                      Mean            .376528
-                        Largest       Std. dev.      .1335193
-75%     .4674238       .8082507
-90%      .559774       .8092468       Variance       .0178274
-95%     .6092405       .8310879       Skewness       .3027055
-99%     .7013332       .8507006       Kurtosis       2.676688
+50%     .3339022                      Mean           .3818198
+                        Largest       Std. dev.      .2809956
+75%      .603699       .9965188
+90%     .8063849       .9967598       Variance       .0789586
+95%     .8926613        .998185       Skewness       .4396955
+99%     .9716876       .9993215       Kurtosis       2.021767
 
 . di "GA funding coefficient (probit): " _b[ga_funding_adj]
-GA funding coefficient (probit): .13667027
+GA funding coefficient (probit): .24845445
 
 . local ga_coef = _b[ga_funding_adj]
 
@@ -591,27 +799,27 @@ Group variable: masters (Completed Master's Degree (1=Yes))
 
  masters |      Mean        SD       p10       p50       p90
 ---------+--------------------------------------------------
-       0 |   .347913  .1249082  .1894151  .3379562   .521479
-       1 |  .4239408  .1338475  .2545213  .4192905  .6036803
+       0 |  .2539097  .2146697  .0230136   .199011  .5789238
+       1 |  .5893017  .2504148  .2232502  .6135215  .9112043
 ---------+--------------------------------------------------
-   Total |   .376528  .1335193  .2062847  .3669151   .559774
+   Total |  .3818198  .2809956  .0405473  .3339022  .8063849
 ------------------------------------------------------------
 
 . 
 . 
 . /*---------------------------------------------------------------------------
->   Section 5: MTE Estimation — Cubic Polynomial Control Function
+>   Section 5: MTE Estimation — Quadratic Polynomial Control Function
 >   
 >   Following Heckman and Vytlacil (1999, 2005), the MTE is recovered from
 >   the derivative of the outcome regression with respect to the propensity
 >   score. The polynomial control function approach is used here for
 >   transparency and direct estimation of ATE, ATT, and ATU.
 >   
->   MTE(u) = b0 + b1*u + b2*u^2 + b3*u^3
+>   MTE(u) = m0 + m1*u + m2*u^2   (Eq. 12.3)
 >   
->   where u is interpreted as unobserved resistance to treatment and the
->   polynomial coefficients are the coefficients on the interaction terms
->   c.masters#c.phat, c.masters#c.phat2, c.masters#c.phat3.
+>   where u is unobserved resistance to treatment and the m coefficients are
+>   built from the coefficients on masters, c.masters#c.phat,
+>   c.masters#c.phat2 (beta) and on phat, phat2 (pi, the control function).
 > ---------------------------------------------------------------------------*/
 . 
 . di _n "============================================================"
@@ -625,145 +833,164 @@ Group variable: masters (Completed Master's Degree (1=Yes))
 ============================================================
 
 . 
-. * ── Cubic MTE regression ────────────────────────────────────────────────────
-. reg ln_salary masters c.masters#(c.phat c.phat2 c.phat3) ///
->     $X phat phat2 phat3, robust
+. * ── Quadratic MTE regression (Eq. 12.2) ─────────────────────────────────────
+. reg ln_salary masters c.masters#(c.phat c.phat2) ///
+>     $X phat phat2, robust
 
 Linear regression                               Number of obs     =      8,000
-                                                F(23, 7976)       =      39.11
+                                                F(21, 7978)       =      76.69
                                                 Prob > F          =     0.0000
-                                                R-squared         =     0.1036
-                                                Root MSE          =      .9148
+                                                R-squared         =     0.1650
+                                                Root MSE          =     .50963
 
 -----------------------------------------------------------------------------------
                   |               Robust
         ln_salary | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
 ------------------+----------------------------------------------------------------
-          masters |   .5543566   .3994757     1.39   0.165    -.2287202    1.337433
+          masters |   .3564861   .0477918     7.46   0.000     .2628015    .4501706
                   |
- c.masters#c.phat |    1.60264   3.199362     0.50   0.616    -4.668945    7.874226
+ c.masters#c.phat |  -.3432101   .2045896    -1.68   0.093    -.7442592    .0578391
                   |
-c.masters#c.phat2 |  -5.592404   8.008699    -0.70   0.485    -21.29155    10.10674
+c.masters#c.phat2 |   .2725091   .2104533     1.29   0.195    -.1400344    .6850525
                   |
-c.masters#c.phat3 |    3.17317   6.295058     0.50   0.614     -9.16679    15.51313
-                  |
-           female |  -.0936791   .0204894    -4.57   0.000    -.1338438   -.0535145
-            black |  -.0741637   .0309731    -2.39   0.017    -.1348792   -.0134483
-         hispanic |  -.0467965    .034676    -1.35   0.177    -.1147706    .0211776
-            asian |  -.0849018   .0420727    -2.02   0.044    -.1673753   -.0024282
-           age_ba |   .0001354   .0040835     0.03   0.974    -.0078694    .0081402
-         firstgen |   .0778754   .0226558     3.44   0.001     .0334642    .1222866
-  parent_income_q |   .0179267   .0094773     1.89   0.059    -.0006512    .0365046
-      parent_grad |   .0017686   .0212725     0.08   0.934    -.0399311    .0434683
-             ugpa |   .2706809   .0276776     9.78   0.000     .2164256    .3249362
-       stem_major |   .1624354   .0267234     6.08   0.000     .1100506    .2148202
-        bus_major |   .2437204   .0279901     8.71   0.000     .1888525    .2985883
-         ed_major |  -.1762892   .0311751    -5.65   0.000    -.2374005   -.1151779
-   selective_inst |   .1494295   .0231406     6.46   0.000     .1040678    .1947912
-        public_ug |    .036699   .0231141     1.59   0.112    -.0086106    .0820086
-      state_unemp |  -.0077294   .0079921    -0.97   0.334    -.0233961    .0079373
-            metro |   .0252851   .0219394     1.15   0.249    -.0177218    .0682919
-             phat |  -.1653119   1.286295    -0.13   0.898    -2.686787    2.356163
-            phat2 |  -.3602912   3.501504    -0.10   0.918    -7.224155    6.503573
-            phat3 |   .6402271   2.987067     0.21   0.830    -5.215206     6.49566
-            _cons |   9.944816   .1959067    50.76   0.000     9.560788    10.32884
+           female |  -.0648975   .0114058    -5.69   0.000    -.0872559   -.0425392
+            black |   -.056081   .0166738    -3.36   0.001    -.0887659    -.023396
+         hispanic |   .0026234   .0185505     0.14   0.888    -.0337405    .0389872
+            asian |  -.0320839   .0227814    -1.41   0.159    -.0767413    .0125736
+           age_ba |  -.0022467   .0021662    -1.04   0.300     -.006493    .0019996
+         firstgen |  -.0047047   .0128868    -0.37   0.715    -.0299661    .0205568
+  parent_income_q |   .0260512   .0050895     5.12   0.000     .0160744     .036028
+      parent_grad |   .0080653    .011791     0.68   0.494    -.0150482    .0311787
+             ugpa |   .2214537    .013543    16.35   0.000     .1949059    .2480016
+       stem_major |    .157225   .0150375    10.46   0.000     .1277476    .1867024
+        bus_major |   .2425714    .015686    15.46   0.000     .2118228    .2733199
+         ed_major |  -.1582802   .0166842    -9.49   0.000    -.1909855   -.1255749
+   selective_inst |   .1172909   .0127842     9.17   0.000     .0922305    .1423514
+        public_ug |  -.0106795   .0127221    -0.84   0.401    -.0356182    .0142591
+      state_unemp |  -.0098949   .0044973    -2.20   0.028    -.0187109   -.0010789
+            metro |  -.0124808   .0123389    -1.01   0.312    -.0366683    .0117067
+             phat |   .3225983   .1056264     3.05   0.002      .115543    .5296536
+            phat2 |  -.3550621   .1436755    -2.47   0.013    -.6367037   -.0734206
+            _cons |   10.12616   .0761742   132.93   0.000     9.976844    10.27549
 -----------------------------------------------------------------------------------
 
-. estimates store mte_cubic
+. estimates store mte_quad
 
 . 
 . * ── Joint tests for the MTE polynomial ──────────────────────────────────────
 . * Individual coefficients are often imprecise due to multicollinearity among
 . * polynomial terms, so joint tests are used.
-. * (1) All four terms (masters plus the three interactions) = 0. This tests
-. *     whether completion has ANY effect on log salary; on its own it is not
-. *     a test of heterogeneity.
-. test masters c.masters#c.phat c.masters#c.phat2 c.masters#c.phat3
+. * The tests are on the MTE coefficients (Eq. 12.3), m0 = b0 + c1,
+. * m1 = 2(b1 + c2), m2 = 3*b2, not on the beta terms alone (REVISION 5).
+. * (1) MTE(u) = 0 for every u (m0 = m1 = m2 = 0): completion has no effect
+. *     on log salary for anyone.
+. test (masters + phat = 0) (c.masters#c.phat + phat2 = 0) (c.masters#c.phat2 = 0)
 
- ( 1)  masters = 0
- ( 2)  c.masters#c.phat = 0
+ ( 1)  masters + phat = 0
+ ( 2)  c.masters#c.phat + phat2 = 0
  ( 3)  c.masters#c.phat2 = 0
- ( 4)  c.masters#c.phat3 = 0
 
-       F(  4,  7976) =  118.88
+       F(  3,  7978) =   56.65
             Prob > F =    0.0000
 
-. di as text "Joint F-test, any effect (4 terms) p-value: " %6.4f r(p)
-Joint F-test, any effect (4 terms) p-value: 0.0000
+. di as text "Joint F-test, no effect (MTE = 0) p-value: " %6.4f r(p)
+Joint F-test, no effect (MTE = 0) p-value: 0.0000
 
 . 
-. * (2) The three interaction terms = 0, i.e., the MTE is flat in u. Rejecting
-. *     this is evidence of essential heterogeneity in returns.
-. test c.masters#c.phat c.masters#c.phat2 c.masters#c.phat3
+. * (2) The MTE is flat in u (m1 = m2 = 0). Rejecting this is evidence of
+. *     essential heterogeneity in returns.
+. test (c.masters#c.phat + phat2 = 0) (c.masters#c.phat2 = 0)
 
- ( 1)  c.masters#c.phat = 0
+ ( 1)  c.masters#c.phat + phat2 = 0
  ( 2)  c.masters#c.phat2 = 0
- ( 3)  c.masters#c.phat3 = 0
 
-       F(  3,  7976) =   15.99
-            Prob > F =    0.0000
+       F(  2,  7978) =    8.93
+            Prob > F =    0.0001
 
 . di as text "Heterogeneity F-test (MTE flat in u) p-value: " %6.4f r(p)
-Heterogeneity F-test (MTE flat in u) p-value: 0.0000
+Heterogeneity F-test (MTE flat in u) p-value: 0.0001
 
 . 
-. * ── Store polynomial coefficients ───────────────────────────────────────────
-. local b0 = _b[masters]                      // MTE at u = 0
+. * ── Store regression coefficients (Eq. 12.2) ────────────────────────────────
+. * beta polynomial: completion and its interactions with the phat polynomial
+. local b0 = _b[masters]
 
-. local b1 = _b[c.masters#c.phat]             // Linear slope
+. local b1 = _b[c.masters#c.phat]
 
-. local b2 = _b[c.masters#c.phat2]            // Quadratic term
+. local b2 = _b[c.masters#c.phat2]
 
-. local b3 = _b[c.masters#c.phat3]            // Cubic term
+. * pi polynomial (control function): coefficients on phat, phat2
+. local c1 = _b[phat]
 
-. 
-. di _n "MTE polynomial: MTE(u) = " %7.4f `b0' " + " %7.4f `b1' "*u" ///
->     " + " %7.4f `b2' "*u^2 + " %7.4f `b3' "*u^3"
-
-MTE polynomial: MTE(u) =  0.5544 +  1.6026*u + -5.5924*u^2 +  3.1732*u^3
+. local c2 = _b[phat2]
 
 . 
-. * ── Treatment parameters ────────────────────────────────────────────────────
-. * ATE = integral of MTE(u) du from 0 to 1
-. local ate = `b0' + `b1'/2 + `b2'/3 + `b3'/4
+. * ── MTE (Eq. 12.3) ──────────────────────────────────────────────────────────
+. * In Eq. 12.2, E[Y | D=0, p] contains pi(p) and E[Y | D=1, p] contains
+. * pi(p) + beta(p). Under the control-function (separate) approach
+. * (Heckman & Vytlacil, 2005; Andresen, 2018), the MTE is
+. *     MTE(u) = beta(u) + u*beta'(u) + pi'(u),
+. * which for the quadratic gives MTE(u) = m0 + m1*u + m2*u^2:
+. local m0 = `b0' + `c1'
 
-. di "Estimated ATE (cubic): " %6.4f `ate'
-Estimated ATE (cubic): 0.2848
+. local m1 = 2*(`b1' + `c2')
+
+. local m2 = 3*`b2'
 
 . 
-. * UNDER REVIEW (outline Author note 3): ATT and ATU below average each
-. * student's MTE evaluated at his or her own propensity score p-hat, i.e., the
-. * return of the person at the margin p-hat. The standard Heckman–Vytlacil
-. * definitions instead integrate MTE(u) over u < P (ATT) or u > P (ATU) with
-. * the corresponding weights. The DGP also defines u = 1 - p, while this
-. * section evaluates the MTE at p. Results are unchanged pending a decision.
-. * ATT = E[MTE(u) | D=1] = weighted average over completers' propensity scores
-. gen mte_hat = `b0' + `b1'*phat + `b2'*phat^2 + `b3'*phat^3
+. di _n "MTE polynomial: MTE(u) = " %7.4f `m0' " + " %7.4f `m1' "*u" ///
+>     " + " %7.4f `m2' "*u^2"
 
-. qui sum mte_hat if masters == 1
+MTE polynomial: MTE(u) =  0.6791 + -1.3965*u +  0.8175*u^2
 
-. local att = r(mean)
+. 
+. * ── Treatment parameters (Chapter 11, Eq. 11.3 weights) ─────────────────────
+. * I(p) = integral of MTE(u) du from 0 to p
+. *      = m0*p + m1*p^2/2 + m2*p^3/3
+. * ATE  = I(1)
+. * ATT  = sum_i I(p_i) / sum_i p_i              (average MTE over u < P)
+. * ATU  = sum_i [I(1) - I(p_i)] / sum_i (1-p_i) (average MTE over u > P)
+. local ate = `m0' + `m1'/2 + `m2'/3
+
+. di "Estimated ATE: " %6.4f `ate'
+Estimated ATE: 0.2533
+
+. 
+. gen double I_hat = `m0'*phat + `m1'*phat^2/2 + `m2'*phat^3/3
+
+. qui sum I_hat
+
+. local sum_I = r(sum)
+
+. qui sum phat
+
+. local sum_p = r(sum)
+
+. local n_obs = r(N)
+
+. local att = `sum_I' / `sum_p'
+
+. local atu = (`n_obs'*`ate' - `sum_I') / (`n_obs' - `sum_p')
 
 . di "Estimated ATT: " %6.4f `att'
-Estimated ATT: 0.4439
-
-. 
-. * ATU = E[MTE(u) | D=0]
-. qui sum mte_hat if masters == 0
-
-. local atu = r(mean)
+Estimated ATT: 0.3793
 
 . di "Estimated ATU: " %6.4f `atu'
-Estimated ATU: 0.5352
+Estimated ATU: 0.1755
 
 . 
-. * Note: in this run ATU > ATT. Whether this reflects negative selection on
-. * gains or the ATT/ATU definitions above (UNDER REVIEW) has not been settled;
-. * the DGP comment describes a declining MTE (positive selection on gains).
-. di _n "Treatment parameter hierarchy (this dataset): ATU > ATT > ATE = " ///
->     %6.4f `atu' " > " %6.4f `att' " > " %6.4f `ate'
+. * Expected return for a completer with propensity score p:
+. * TT(p) = I(p)/p, the average MTE over resistance levels below p. This is the
+. * return a completer forfeits if displaced (used in Sections 6 and 7).
+. gen double tt_hat = I_hat / phat
 
-Treatment parameter hierarchy (this dataset): ATU > ATT > ATE = 0.5352 > 0.4439 > 0.2848
+. label variable tt_hat "Expected return to completion for a completer at phat"
+
+. 
+. * Check: ATE = E[P]*ATT + (1 - E[P])*ATU (should match ATE)
+. di "Check (should equal ATE): " %6.4f ///
+>     ((`sum_p'/`n_obs')*`att' + (1 - `sum_p'/`n_obs')*`atu')
+Check (should equal ATE): 0.2533
 
 . 
 . * ── Store VCV for Bayesian draws ─────────────────────────────────────────────
@@ -817,7 +1044,7 @@ Treatment parameter hierarchy (this dataset): ATU > ATT > ATE = 0.5352 > 0.4439 
 
     Variable |        Obs        Mean    Std. dev.       Min        Max
 -------------+---------------------------------------------------------
- p_displaced |        290    .6027871    .0841874   .5001934   .9234082
+ p_displaced |        263    .5915759    .0784061   .5000557   .8495189
 
 . 
 . * ── Expected displacement indicator (continuous treatment intensity) ─────────
@@ -827,12 +1054,14 @@ Treatment parameter hierarchy (this dataset): ATU > ATT > ATE = 0.5352 > 0.4439 
 
     Variable |        Obs        Mean    Std. dev.       Min        Max
 -------------+---------------------------------------------------------
- displaced_E |      8,000     .021851    .1138056          0   .9234082
+ displaced_E |      8,000    .0194481    .1064402          0   .8495189
 
 . 
-. * ── Marginal Policy-Relevant Treatment Effect (MPRTE) ────────────────────────
-. * MPRTE = E[MTE(U) | margin shifted by the $100k cap]
-. *       = displacement-weighted average of individual MTEs.
+. * ── Policy-relevant treatment effect for displaced students ("MPRTE") ───────
+. * Displacement-weighted average of each completer's expected return,
+. * TT(phat) = I(phat)/phat from Section 5 (REVISION 2). Variable names keep
+. * the "mprte" label from earlier drafts; conceptually this is a PRTE for a
+. * discrete policy (see Chapter 11, Table 11.4).
 . * Each student is weighted by their share of total expected displacement.
 . * Restricted to completers (displaced_E = 0 for non-completers by construction).
 . *
@@ -849,10 +1078,10 @@ Treatment parameter hierarchy (this dataset): ATU > ATT > ATE = 0.5352 > 0.4439 
 . scalar total_disp = r(sum)
 
 . gen mprte_weight = displaced_E / total_disp if masters == 1
-(4,989 missing values generated)
+(4,949 missing values generated)
 
-. gen mprte_i      = mte_hat * mprte_weight   if masters == 1
-(4,989 missing values generated)
+. gen mprte_i      = tt_hat * mprte_weight    if masters == 1
+(4,949 missing values generated)
 
 . qui sum mprte_i  if masters == 1
 
@@ -864,16 +1093,16 @@ Treatment parameter hierarchy (this dataset): ATU > ATT > ATE = 0.5352 > 0.4439 
 --- Treatment Parameter Hierarchy (Point Estimates) ---
 
 . di "ATE   (population average):           " %6.4f `ate'
-ATE   (population average):           0.2848
+ATE   (population average):           0.2533
 
 . di "ATT   (E[MTE | D=1], completers):     " %6.4f `att'
-ATT   (E[MTE | D=1], completers):     0.4439
+ATT   (E[MTE | D=1], completers):     0.3793
 
 . di "ATU   (E[MTE | D=0], non-completers): " %6.4f `atu'
-ATU   (E[MTE | D=0], non-completers): 0.5352
+ATU   (E[MTE | D=0], non-completers): 0.1755
 
 . di "MPRTE (cap-displaced margin):         " %6.4f mprte
-MPRTE (cap-displaced margin):         0.4954
+MPRTE (cap-displaced margin):         0.3992
 
 . di _n "MPRTE compares the average return of displaced students with the"
 
@@ -894,74 +1123,224 @@ students with above-average returns among completers (efficiency loss).
 Present value factor (30 yrs, 3% r): 19.600
 
 . 
-. * ── Point-estimate CBA (pre-simulation baseline) ─────────────────────────────
-. * Fiscal savings: government recovers subsidy on overage lending
-. gen fiscal_saving_i = loan_overage * $subsidy_rate * above_cap
+. * ── Table 12.2: Simulation assumptions (Word) ───────────────────────────────
+. * Built from the globals at the top of the script and from the data, so the
+. * table always matches the values the code uses.
+. qui sum net_inst_rev
 
-. * This applies to ALL students above the cap (completers and non-completers)
-. * because the cap reduces federal exposure regardless of enrollment outcome.
-. qui sum fiscal_saving_i
+. local net_tot = r(sum)
 
-. local FS_point = r(sum)
+. qui sum gross_tuition
 
-. di "Point-estimate fiscal savings ($000s): " %8.1f `FS_point'
-Point-estimate fiscal savings ($000s):   2340.9
+. local instr_share = 1 - `net_tot' / r(sum)
+
+. local pct = "%"
+
+. putdocx clear
+
+. putdocx begin, font("Times New Roman", 10)
+
+. putdocx paragraph
+
+. putdocx text ("Table 12.2 "), bold
+
+. putdocx text ("Simulation assumptions")
+
+. putdocx table t2 = (15, 4), border(all, nil) layout(autofitwindow)
+
+. putdocx table t2(1,1) = ("Parameter")
+
+. putdocx table t2(1,2) = ("Baseline value")
+
+. putdocx table t2(1,3) = ("Prior distribution (Sect. 12.6)")
+
+. putdocx table t2(1,4) = ("Sensitivity check (Sect. 12.7.3)")
+
+. putdocx table t2(2,1) = ("Policy and behavior"), italic
+
+. putdocx table t2(3,1) = ("    Aggregate federal loan limit")
+
+. putdocx table t2(3,2) = (char(36) + strtrim(string(1000*$cap_threshold, "%12.0fc")))
+
+. putdocx table t2(3,3) = ("Fixed")
+
+. putdocx table t2(3,4) = ("None")
+
+. putdocx table t2(4,1) = ("    Probability that a completer above the limit leaves")
+
+. putdocx table t2(4,2) = ("Φ(overage / 50), overage in $000s")
+
+. putdocx table t2(4,3) = ("Fixed")
+
+. putdocx table t2(4,4) = ("2Φ(overage / 50) − 1")
+
+. putdocx table t2(5,1) = ("Earnings"), italic
+
+. putdocx table t2(6,1) = ("    Base salary (non-degree holders)")
+
+. putdocx table t2(6,2) = (char(36) + strtrim(string($base_salary, "%12.0fc")))
+
+. putdocx table t2(6,3) = ("Log-normal, SD " + strtrim(string($prior_sd_salary, "%4.2f")) + " on the log 
+> scale")
+
+. putdocx table t2(6,4) = ("None")
+
+. putdocx table t2(7,1) = ("    Earnings horizon")
+
+. putdocx table t2(7,2) = ("$career_years years")
+
+. putdocx table t2(7,3) = ("Fixed")
+
+. putdocx table t2(7,4) = ("10 years")
+
+. putdocx table t2(8,1) = ("    Discount rate")
+
+. putdocx table t2(8,2) = (strtrim(string(100*$discount_rate, "%4.0f")) + "`pct'")
+
+. putdocx table t2(8,3) = ("Fixed")
+
+. putdocx table t2(8,4) = ("None")
+
+. putdocx table t2(9,1) = ("Federal government"), italic
+
+. putdocx table t2(10,1) = ("    Federal subsidy rate")
+
+. putdocx table t2(10,2) = (strtrim(string(100*$subsidy_rate, "%4.0f")) + "`pct'")
+
+. putdocx table t2(10,3) = ("Uniform, " + strtrim(string(100*($subsidy_rate - $prior_hw_subsidy), "%4.0f"
+> )) + "`pct' to " + strtrim(string(100*($subsidy_rate + $prior_hw_subsidy), "%4.0f")) + "`pct'")
+
+. putdocx table t2(10,4) = ("None")
+
+. putdocx table t2(11,1) = ("    Tax rate on forgone earnings")
+
+. putdocx table t2(11,2) = (strtrim(string(100*$tax_rate, "%4.0f")) + "`pct'")
+
+. putdocx table t2(11,3) = ("Uniform, " + strtrim(string(100*$tax_lo, "%4.0f")) + "`pct' to " + strtrim(s
+> tring(100*$tax_hi, "%4.0f")) + "`pct'")
+
+. putdocx table t2(11,4) = ("None")
+
+. putdocx table t2(12,1) = ("Institutions"), italic
+
+. putdocx table t2(13,1) = ("    Tuition")
+
+. putdocx table t2(13,2) = ("Program values in the data")
+
+. putdocx table t2(13,3) = ("Log-normal multiplier, SD " + strtrim(string($prior_sd_tuition, "%4.2f")))
+
+. putdocx table t2(13,4) = ("None")
+
+. putdocx table t2(14,1) = ("    Instructional cost share of tuition; cross-subsidy share of net revenue"
+> )
+
+. putdocx table t2(14,2) = (strtrim(string(100*`instr_share', "%4.0f")) + "`pct'; " + strtrim(string(100*
+> $cross_sub_share, "%4.0f")) + "`pct'")
+
+. putdocx table t2(14,3) = ("Fixed")
+
+. putdocx table t2(14,4) = ("None")
+
+. putdocx table t2(15,1) = ("Note: MTE coefficients are drawn from a normal distribution centered on the 
+> estimates (Eq. 12.3), with the robust variance-covariance matrix. The simulation uses $S_draws posterio
+> r draws."), colspan(4)
+
+. putdocx table t2(1,.), border(top)
+
+. putdocx table t2(1,.), border(bottom)
+
+. putdocx table t2(14,.), border(bottom)
+
+. putdocx save "$tables_dir/Table12_2_Assumptions_Stata.docx", replace
+successfully replaced "C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 12/Output/tables/Table12_2_Assumpt
+> ions_Stata.docx"
+
+. di as text "Table 12.2 written to $tables_dir/Table12_2_Assumptions_Stata.docx"
+Table 12.2 written to Output/tables/Table12_2_Assumptions_Stata.docx
 
 . 
-. * Behavioral cost: lost human capital for displaced completers
-. * = MTE × base_salary × PV_factor (in $000s, since salary is in $)
-. gen behav_cost_i = displaced_E * max(0, mte_hat) * ($base_salary/1000) * `pv_factor'
+. * ── Point-estimate CBA by account (REVISION 6) ──────────────────────────────
+. * Three accounts plus a social total. Amounts are present values in $000s.
+. *
+. *   Students:     - after-tax forgone earnings (+ after-tax efficiency gain)
+. *                 + avoided tuition (displaced students no longer pay it)
+. *                 + avoided debt service (repayments they no longer make)
+. *                 - forgone loan disbursements (loans they no longer receive)
+. *                 - higher financing cost for students who stay above the
+. *                   limit (the subsidy they lose on borrowing above $100k)
+. *   Federal:      + subsidy savings (all borrowing by displaced students,
+. *                   plus the overage of students who stay)
+. *                 - lost tax revenue on forgone earnings
+. *   Institutions: - lost net tuition revenue (gross tuition minus the
+. *                   variable instructional cost avoided)
+. *   Society:      sum of the three accounts. Tuition, loans, subsidies, and
+. *                 taxes are transfers between accounts and net out, leaving
+. *                 - forgone earnings + efficiency gain + avoided
+. *                   instructional cost.
+. *
+. * The present value of repayments on a dollar borrowed is (1 - subsidy
+. * rate), so avoided debt service and the subsidy are consistent.
+. 
+. * Forgone earnings (pre-tax): TT(phat) x base_salary x PV factor ($000s)
+. gen behav_cost_i = displaced_E * max(0, tt_hat) * ($base_salary/1000) * `pv_factor'
 
-. * Note: max(0, MTE) reflects that only students with positive returns suffer a
-. * human capital loss. Displaced students with negative MTE represent an
+. * Note: max(0, TT) reflects that only students with positive returns suffer a
+. * human capital loss. Displaced students with negative TT represent an
 . * efficiency GAIN (removing low-return borrowers).
 . qui sum behav_cost_i if masters == 1
 
 . local BC_point = r(sum)
 
-. di "Point-estimate behavioral cost ($000s): " %8.1f `BC_point'
-Point-estimate behavioral cost ($000s):  79852.8
-
-. 
-. * Efficiency gain from removing low-return borrowers (negative MTE region)
-. gen efficiency_gain_i = displaced_E * max(0, -mte_hat) * ($base_salary/1000) * `pv_factor'
+. gen efficiency_gain_i = displaced_E * max(0, -tt_hat) * ($base_salary/1000) * `pv_factor'
 
 . qui sum efficiency_gain_i if masters == 1
 
 . local EG_point = r(sum)
 
-. di "Point-estimate efficiency gain (low-return exit, $000s): " %8.1f `EG_point'
-Point-estimate efficiency gain (low-return exit, $000s):     69.3
+. 
+. * Federal subsidy savings
+. gen fiscal_saving_i = $subsidy_rate * (displaced_E * grad_plus_loans ///
+>     + (above_cap - displaced_E) * loan_overage)
+
+. qui sum fiscal_saving_i
+
+. local FS_point = r(sum)
+
+. * Lost tax revenue on (net) forgone earnings
+. local TL_point = $tax_rate * (`BC_point' - `EG_point')
 
 . 
-. * Net benefit (point estimate)
-. local NB_point = `FS_point' - `BC_point' + `EG_point'
+. * Students' tuition and loans (displaced completers)
+. gen avoid_tuition_i = displaced_E * gross_tuition
 
-. di "Point-estimate net benefit ($000s): " %8.1f `NB_point'
-Point-estimate net benefit ($000s): -77442.6
+. qui sum avoid_tuition_i
 
-. di "Benefit-cost ratio: " %5.3f (`FS_point' + `EG_point') / max(1, `BC_point')
-Benefit-cost ratio: 0.030
+. local AT_point = r(sum)
+
+. gen loans_disp_i = displaced_E * grad_plus_loans
+
+. qui sum loans_disp_i
+
+. local LD_point = r(sum)
+
+. local DS_point = (1 - $subsidy_rate) * `LD_point'     // avoided debt service
+
+. gen stay_cost_i = $subsidy_rate * (above_cap - displaced_E) * loan_overage
+
+. qui sum stay_cost_i
+
+. local SC_point = r(sum)
 
 . 
-. * ── Institutional revenue loss ───────────────────────────────────────────────
-. * When a student is displaced by the cap, the institution loses their net
-. * tuition revenue. As implemented, the loss is net_inst_rev for the FULL
-. * program (all program years), not only the remaining years; if displaced
-. * students leave partway through, this overstates the loss (UNDER REVIEW). This is distinct f
-> rom the
-. * student's human capital loss: it is a revenue shock to the institution that
-. * affects staffing, cross-subsidies, and program viability.
-. *
-. * Two components:
-. *   (a) Direct net revenue loss:  displaced_E × net_inst_rev
-. *   (b) Cross-subsidy disruption: 20% of (a), representing the upstream effect
-. *       on undergraduate aid and other programs funded by graduate tuition.
+. * Institutions: lost net tuition revenue; cross-subsidy is part of it
+. * As implemented, the loss covers the FULL program (all program years); if
+. * displaced students leave partway through, this overstates it (UNDER REVIEW).
 . gen inst_rev_loss_i   = displaced_E * net_inst_rev
 
-. gen cross_sub_loss_i  = 0.20 * inst_rev_loss_i
+. gen cross_sub_loss_i  = $cross_sub_share * inst_rev_loss_i  // of which: cross-subsidy
 
-. 
+. gen avoid_instr_i     = displaced_E * (gross_tuition - net_inst_rev)
+
 . qui sum inst_rev_loss_i  if masters == 1
 
 . local IR_point = r(sum)
@@ -970,19 +1349,94 @@ Benefit-cost ratio: 0.030
 
 . local CS_point = r(sum)
 
+. qui sum avoid_instr_i    if masters == 1
+
+. local AI_point = r(sum)
+
 . 
-. di _n "--- Institutional Outcomes (Point Estimates) ---"
+. * Account totals
+. local STU_point = -(1 - $tax_rate)*(`BC_point' - `EG_point') + `AT_point' ///
+>                   + `DS_point' - `LD_point' - `SC_point'
 
---- Institutional Outcomes (Point Estimates) ---
+. local FED_point = `FS_point' - `TL_point'
 
-. di "Net institutional revenue loss ($000s):     " %8.1f `IR_point'
-Net institutional revenue loss ($000s):      11792.9
+. local INS_point = -`IR_point'
 
-. di "Cross-subsidy disruption ($000s):           " %8.1f `CS_point'
-Cross-subsidy disruption ($000s):             2358.6
+. local NB_point  = `STU_point' + `FED_point' + `INS_point'
 
-. di "Total institutional sector impact ($000s):  " %8.1f (`IR_point' + `CS_point')
-Total institutional sector impact ($000s):   14151.5
+. local BCR_point = (`AI_point' + `EG_point') / max(1, `BC_point')
+
+. 
+. di _n "--- Point-estimate CBA by account ($000s) ---"
+
+--- Point-estimate CBA by account ($000s) ---
+
+. di "Students"
+Students
+
+. di "  Forgone after-tax earnings              " %12.1fc -(1 - $tax_rate)*(`BC_point' - `EG_point')
+  Forgone after-tax earnings                 -45,778.7
+
+. di "  Avoided tuition                         " %12.1fc `AT_point'
+  Avoided tuition                             16,489.7
+
+. di "  Avoided debt service                    " %12.1fc `DS_point'
+  Avoided debt service                        14,110.3
+
+. di "  Forgone loan disbursements              " %12.1fc -`LD_point'
+  Forgone loan disbursements                 -17,637.8
+
+. di "  Higher financing cost (students who stay)" %11.1fc -`SC_point'
+  Higher financing cost (students who stay)   -1,978.4
+
+. di "  Student account                         " %12.1fc `STU_point'
+  Student account                            -34,795.0
+
+. di "Federal government"
+Federal government
+
+. di "  Subsidy savings                         " %12.1fc `FS_point'
+  Subsidy savings                              5,506.0
+
+. di "  Lost tax revenue                        " %12.1fc -`TL_point'
+  Lost tax revenue                           -11,444.7
+
+. di "  Federal account                         " %12.1fc `FED_point'
+  Federal account                             -5,938.7
+
+. di "Institutions"
+Institutions
+
+. di "  Lost net tuition revenue                " %12.1fc -`IR_point'
+  Lost net tuition revenue                   -10,718.3
+
+. di "    of which cross-subsidy to other programs" %10.1fc -`CS_point'
+    of which cross-subsidy to other programs  -2,143.7
+
+. di "  Institutional account                   " %12.1fc `INS_point'
+  Institutional account                      -10,718.3
+
+. di "Society (transfers net out)"
+Society (transfers net out)
+
+. di "  Forgone earnings (pre-tax)              " %12.1fc -`BC_point'
+  Forgone earnings (pre-tax)                 -57,223.4
+
+. di "  Efficiency gain                         " %12.1fc `EG_point'
+  Efficiency gain                                  0.0
+
+. di "  Avoided instructional cost              " %12.1fc `AI_point'
+  Avoided instructional cost                   5,771.4
+
+. di "Point-estimate net benefit ($000s):       " %12.1fc `NB_point'
+Point-estimate net benefit ($000s):          -51,452.0
+
+. di "Check (- forgone earnings + efficiency gain + avoided instructional cost): " ///
+>     %12.1fc (-`BC_point' + `EG_point' + `AI_point')
+Check (- forgone earnings + efficiency gain + avoided instructional cost):    -51,452.0
+
+. di "Benefit-cost ratio: " %5.3f `BCR_point'
+Benefit-cost ratio: 0.101
 
 . 
 . * Revenue loss by program area (all five areas; prog_area from Section 3)
@@ -998,13 +1452,13 @@ Group variable: prog_area (Graduate program area)
 
 prog_area |       Sum      Mean         N
 ----------+------------------------------
-     STEM |  2818.202   4.07844       691
- Business |  6135.821  12.10221       507
-Education |  759.0234  1.574737       482
-   Health |  1706.608  3.887489       439
-    Other |  373.2713  .4184655       892
+     STEM |  2705.337  4.213921       642
+ Business |  5759.634  10.41525       553
+Education |  589.8335  1.213649       486
+   Health |  1335.441  2.947993       453
+    Other |  328.0293  .3577201       917
 ----------+------------------------------
-    Total |  11792.92  3.916614      3011
+    Total |  10718.27  3.513036      3051
 -----------------------------------------
 
 . 
@@ -1021,10 +1475,10 @@ Group variable: selective_inst
 
 selective_inst |       Sum      Mean         N
 ---------------+------------------------------
-             0 |  5494.365  2.546045      2158
-             1 |  6298.559  7.384009       853
+             0 |  4351.017  1.990401      2186
+             1 |  6367.258  7.360992       865
 ---------------+------------------------------
-         Total |  11792.92  3.916614      3011
+         Total |  10718.27  3.513036      3051
 ----------------------------------------------
 
 . tabstat inst_rev_loss_i if masters == 1, ///
@@ -1035,19 +1489,69 @@ Group variable: public_ug
 
 public_ug |       Sum      Mean         N
 ----------+------------------------------
-        0 |  3366.294  3.905213       862
-        1 |  8426.631  3.921187      2149
+        0 |  3169.409   3.56514       889
+        1 |  7548.865  3.491612      2162
 ----------+------------------------------
-    Total |  11792.92  3.916614      3011
+    Total |  10718.27  3.513036      3051
 -----------------------------------------
 
 . 
-. * Extended net benefit including institutional costs
-. local NB_extended = `NB_point' - `IR_point' - `CS_point'
+. * ── Sensitivity of the point-estimate CBA (REVISIONS 4 and 6) ───────────────
+. * Two assumptions drive the size of the net benefit:
+. *   (1) Displacement function. Baseline: normal(overage/50), which gives a
+. *       student $1 over the limit a 0.50 probability of leaving. Alternative:
+. *       2*normal(overage/50) - 1, which starts at 0 and rises toward 1.
+. *   (2) Earnings horizon. Baseline: 30 years. Alternative: 10 years.
+. * The PRTE depends only on the displacement function (it changes the weights).
+. di _n "--- Sensitivity of the point-estimate CBA ($000s) ---"
 
-. di _n "Extended net benefit (incl. institutional costs, $000s): " %8.1f `NB_extended'
+--- Sensitivity of the point-estimate CBA ($000s) ---
 
-Extended net benefit (incl. institutional costs, $000s): -91594.2
+. di "Displacement    Horizon  Displaced    PRTE  Forgone earn.  Net social ben.    BCR  Federal acct."
+Displacement    Horizon  Displaced    PRTE  Forgone earn.  Net social ben.    BCR  Federal acct.
+
+. foreach alt in 0 1 {
+  2.     foreach yrs in 30 10 {
+  3.         if `alt' == 0 {
+  4.             qui gen double sens_pd = normal(loan_overage/50) * above_cap
+  5.             local dlab "normal(o/50)"
+  6.         }
+  7.         else {
+  8.             qui gen double sens_pd = (2*normal(loan_overage/50) - 1) * above_cap
+  9.             local dlab "2normal(o/50)-1"
+ 10.         }
+ 11.         qui gen double sens_de = sens_pd * masters
+ 12.         qui sum sens_de if masters == 1
+ 13.         local nd_k = r(sum)
+ 14.         qui gen double sens_w = sens_de * tt_hat / `nd_k' if masters == 1
+ 15.         qui sum sens_w
+ 16.         local prte_k = r(sum)
+ 17.         local pv_k = (1 - (1 + $discount_rate)^(-`yrs')) / $discount_rate
+ 18.         qui replace sens_w = sens_de * max(0, tt_hat) * ($base_salary/1000) * `pv_k' if masters == 1
+ 19.         qui sum sens_w
+ 20.         local bc_k = r(sum)
+ 21.         qui replace sens_w = sens_de * max(0, -tt_hat) * ($base_salary/1000) * `pv_k' if masters == 
+> 1
+ 22.         qui sum sens_w
+ 23.         local eg_k = r(sum)
+ 24.         qui replace sens_w = sens_de * (gross_tuition - net_inst_rev) if masters == 1
+ 25.         qui sum sens_w
+ 26.         local ai_k = r(sum)
+ 27.         qui replace sens_w = $subsidy_rate * (sens_de * grad_plus_loans ///
+>             + (above_cap - sens_de) * loan_overage)
+ 28.         qui sum sens_w
+ 29.         local fs_k = r(sum)
+ 30.         local nb_k  = -`bc_k' + `eg_k' + `ai_k'
+ 31.         local fed_k = `fs_k' - $tax_rate * (`bc_k' - `eg_k')
+ 32.         di %-15s "`dlab'" %9.0f `yrs' %11.1f `nd_k' %8.4f `prte_k' %15.1fc `bc_k' ///
+>            %17.1fc `nb_k' %7.3f (`ai_k' + `eg_k')/max(1, `bc_k') %15.1fc `fed_k'
+ 33.         drop sens_pd sens_de sens_w
+ 34.     }
+ 35. }
+normal(o/50)          30      155.6  0.3992       57,223.4        -51,452.0  0.101       -5,938.7
+normal(o/50)          10      155.6  0.3992       24,903.9        -19,132.5  0.232          525.2
+2normal(o/50)-1       30       48.2  0.4060       18,014.5        -16,151.0  0.103         -245.2
+2normal(o/50)-1       10       48.2  0.4060        7,840.0         -5,976.5  0.238        1,789.7
 
 . 
 . 
@@ -1061,7 +1565,7 @@ Extended net benefit (incl. institutional costs, $000s): -91594.2
 >     θ^(s) ~ N(θ_hat, V_hat)
 >   
 >   where θ_hat and V_hat are the estimated coefficient vector and its
->   variance-covariance matrix from the cubic MTE regression. For each draw,
+>   variance-covariance matrix from the quadratic MTE regression. For each draw,
 >   we recompute the MTE curve, the policy-affected margin, and the three
 >   CBA components. The resulting distribution characterizes posterior
 >   uncertainty about the net social benefit of the $100k cap.
@@ -1070,6 +1574,7 @@ Extended net benefit (incl. institutional costs, $000s): -91594.2
 >     - Base salary (log-normal, reflecting real-wage uncertainty)
 >     - Subsidy rate (uniform, reflecting fiscal policy uncertainty)
 >     - Tuition multiplier (log-normal, reflecting pricing uncertainty)
+>     - Tax rate (uniform, 0.15 to 0.25; REVISION 6)
 >   The propensity score (phat) is held fixed across draws, so uncertainty
 >   in the first-stage probit is not propagated.
 > ---------------------------------------------------------------------------*/
@@ -1087,8 +1592,8 @@ Extended net benefit (incl. institutional costs, $000s): -91594.2
 . 
 . * ── Store coefficient vector and VCV ─────────────────────────────────────────
 . * Re-estimate to ensure correct e(V) is in memory.
-. qui reg ln_salary masters c.masters#(c.phat c.phat2 c.phat3) ///
->     $X phat phat2 phat3, robust
+. qui reg ln_salary masters c.masters#(c.phat c.phat2) ///
+>     $X phat phat2, robust
 
 . matrix b_full = e(b)
 
@@ -1106,7 +1611,9 @@ Extended net benefit (incl. institutional costs, $000s): -91594.2
 
 . local pos_b2 = 0
 
-. local pos_b3 = 0
+. local pos_c1 = 0
+
+. local pos_c2 = 0
 
 . local c = 0
 
@@ -1115,11 +1622,15 @@ Extended net benefit (incl. institutional costs, $000s): -91594.2
   3.     if "`col'" == "masters"              local pos_b0 = `c'
   4.     if "`col'" == "c.masters#c.phat"     local pos_b1 = `c'
   5.     if "`col'" == "c.masters#c.phat2"    local pos_b2 = `c'
-  6.     if "`col'" == "c.masters#c.phat3"    local pos_b3 = `c'
-  7. }
+  6.     if "`col'" == "phat"                 local pos_c1 = `c'
+  7.     if "`col'" == "phat2"                local pos_c2 = `c'
+  8. }
 
-. di "Coefficient positions — b0: `pos_b0', b1: `pos_b1', b2: `pos_b2', b3: `pos_b3'"
-Coefficient positions — b0: 1, b1: 2, b2: 3, b3: 4
+. di "Coefficient positions — b0: `pos_b0', b1: `pos_b1', b2: `pos_b2'"
+Coefficient positions — b0: 1, b1: 2, b2: 3
+
+. di "                         c1: `pos_c1', c2: `pos_c2'"
+                         c1: 20, c2: 21
 
 . 
 . * ── Postfile for simulation results ─────────────────────────────────────────
@@ -1127,20 +1638,26 @@ Coefficient positions — b0: 1, b1: 2, b2: 3, b3: 4
 
 . postfile sim_handle ///
 >     draw          ///
->     b0_s b1_s b2_s b3_s        ///  Posterior draws on MTE polynomial
+>     b0_s b1_s b2_s             ///  Posterior draws on beta polynomial (Eq. 12.2)
+>     m0_s m1_s m2_s             ///  Implied MTE polynomial (Eq. 12.3)
 >     ate_s att_s atu_s mprte_s  ///  Treatment parameters per draw (incl. MPRTE)
->     fiscal_s                   ///  Fiscal savings ($000s)
->     behav_cost_s               ///  Behavioral cost ($000s)
+>     fiscal_s                   ///  Federal subsidy savings ($000s)
+>     tax_loss_s                 ///  Lost tax revenue ($000s)
+>     behav_cost_s               ///  Forgone earnings, pre-tax ($000s)
 >     effic_gain_s               ///  Efficiency gain from low-return exit ($000s)
+>     avoid_tuition_s            ///  Avoided tuition, students ($000s)
+>     avoid_instr_s              ///  Avoided instructional cost ($000s)
+>     student_acct_s             ///  Student account ($000s)
+>     federal_acct_s             ///  Federal account ($000s)
+>     inst_acct_s                ///  Institutional account ($000s)
 >     net_benefit_s              ///  Net social benefit ($000s)
 >     nb_per_student_s           ///  NB per displaced student ($000s)
 >     bcr_s                      ///  Benefit-cost ratio
 >     pnb_positive_s             ///  Indicator: NB > 0 this draw
 >     inst_rev_loss_s            ///  Net institutional revenue loss ($000s)
->     cross_sub_loss_s           ///  Cross-subsidy disruption ($000s)
->     nb_extended_s              ///  Extended NB including institutional costs ($000s)
+>     cross_sub_loss_s           ///  of which: cross-subsidy ($000s)
 >     using `sim_results', replace
-(file C:\Users\marvi\AppData\Local\Temp\ST_6a18_dw8m_000001.tmp not found)
+(file C:\Users\marvi\AppData\Local\Temp\ST_4390_v100_000001.tmp not found)
 
 . 
 . * ── Simulation loop ──────────────────────────────────────────────────────────
@@ -1167,6 +1684,32 @@ Running 1000 posterior draws...
 . restore
 
 . 
+. * Quantities that do not change across draws (displacement is fixed)
+. qui sum loans_disp_i
+
+. local LD_0 = r(sum)
+
+. qui sum avoid_tuition_i
+
+. local AT_0 = r(sum)
+
+. qui sum avoid_instr_i if masters == 1
+
+. local AI_0 = r(sum)
+
+. qui sum inst_rev_loss_i if masters == 1
+
+. local IR_0 = r(sum)
+
+. gen double ov_stay_i = (above_cap - displaced_E) * loan_overage
+
+. qui sum ov_stay_i
+
+. local OS_0 = r(sum)
+
+. drop ov_stay_i
+
+. 
 . forvalues s = 1 / $S_draws {
   2. 
 .     * ── Extract posterior draw s from pre-stored matrix ─────────────────────
@@ -1176,92 +1719,104 @@ Running 1000 posterior draws...
 .     local b0_s = B_draws[`s', `pos_b0']
   3.     local b1_s = B_draws[`s', `pos_b1']
   4.     local b2_s = B_draws[`s', `pos_b2']
-  5.     local b3_s = B_draws[`s', `pos_b3']
-  6. 
+  5.     local c1_s = B_draws[`s', `pos_c1']
+  6.     local c2_s = B_draws[`s', `pos_c2']
+  7.     * Implied MTE coefficients for this draw (Eq. 12.3)
+.     local m0_s = `b0_s' + `c1_s'
+  8.     local m1_s = 2*(`b1_s' + `c2_s')
+  9.     local m2_s = 3*`b2_s'
+ 10. 
 .     * ── Additional economic uncertainty ─────────────────────────────────────
 .     * Base salary: log-normal with 10% coefficient of variation
-.     local base_sal_s = exp(ln($base_salary) + rnormal(0, 0.10))
-  7.     * Subsidy rate: uniform ± 5 percentage points around baseline
-.     local sub_rate_s = $subsidy_rate + runiform(-0.05, 0.05)
-  8.     * Tuition multiplier: log-normal with 8% CV, reflecting uncertainty in
+.     local base_sal_s = exp(ln($base_salary) + rnormal(0, $prior_sd_salary))
+ 11.     * Subsidy rate: uniform ± 5 percentage points around baseline
+.     local sub_rate_s = $subsidy_rate + runiform(-$prior_hw_subsidy, $prior_hw_subsidy)
+ 12.     * Tuition multiplier: log-normal with 8% CV, reflecting uncertainty in
 .     * actual tuition levels, discount rates, and institutional aid policies.
 .     * This ensures inst_rev_loss_s varies meaningfully across draws.
-.     local tuition_mult_s = exp(rnormal(0, 0.08))
-  9. 
+.     local tuition_mult_s = exp(rnormal(0, $prior_sd_tuition))
+ 13.     * Tax rate on forgone earnings: uniform 0.15 to 0.25 (REVISION 6)
+.     local tax_rate_s = runiform($tax_lo, $tax_hi)
+ 14. 
 .     * ── Recompute MTE for this draw ──────────────────────────────────────────
 .     qui {
- 10.         gen mte_s = `b0_s' + `b1_s'*phat + `b2_s'*phat^2 + `b3_s'*phat^3
- 11. 
-.         * Treatment parameters
-.         local ate_s = `b0_s' + `b1_s'/2 + `b2_s'/3 + `b3_s'/4
- 12.         sum mte_s if masters == 1
- 13.         local att_s = r(mean)
- 14.         sum mte_s if masters == 0
- 15.         local atu_s = r(mean)
- 16. 
-.         * MPRTE: displacement-weighted average of draw-specific MTE.
+ 15.         * I(p) for this draw and treatment parameters (Eq. 11.3 weights)
+.         gen double I_s = `m0_s'*phat + `m1_s'*phat^2/2 + `m2_s'*phat^3/3
+ 16.         local ate_s = `m0_s' + `m1_s'/2 + `m2_s'/3
+ 17.         sum I_s
+ 18.         local sumI_s = r(sum)
+ 19.         local att_s = `sumI_s' / `sum_p'
+ 20.         local atu_s = (`n_obs'*`ate_s' - `sumI_s') / (`n_obs' - `sum_p')
+ 21. 
+.         * Expected return for each completer, TT(phat) = I(phat)/phat
+.         gen double mte_s = I_s / phat
+ 22. 
+.         * PRTE ("MPRTE"): displacement-weighted average of TT for this draw.
 .         * Reuses total_disp scalar from Section 6 (constant across draws since
 .         * displaced_E is a function of loan_overage, not the MTE polynomial).
 .         gen mprte_i_s = displaced_E * mte_s / total_disp if masters == 1
- 17.         sum mprte_i_s if masters == 1
- 18.         local mprte_s = r(sum)
- 19. 
-.         * Fiscal savings (uses draw-specific subsidy rate)
-.         gen fs_i_s = loan_overage * `sub_rate_s' * above_cap
- 20.         sum fs_i_s
- 21.         local fiscal_s = r(sum)
- 22. 
+ 23.         sum mprte_i_s if masters == 1
+ 24.         local mprte_s = r(sum)
+ 25. 
 .         * Behavioral cost: human capital loss for displaced high-return students
 .         gen bc_i_s = displaced_E * max(0, mte_s) * (`base_sal_s'/1000) * `pv_factor'
- 23.         sum bc_i_s if masters == 1
- 24.         local behav_cost_s = r(sum)
- 25. 
+ 26.         sum bc_i_s if masters == 1
+ 27.         local behav_cost_s = r(sum)
+ 28. 
 .         * Efficiency gain: removing low-return constrained students
 .         gen eg_i_s = displaced_E * max(0, -mte_s) * (`base_sal_s'/1000) * `pv_factor'
- 26.         sum eg_i_s if masters == 1
- 27.         local effic_gain_s = r(sum)
- 28. 
-.         * Net benefit
-.         local net_benefit_s = `fiscal_s' - `behav_cost_s' + `effic_gain_s'
- 29. 
+ 29.         sum eg_i_s if masters == 1
+ 30.         local effic_gain_s = r(sum)
+ 31. 
+.         * Accounts (REVISION 6; see Section 6)
+.         local fiscal_s        = `sub_rate_s' * (`LD_0' + `OS_0')
+ 32.         local tax_loss_s      = `tax_rate_s' * (`behav_cost_s' - `effic_gain_s')
+ 33.         local avoid_tuition_s = `AT_0' * `tuition_mult_s'
+ 34.         local avoid_instr_s   = `AI_0' * `tuition_mult_s'
+ 35.         local inst_rev_loss_s = `IR_0' * `tuition_mult_s'
+ 36.         local cross_sub_loss_s = $cross_sub_share * `inst_rev_loss_s'
+ 37.         * Students: after-tax earnings, tuition, and the subsidy they lose
+.         * (avoided debt service minus forgone loans = -subsidy on displaced
+.         * borrowing; plus the subsidy lost by students who stay)
+.         local student_acct_s = -(1 - `tax_rate_s')*(`behav_cost_s' - `effic_gain_s') ///
+>                                + `avoid_tuition_s' - `fiscal_s'
+ 38.         local federal_acct_s = `fiscal_s' - `tax_loss_s'
+ 39.         local inst_acct_s    = -`inst_rev_loss_s'
+ 40. 
+.         * Net social benefit = sum of the accounts
+.         local net_benefit_s = `student_acct_s' + `federal_acct_s' + `inst_acct_s'
+ 41. 
 .         * Per-displaced-student net benefit
 .         sum displaced_E if masters == 1
- 30.         local n_disp_s = max(1, r(sum))
- 31.         local nb_per_student_s = `net_benefit_s' / `n_disp_s'
- 32. 
+ 42.         local n_disp_s = max(1, r(sum))
+ 43.         local nb_per_student_s = `net_benefit_s' / `n_disp_s'
+ 44. 
 .         * Benefit-cost ratio
-.         local bcr_s = (`fiscal_s' + `effic_gain_s') / max(1, `behav_cost_s')
- 33. 
+.         local bcr_s = (`avoid_instr_s' + `effic_gain_s') / max(1, `behav_cost_s')
+ 45. 
 .         * Efficiency indicator
 .         local pnb_positive_s = (`net_benefit_s' > 0)
- 34. 
-.         * Institutional revenue loss
-.         * Net tuition revenue forgone when displaced students leave.
-.         * Draw-specific tuition multiplier propagates pricing uncertainty.
-.         * Cross-subsidy disruption adds 20% for upstream undergraduate impact.
-.         gen ir_i_s = displaced_E * net_inst_rev * `tuition_mult_s'
- 35.         sum ir_i_s if masters == 1
- 36.         local inst_rev_loss_s = r(sum)
- 37.         local cross_sub_loss_s = 0.20 * `inst_rev_loss_s'
- 38.         local nb_extended_s = `net_benefit_s' - `inst_rev_loss_s' - `cross_sub_loss_s'
- 39. 
-.         drop mte_s mprte_i_s fs_i_s bc_i_s eg_i_s ir_i_s
- 40.     }
- 41. 
+ 46. 
+.         drop I_s mte_s mprte_i_s bc_i_s eg_i_s
+ 47.     }
+ 48. 
 .     * ── Post results ──────────────────────────────────────────────────────────
 .     post sim_handle ///
 >         (`s') ///
->         (`b0_s') (`b1_s') (`b2_s') (`b3_s') ///
+>         (`b0_s') (`b1_s') (`b2_s') ///
+>         (`m0_s') (`m1_s') (`m2_s') ///
 >         (`ate_s') (`att_s') (`atu_s') (`mprte_s') ///
->         (`fiscal_s') (`behav_cost_s') (`effic_gain_s') ///
+>         (`fiscal_s') (`tax_loss_s') (`behav_cost_s') (`effic_gain_s') ///
+>         (`avoid_tuition_s') (`avoid_instr_s') ///
+>         (`student_acct_s') (`federal_acct_s') (`inst_acct_s') ///
 >         (`net_benefit_s') (`nb_per_student_s') (`bcr_s') (`pnb_positive_s') ///
->         (`inst_rev_loss_s') (`cross_sub_loss_s') (`nb_extended_s')
- 42. 
+>         (`inst_rev_loss_s') (`cross_sub_loss_s')
+ 49. 
 .     * Progress indicator every 100 draws
 .     if mod(`s', 100) == 0 {
- 43.         di as text "  Draw `s' / $S_draws complete"
- 44.     }
- 45. }
+ 50.         di as text "  Draw `s' / $S_draws complete"
+ 51.     }
+ 52. }
   Draw 100 / 1000 complete
   Draw 200 / 1000 complete
   Draw 300 / 1000 complete
@@ -1310,7 +1865,7 @@ Simulation complete.
 . 
 . * tabstat does not accept decimal percentiles (p2.5, p97.5).
 . * Use _pctile to compute 2.5th and 97.5th percentiles directly.
-. foreach var in fiscal_s behav_cost_s effic_gain_s net_benefit_s {
+. foreach var in behav_cost_s effic_gain_s avoid_instr_s net_benefit_s {
   2.     qui sum `var'
   3.     local xm = r(mean)
   4.     local xs = r(sd)
@@ -1319,56 +1874,61 @@ Simulation complete.
 >         "  sd = " %10.2f `xs' ///
 >         "  95% CI: [" %10.2f r(r1) ", " %10.2f r(r2) "]"
   7. }
-fiscal_s:  mean =    2351.19  sd =     339.76  95% CI: [   1791.04,    2901.50]
-behav_cost_s:  mean =   80207.75  sd =    8689.13  95% CI: [  65300.10,   98573.89]
-effic_gain_s:  mean =     208.46  sd =     291.29  95% CI: [      0.00,    1003.65]
-net_benefit_s:  mean =  -77648.10  sd =    8673.04  95% CI: [ -95871.78,  -62470.77]
+behav_cost_s:  mean =   57624.30  sd =    8553.10  95% CI: [  42351.82,   75939.49]
+effic_gain_s:  mean =       0.00  sd =       0.00  95% CI: [      0.00,       0.00]
+avoid_instr_s:  mean =    5773.89  sd =     445.30  95% CI: [   4945.73,    6648.38]
+net_benefit_s:  mean =  -51850.40  sd =    8562.77  95% CI: [ -70310.32,  -36419.19]
 
 . 
-. di _n "--- Institutional Outcomes: Posterior Summary ($000s) ---"
+. di _n "--- Accounts by Perspective: Posterior Summary ($000s) ---"
 
---- Institutional Outcomes: Posterior Summary ($000s) ---
+--- Accounts by Perspective: Posterior Summary ($000s) ---
 
-. foreach var in inst_rev_loss_s cross_sub_loss_s nb_extended_s {
+. foreach var in student_acct_s federal_acct_s fiscal_s tax_loss_s ///
+>     inst_acct_s cross_sub_loss_s {
   2.     qui sum `var'
   3.     local xm = r(mean)
   4.     _pctile `var', p(2.5 97.5)
   5.     di "`var':  mean = " %10.2f `xm' ///
 >         "  95% CI: [" %10.2f r(r1) ", " %10.2f r(r2) "]"
   6. }
-inst_rev_loss_s:  mean =   11823.48  95% CI: [   9980.78,   13786.98]
-cross_sub_loss_s:  mean =    2364.70  95% CI: [   1996.16,    2757.40]
-nb_extended_s:  mean =  -91836.27  95% CI: [-110579.63,  -76371.88]
+student_acct_s:  mean =  -35204.11  95% CI: [ -51199.33,  -21672.50]
+federal_acct_s:  mean =   -5923.36  95% CI: [ -11416.67,   -1554.85]
+fiscal_s:  mean =    5532.03  95% CI: [   4224.97,    6783.15]
+tax_loss_s:  mean =   11455.38  95% CI: [   7417.88,   16445.32]
+inst_acct_s:  mean =  -10722.94  95% CI: [ -12347.00,   -9184.93]
+cross_sub_loss_s:  mean =    2144.59  95% CI: [   1836.99,    2469.40]
 
 . 
-. * Probability extended NB > 0
-. gen pnb_ext_pos_s = (nb_extended_s > 0)
+. * Probability that the federal government comes out ahead
+. gen pfed_pos_s = (federal_acct_s > 0)
 
-. qui sum pnb_ext_pos_s
+. qui sum pfed_pos_s
 
-. di _n "P(Extended NB > 0, incl. institutional costs): " %5.3f r(mean)
+. di _n "P(Federal account > 0): " %5.3f r(mean)
 
-P(Extended NB > 0, incl. institutional costs): 0.000
+P(Federal account > 0): 0.003
 
-. tabstat b0_s b1_s b2_s b3_s ate_s att_s atu_s mprte_s, ///
+. drop pfed_pos_s
+
+. tabstat m0_s m1_s m2_s ate_s att_s atu_s mprte_s, ///
 >     stats(mean sd) columns(statistics)
 
     Variable |      Mean        SD
 -------------+--------------------
-        b0_s |  .5493925  .3922782
-        b1_s |  1.608741  3.146433
-        b2_s | -5.561887  7.900027
-        b3_s |  3.139135  6.230776
-       ate_s |   .284584  .1421713
-       att_s |   .444206  .0236643
-       atu_s |  .5344743  .0247235
-     mprte_s |  .4951962  .0230781
+        m0_s |  .6767213  .1277371
+        m1_s | -1.388314  .6042957
+        m2_s |  .8103201  .6328552
+       ate_s |  .2526709  .0326913
+       att_s |  .3783994  .0369215
+       atu_s |  .1750146  .0448745
+     mprte_s |  .3982533  .0411415
 ----------------------------------
 
 . 
-. * ── Treatment Parameter Posterior Summary (Table 12.5 inputs) ────────────────
+. * ── Treatment Parameter Posterior Summary (Sects. 12.3.3 and 12.6.3) ─────────
 . * Posterior means and 95% credible intervals for ATE, ATT, MPRTE, ATU.
-. * These four numbers populate the Estimate column of Table 12.5 and provide
+. * These four numbers are reported in the text and provide
 . * the inferential basis for the MPRTE > ATT claim in the chapter narrative.
 . di _n "--- Treatment Parameter Posterior (log-salary units) ---"
 
@@ -1383,10 +1943,10 @@ P(Extended NB > 0, incl. institutional costs): 0.000
 >         "  sd = " %6.4f `xs' ///
 >         "  95% CI: [" %6.4f r(r1) ", " %6.4f r(r2) "]"
   7. }
-ate_s:  mean = 0.2846  sd = 0.1422  95% CI: [0.0077, 0.5700]
-att_s:  mean = 0.4442  sd = 0.0237  95% CI: [0.3989, 0.4900]
-mprte_s:  mean = 0.4952  sd = 0.0231  95% CI: [0.4493, 0.5400]
-atu_s:  mean = 0.5345  sd = 0.0247  95% CI: [0.4857, 0.5826]
+ate_s:  mean = 0.2527  sd = 0.0327  95% CI: [0.1914, 0.3178]
+att_s:  mean = 0.3784  sd = 0.0369  95% CI: [0.3083, 0.4513]
+mprte_s:  mean = 0.3983  sd = 0.0411  95% CI: [0.3205, 0.4792]
+atu_s:  mean = 0.1750  sd = 0.0449  95% CI: [0.0883, 0.2674]
 
 . 
 . * ── P(MPRTE > ATT) — formal inferential statement ────────────────────────────
@@ -1430,7 +1990,7 @@ Posterior benefit-cost ratio:
 
 . di "BCR:  mean = " %6.4f `xm' "  sd = " %6.4f `xs' ///
 >     "  95% CI: [" %6.4f r(r1) ", " %6.4f r(r2) "]"
-BCR:  mean = 0.0323  sd = 0.0066  95% CI: [0.0214, 0.0472]
+BCR:  mean = 0.1024  sd = 0.0174  95% CI: [0.0728, 0.1419]
 
 . 
 . * ── Net benefit per displaced student ────────────────────────────────────────
@@ -1448,7 +2008,7 @@ Net benefit per displaced student ($000s):
 
 . di "NB/student:  mean = " %8.2f `xm' "  sd = " %8.2f `xs' ///
 >     "  95% CI: [" %8.2f r(r1) ", " %8.2f r(r2) "]"
-NB/student:  mean =  -444.19  sd =    49.61  95% CI: [ -548.44,  -357.37]
+NB/student:  mean =  -333.26  sd =    55.04  95% CI: [ -451.91,  -234.08]
 
 . 
 . * ── Save results for figures ─────────────────────────────────────────────────
@@ -1481,7 +2041,8 @@ file Output/tables/sim_results_ch12.dta saved
 . 
 . * ── 95% credible intervals ───────────────────────────────────────────────────
 . * r(p2) and r(p97) are not stored by sum,detail. Use _pctile instead.
-. foreach var in fiscal_s behav_cost_s effic_gain_s net_benefit_s bcr_s {
+. foreach var in behav_cost_s effic_gain_s avoid_instr_s net_benefit_s bcr_s ///
+>     student_acct_s federal_acct_s inst_acct_s {
   2.     qui sum `var'
   3.     local xm = r(mean)
   4.     _pctile `var', p(2.5 97.5)
@@ -1490,11 +2051,14 @@ file Output/tables/sim_results_ch12.dta saved
   7.     di "`var': mean = " %12.2fc `xm' ///
 >         "  95% CI: [" %12.2fc `p_lo' ", " %12.2fc `p_hi' "]"
   8. }
-fiscal_s: mean =     2,351.19  95% CI: [    1,791.04,     2,901.50]
-behav_cost_s: mean =    80,207.75  95% CI: [   65,300.10,    98,573.89]
-effic_gain_s: mean =       208.46  95% CI: [        0.00,     1,003.65]
-net_benefit_s: mean =   -77,648.10  95% CI: [  -95,871.78,   -62,470.77]
-bcr_s: mean =         0.03  95% CI: [        0.02,         0.05]
+behav_cost_s: mean =    57,624.30  95% CI: [   42,351.82,    75,939.49]
+effic_gain_s: mean =         0.00  95% CI: [        0.00,         0.00]
+avoid_instr_s: mean =     5,773.89  95% CI: [    4,945.73,     6,648.38]
+net_benefit_s: mean =   -51,850.40  95% CI: [  -70,310.32,   -36,419.19]
+bcr_s: mean =         0.10  95% CI: [        0.07,         0.14]
+student_acct_s: mean =   -35,204.11  95% CI: [  -51,199.33,   -21,672.50]
+federal_acct_s: mean =    -5,923.36  95% CI: [  -11,416.67,    -1,554.85]
+inst_acct_s: mean =   -10,722.94  95% CI: [  -12,347.00,    -9,184.93]
 
 . 
 . * ── Scenario classification ──────────────────────────────────────────────────
@@ -1520,73 +2084,103 @@ bcr_s: mean =         0.03  95% CI: [        0.02,         0.05]
 . if `nb_mean' > 0 {
 .     di as text "Posterior mean NB = " %12.2fc `nb_mean' " ($000s) > 0"
 .     di as text "Scenario A likely: cap predominantly displaces low-return borrowers."
-.     di as text "Policy generates net fiscal savings in excess of human capital loss."
+.     di as text "Resources saved exceed forgone earnings."
 . }
 
 . else {
 .     di as text "Posterior mean NB = " %12.2fc `nb_mean' " ($000s) < 0"
-Posterior mean NB =   -77,648.10 ($000s) < 0
+Posterior mean NB =   -51,850.40 ($000s) < 0
 .     di as text "Scenario B likely: cap displaces students with positive marginal returns."
 Scenario B likely: cap displaces students with positive marginal returns.
-.     di as text "Human capital loss exceeds fiscal savings."
-Human capital loss exceeds fiscal savings.
+.     di as text "Forgone earnings exceed the resources saved."
+Forgone earnings exceed the resources saved.
 . }
 
 . 
-. * ── LaTeX-ready summary table ────────────────────────────────────────────────
-. file open ftab using "$tables_dir/Table12_1_CBA_Summary.tex", write replace
+. * ── Table 12.3: Posterior cost-benefit summary (Word) ───────────────────────
+. local t3vars "behav_cost_s effic_gain_s avoid_instr_s net_benefit_s bcr_s @ student_acct_s federal_acct
+> _s inst_acct_s"
 
-. file write ftab "\begin{table}[ht]" _n
+. local lab_behav_cost_s   "Forgone earnings"
 
-. file write ftab "\caption{Posterior Cost--Benefit Summary: \$100k Grad PLUS Cap}" _n
+. local lab_effic_gain_s   "Efficiency gain"
 
-. file write ftab "\begin{tabular}{lrrrr}" _n
+. local lab_avoid_instr_s  "Avoided instructional cost"
 
-. file write ftab "\hline" _n
+. local lab_net_benefit_s  "Net social benefit"
 
-. file write ftab "Component & Mean & SD & 2.5\% & 97.5\% \\" _n
+. local lab_bcr_s          "Benefit-cost ratio"
 
-. file write ftab "\hline" _n
+. local lab_student_acct_s "Students"
 
-. 
-. foreach var in fiscal_s behav_cost_s effic_gain_s net_benefit_s bcr_s {
-  2.     qui sum `var'
-  3.     local xmean = r(mean)
-  4.     local xsd   = r(sd)
-  5.     _pctile `var', p(2.5 97.5)
-  6.     local p_lo = r(r1)
-  7.     local p_hi = r(r2)
-  8.     local label = cond("`var'" == "fiscal_s",       "Fiscal savings (\$000s)", ///
->                   cond("`var'" == "behav_cost_s",   "Behavioral cost (\$000s)", ///
->                   cond("`var'" == "effic_gain_s",   "Efficiency gain (\$000s)", ///
->                   cond("`var'" == "net_benefit_s",  "Net benefit (\$000s)", ///
->                                                     "Benefit-cost ratio"))))
-  9.     * Use string() to format numbers before file write — avoids %fmt parsing issues
-.     local s1 = string(`xmean', "%10.2f")
- 10.     local s2 = string(`xsd',   "%10.2f")
- 11.     local s3 = string(`p_lo',  "%10.2f")
- 12.     local s4 = string(`p_hi',  "%10.2f")
- 13.     file write ftab "`label' & `s1' & `s2' & `s3' & `s4' \\" _n
- 14. }
+. local lab_federal_acct_s "Federal government"
+
+. local lab_inst_acct_s    "Institutions"
 
 . 
-. file write ftab "\hline" _n
+. putdocx clear
 
-. file write ftab "\multicolumn{5}{l}{\textit{Note: " ///
->     "$S_draws posterior draws. " ///
->     "Behavioral cost = lost human capital for displaced completers with MTE > 0. " ///
->     "Efficiency gain = avoided loss from removing completers with MTE \$\leq\$ 0.}} \\" _n
+. putdocx begin, font("Times New Roman", 10)
 
-. file write ftab "\end{tabular}" _n
+. putdocx paragraph
 
-. file write ftab "\end{table}" _n
+. putdocx text ("Table 12.3 "), bold
 
-. file close ftab
+. putdocx text ("Posterior cost-benefit summary: $100,000 federal graduate loan limit ($000s)")
 
-. 
-. di _n "Summary table written to $tables_dir/Table12_1_CBA_Summary.tex"
+. putdocx table t3 = (12, 5), border(all, nil) layout(autofitcontents)
 
-Summary table written to Output/tables/Table12_1_CBA_Summary.tex
+. putdocx table t3(1,1) = ("Component")
+
+. putdocx table t3(1,2) = ("Mean"), halign(right)
+
+. putdocx table t3(1,3) = ("SD"), halign(right)
+
+. putdocx table t3(1,4) = ("2.5th pct."), halign(right)
+
+. putdocx table t3(1,5) = ("97.5th pct."), halign(right)
+
+. putdocx table t3(2,1) = ("Society"), italic
+
+. local r = 2
+
+. foreach var of local t3vars {
+  2.     local ++r
+  3.     if "`var'" == "@" {
+  4.         putdocx table t3(`r',1) = ("By account"), italic
+  5.         continue
+  6.     }
+  7.     local fmt = cond("`var'" == "bcr_s", "%9.3f", "%12.1fc")
+  8.     qui sum `var'
+  9.     local xmean = r(mean)
+ 10.     local xsd   = r(sd)
+ 11.     _pctile `var', p(2.5 97.5)
+ 12.     local p_lo = r(r1)
+ 13.     local p_hi = r(r2)
+ 14.     putdocx table t3(`r',1) = ("    `lab_`var''")
+ 15.     putdocx table t3(`r',2) = (strtrim(string(`xmean', "`fmt'"))), halign(right)
+ 16.     putdocx table t3(`r',3) = (strtrim(string(`xsd',   "`fmt'"))), halign(right)
+ 17.     putdocx table t3(`r',4) = (strtrim(string(`p_lo',  "`fmt'"))), halign(right)
+ 18.     putdocx table t3(`r',5) = (strtrim(string(`p_hi',  "`fmt'"))), halign(right)
+ 19. }
+
+. putdocx table t3(12,1) = ("Note: Based on $S_draws posterior draws. Net social benefit is the sum of th
+> e three accounts; tuition, loans, subsidies, and taxes are transfers between accounts and net out. Bene
+> fit-cost ratio = (avoided instructional cost + efficiency gain) / forgone earnings."), colspan(5)
+
+. putdocx table t3(1,.), border(top)
+
+. putdocx table t3(1,.), border(bottom)
+
+. putdocx table t3(11,.), border(bottom)
+
+. putdocx save "$tables_dir/Table12_3_CBA_Summary_Stata.docx", replace
+successfully replaced "C:/Users/marvi/Dropbox/Book/2nd Edition/Chapter 12/Output/tables/Table12_3_CBA_Sum
+> mary_Stata.docx"
+
+. di _n "Table 12.3 written to $tables_dir/Table12_3_CBA_Summary_Stata.docx"
+
+Table 12.3 written to Output/tables/Table12_3_CBA_Summary_Stata.docx
 
 . 
 . restore
@@ -1632,7 +2226,7 @@ Summary table written to Output/tables/Table12_1_CBA_Summary.tex
 >          %6.1f `nb_mean_plot' " $000s)." ///
 >          "N = $S_draws posterior draws.") ///
 >     name(fig12_1_posterior_nb, replace)
-(bin=29, start=-104385.14, width=1791.2307)
+(bin=29, start=-89593.227, width=2162.7919)
 
 . 
 . graph export "$graphs_dir/fig12_1_posterior_nb_Stata.png", ///
@@ -1653,21 +2247,17 @@ file Output/graphs/fig12_1_posterior_nb_Stata.png saved as PNG format
 
 . 
 . * Posterior mean coefficients — each command on its own line
-. qui sum b0_s
+. qui sum m0_s
 
 . local b0_pm = r(mean)
 
-. qui sum b1_s
+. qui sum m1_s
 
 . local b1_pm = r(mean)
 
-. qui sum b2_s
+. qui sum m2_s
 
 . local b2_pm = r(mean)
-
-. qui sum b3_s
-
-. local b3_pm = r(mean)
 
 . 
 . * Identify policy-affected u range:
@@ -1686,7 +2276,7 @@ Number of observations (_N) was 0, now 100.
 
 . gen u    = _n / 100
 
-. gen mte  = `b0_pm' + `b1_pm'*u + `b2_pm'*u^2 + `b3_pm'*u^3
+. gen mte  = `b0_pm' + `b1_pm'*u + `b2_pm'*u^2
 
 . gen zero_line = 0
 
@@ -1736,10 +2326,10 @@ file Output/graphs/fig12_2_mte_policy_Stata.png saved as PNG format
 . use "$tables_dir/sim_results_ch12.dta", clear
 
 . 
-. * Compute posterior means — each command on its own line (no inline semicolons)
-. qui sum fiscal_s
+. * Posterior means of the real (non-transfer) components (REVISION 6)
+. qui sum avoid_instr_s
 
-. scalar sc_fs = r(mean)
+. scalar sc_ai = r(mean)
 
 . qui sum behav_cost_s
 
@@ -1768,36 +2358,23 @@ Number of observations (_N) was 0, now 3.
 . gen value     = .
 (3 missing values generated)
 
-. gen color_grp = .
-(3 missing values generated)
-
-. replace label = "Fiscal Savings"   in 1
-variable label was str1 now str14
+. replace label = "Avoided Instructional Cost" in 1
+variable label was str1 now str26
 (1 real change made)
 
-. replace label = "Efficiency Gain"  in 2
-variable label was str14 now str15
+. replace label = "Efficiency Gain"            in 2
 (1 real change made)
 
-. replace label = "Behavioral Cost"  in 3
+. replace label = "Forgone Earnings"           in 3
 (1 real change made)
 
-. replace value = sc_fs              in 1
+. replace value = sc_ai              in 1
 (1 real change made)
 
 . replace value = sc_eg              in 2
 (1 real change made)
 
 . replace value = -sc_bc             in 3
-(1 real change made)
-
-. replace color_grp = 1              in 1
-(1 real change made)
-
-. replace color_grp = 1              in 2
-(1 real change made)
-
-. replace color_grp = 2              in 3
 (1 real change made)
 
 . 
@@ -1807,8 +2384,9 @@ variable label was str14 now str15
 >     ytitle("Posterior Mean ($000s)") ///
 >     title("Cost–Benefit Decomposition") ///
 >     subtitle("$100k Federal Loan Cap (Posterior Mean Components)") ///
->     note("Behavioral cost shown as negative (subtracted from net benefit)." ///
->          "Net benefit = Fiscal Savings + Efficiency Gain − Behavioral Cost.") ///
+>     note("Forgone earnings shown as negative. Net social benefit =" ///
+>          "Avoided Instructional Cost + Efficiency Gain − Forgone Earnings;" ///
+>          "tuition, loans, subsidies, and taxes are transfers and net out.") ///
 >     name(fig12_3_cba_decomp, replace)
 
 . 
@@ -1844,8 +2422,8 @@ file Output/graphs/fig12_3_cba_decomp_Stata.png saved as PNG format
 >     ytitle("Posterior Density") ///
 >     xtitle("Estimated Treatment Effect (log salary)") ///
 >     legend(order(1 "ATE" 2 "ATT" 3 "ATU") cols(3) size(small)) ///
->     note("ATU > ATT > ATE reflects negative selection: financially constrained" ///
->          "students have higher potential returns than self-selected completers." ///
+>     note("Posterior distributions of the average treatment effects" ///
+>          "(weights as in Chapter 11, Eq. 11.3)." ///
 >          "N = $S_draws posterior draws.") ///
 >     name(fig12_4_param_posteriors, replace)
 
@@ -1865,18 +2443,60 @@ file Output/graphs/fig12_4_param_posteriors_Stata.png saved as PNG format
 . * Fig. 12.5: MTE Curve by Graduate Program Area (Heterogeneity)
 . * Field-specific MTE curves reveal which programs drive the efficiency verdict.
 . * ─────────────────────────────────────────────────────────────────────────────
-. * Illustrates the concept using the pooled cubic MTE with program-area
-. * intercept offsets. UNDER REVIEW (outline Author note 7): the offsets were
-. * labeled as coming from "Chapter 10, Table 10.1", which no longer exists in
-. * that form, and they do not match Chapter 11, Table 11.3 (e.g., Business
-. * ATT 0.907, STEM ATE 0.455 there). Their source must be confirmed or the
-. * offsets re-derived; values are unchanged here.
-. 
-. * Field-specific ATE offsets relative to base Other (source to be confirmed):
-. *   STEM:     ATE = 0.9424 vs. Other ATE = 0.8085 → offset = +0.134
-. *   Business: ATE = 1.6936 vs. Other ATE = 0.8085 → offset = +0.885
-. *   Education: ATE = 0.6437 vs. Other ATE = 0.8085 → offset = -0.165
-. *   Health:   ATE = 0.8469 vs. Other ATE = 0.8085 → offset = +0.038
+. * REVISION 4: program-area offsets are estimated from the data. The
+. * quadratic MTE regression (Eq. 12.2) is re-run with masters x program-area
+. * intercept shifts (Other = base), so each area's MTE curve is the base
+. * curve shifted up or down by its estimated offset. Health is added as a
+. * main effect here so that each shift is measured against the right base.
+. gen m_stem   = masters * stem_major
+
+. gen m_bus    = masters * bus_major
+
+. gen m_educ   = masters * ed_major
+
+. gen m_health = masters * health_major
+
+. qui reg ln_salary masters c.masters#(c.phat c.phat2) ///
+>     m_stem m_bus m_educ m_health $X health_major phat phat2, robust
+
+. local mo0 = _b[masters] + _b[phat]
+
+. local mo1 = 2*(_b[c.masters#c.phat] + _b[phat2])
+
+. local mo2 = 3*_b[c.masters#c.phat2]
+
+. di _n "Program-area MTE offsets (relative to Other), log-salary units:"
+
+Program-area MTE offsets (relative to Other), log-salary units:
+
+. foreach v in m_stem m_bus m_educ m_health {
+  2.     local o_`v' = _b[`v']
+  3.     di "  `v': " %7.4f _b[`v'] "  (SE " %6.4f _se[`v'] ")"
+  4. }
+  m_stem:  0.0220  (SE 0.0339)
+  m_bus: -0.0567  (SE 0.0352)
+  m_educ: -0.0203  (SE 0.0370)
+  m_health: -0.0393  (SE 0.0378)
+
+. test m_stem m_bus m_educ m_health
+
+ ( 1)  m_stem = 0
+ ( 2)  m_bus = 0
+ ( 3)  m_educ = 0
+ ( 4)  m_health = 0
+
+       F(  4,  7973) =    1.37
+            Prob > F =    0.2420
+
+. local p_area = r(p)
+
+. local p_area_s = string(`p_area', "%5.3f")
+
+. di "Joint test, no differences by program area: p = " %6.4f `p_area'
+Joint test, no differences by program area: p = 0.2420
+
+. drop m_stem m_bus m_educ m_health
+
 . 
 . preserve
 
@@ -1888,16 +2508,16 @@ Number of observations (_N) was 0, now 100.
 . gen u = _n / 100
 
 . 
-. * Use point-estimate polynomial locals b0–b3 stored in Section 5
-. gen mte_other = `b0' + `b1'*u + `b2'*u^2 + `b3'*u^3
+. * Base (Other) MTE from the program-area regression, shifted by each offset
+. gen mte_other   = `mo0' + `mo1'*u + `mo2'*u^2
 
-. gen mte_stem    = mte_other + 0.134
+. gen mte_stem    = mte_other + `o_m_stem'
 
-. gen mte_bus     = mte_other + 0.885
+. gen mte_bus     = mte_other + `o_m_bus'
 
-. gen mte_educ    = mte_other - 0.165
+. gen mte_educ    = mte_other + `o_m_educ'
 
-. gen mte_health  = mte_other + 0.038
+. gen mte_health  = mte_other + `o_m_health'
 
 . 
 . twoway ///
@@ -1916,8 +2536,8 @@ Number of observations (_N) was 0, now 100.
 >         4 "Education" ///
 >         5 "Other (base)") ///
 >         cols(3) size(small)) ///
->     note("Illustrative: pooled MTE shifted by program-area intercept offsets." ///
->          "Business programs show the largest returns; Education the lowest.") ///
+>     note("MTE shifted by program-area offsets estimated from the data (Other = base)." ///
+>          "Joint test of no differences by program area: p = `p_area_s'.") ///
 >     name(fig12_5_mte_byfield, replace)
 
 . 
@@ -1955,18 +2575,18 @@ file Output/graphs/fig12_5_mte_byfield_Stata.png saved as PNG format
 . gen prog_area = "Other"
 
 . replace prog_area = "STEM"     if stem_major   == 1
-(1,729 real changes made)
+(1,783 real changes made)
 
 . replace prog_area = "Business" if bus_major    == 1
 variable prog_area was str5 now str8
-(1,449 real changes made)
+(1,515 real changes made)
 
 . replace prog_area = "Education" if ed_major     == 1
 variable prog_area was str8 now str9
-(1,244 real changes made)
+(1,250 real changes made)
 
 . replace prog_area = "Health"   if health_major == 1
-(1,152 real changes made)
+(1,139 real changes made)
 
 . 
 . collapse (sum) inst_rev_loss_i (mean) annual_tuition ///
@@ -2011,115 +2631,81 @@ file Output/graphs/fig12_6_inst_rev_byfield_Stata.png saved as PNG format
 
 . 
 . * ─────────────────────────────────────────────────────────────────────────────
-. * Fig. 12.7: Full Social Cost Stack — Student + Institutional Channels
-. * Stacks all costs and savings to show the complete distributional picture.
+. * Fig. 12.7: Who Bears the Cost — Accounts by Perspective (REVISION 6)
+. * Posterior means of the student, federal, and institutional accounts and
+. * their sum, the net social benefit.
 . * ─────────────────────────────────────────────────────────────────────────────
 . preserve
 
 . use "$tables_dir/sim_results_ch12.dta", clear
 
 . 
-. qui sum fiscal_s
+. qui sum student_acct_s
 
-. scalar sc_fs  = r(mean)
+. scalar sc_st = r(mean)
 
-. qui sum behav_cost_s
+. qui sum federal_acct_s
 
-. scalar sc_bc  = r(mean)
+. scalar sc_fe = r(mean)
 
-. qui sum effic_gain_s
+. qui sum inst_acct_s
 
-. scalar sc_eg  = r(mean)
+. scalar sc_in = r(mean)
 
-. qui sum inst_rev_loss_s
+. qui sum net_benefit_s
 
-. scalar sc_ir  = r(mean)
-
-. qui sum cross_sub_loss_s
-
-. scalar sc_cs  = r(mean)
+. scalar sc_nb = r(mean)
 
 . 
 . clear
 
-. set obs 5
-Number of observations (_N) was 0, now 5.
+. set obs 4
+Number of observations (_N) was 0, now 4.
 
 . gen component = _n
 
 . gen label     = ""
-(5 missing values generated)
+(4 missing values generated)
 
 . gen value     = .
-(5 missing values generated)
+(4 missing values generated)
 
-. gen category  = ""   // "Benefit" or "Cost"
-(5 missing values generated)
-
-. 
-. replace label    = "Fiscal Savings"          in 1
-variable label was str1 now str14
+. replace label = "Students"           in 1
+variable label was str1 now str8
 (1 real change made)
 
-. replace label    = "Efficiency Gain"         in 2
-variable label was str14 now str15
+. replace label = "Federal Government" in 2
+variable label was str8 now str18
 (1 real change made)
 
-. replace label    = "Human Capital Loss"      in 3
-variable label was str15 now str18
+. replace label = "Institutions"       in 3
 (1 real change made)
 
-. replace label    = "Institutional Rev. Loss" in 4
-variable label was str18 now str23
+. replace label = "Society (Total)"    in 4
 (1 real change made)
 
-. replace label    = "Cross-Subsidy Disruption" in 5
-variable label was str23 now str24
+. replace value = sc_st in 1
 (1 real change made)
 
-. 
-. replace value    =  sc_fs  in 1
+. replace value = sc_fe in 2
 (1 real change made)
 
-. replace value    =  sc_eg  in 2
+. replace value = sc_in in 3
 (1 real change made)
 
-. replace value    = -sc_bc  in 3
-(1 real change made)
-
-. replace value    = -sc_ir  in 4
-(1 real change made)
-
-. replace value    = -sc_cs  in 5
+. replace value = sc_nb in 4
 (1 real change made)
 
 . 
-. replace category = "Benefit" in 1
-variable category was str1 now str7
-(1 real change made)
-
-. replace category = "Benefit" in 2
-(1 real change made)
-
-. replace category = "Cost"    in 3
-(1 real change made)
-
-. replace category = "Cost"    in 4
-(1 real change made)
-
-. replace category = "Cost"    in 5
-(1 real change made)
-
-. 
-. graph bar value, over(label, sort(component) label(angle(30))) ///
+. graph bar value, over(label, sort(component)) ///
 >     bar(1, fcolor(gs5) lcolor(gs0)) ///
 >     yline(0, lpattern(dash) lcolor(gs8)) ///
 >     ytitle("Posterior Mean ($000s)") ///
->     title("Full Social Cost Stack") ///
->     subtitle("Student and Institutional Channels Combined") ///
->     note("Benefits shown positive; costs shown negative." ///
->          "Human capital loss and institutional revenue loss dominate." ///
->          "Cross-subsidy disruption captures upstream undergraduate impact.") ///
+>     title("Who Bears the Cost") ///
+>     subtitle("Accounts by Perspective (Posterior Means)") ///
+>     note("Society = Students + Federal Government + Institutions." ///
+>          "Students: after-tax earnings, tuition, and lost loan subsidies." ///
+>          "Federal: subsidy savings minus lost tax revenue.") ///
 >     name(fig12_7_full_cost_stack, replace)
 
 . 
@@ -2155,8 +2741,14 @@ Output files:
 . di as text "  Data:         Example_12_1.dta"
   Data:         Example_12_1.dta
 
-. di as text "  Table:        $tables_dir/Table12_1_CBA_Summary.tex"
-  Table:        Output/tables/Table12_1_CBA_Summary.tex
+. di as text "  Tables:       $tables_dir/Table12_1_Descriptives_Stata.docx"
+  Tables:       Output/tables/Table12_1_Descriptives_Stata.docx
+
+. di as text "                $tables_dir/Table12_2_Assumptions_Stata.docx"
+                Output/tables/Table12_2_Assumptions_Stata.docx
+
+. di as text "                $tables_dir/Table12_3_CBA_Summary_Stata.docx"
+                Output/tables/Table12_3_CBA_Summary_Stata.docx
 
 . di as text "  Sim results:  $tables_dir/sim_results_ch12.dta"
   Sim results:  Output/tables/sim_results_ch12.dta
@@ -2185,8 +2777,7 @@ Output files:
 . 
 . log close
       name:  <unnamed>
-       log:  C:\Users\marvi\Dropbox\Book\2nd Edition\Chapter 12\Output/logs/Chapter12_Stata_out
-> put.log
+       log:  C:\Users\marvi\Dropbox\Book\2nd Edition\Chapter 12\Output/logs/Chapter12_Stata_output.log
   log type:  text
- closed on:  15 Nov 2026, 18:29:05
------------------------------------------------------------------------------------------------
+ closed on:  19 Nov 2026, 12:33:13
+---------------------------------------------------------------------------------------------------------
